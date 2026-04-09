@@ -3,51 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cobrança Pro - Oficial</title>
+    <title>Cobrança Pro - v6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --whatsapp: #25d366; --bg: #f8fafc; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1e293b; }
         
-        /* Controle de Visão */
         .admin-only, .client-only { display: none; }
         body.modo-admin .admin-only { display: block; }
         body.modo-cliente .client-only { display: flex; flex-direction: column; align-items: center; }
 
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        /* Admin Styles */
         .pix-config { background: #eff6ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #dbeafe; }
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { padding: 10px; border-radius: 8px; color: white; text-align: center; font-weight: bold; font-size: 13px; }
         
         .table-res { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 12px; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
 
-        /* Inputs e Botões */
-        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; }
+        input, select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; font-size: 14px; }
         .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; justify-content: center; }
-        .btn-add { background: var(--primary); color: white; width: 100%; margin-bottom: 15px; }
+        .btn-add { background: var(--primary); color: white; width: 100%; margin: 15px 0; }
         .btn-zap { background: var(--whatsapp); color: white; text-decoration: none; }
         
-        /* Portal Cliente */
         .client-box { width: 100%; max-width: 400px; text-align: center; }
         .preview-img { width: 100%; max-height: 250px; object-fit: contain; margin-top: 15px; border: 2px dashed #ccc; display: none; }
         .file-label { background: #475569; color: white; padding: 15px; border-radius: 8px; display: block; margin: 15px 0; cursor: pointer; }
     </style>
 </head>
-<body class="modo-admin"> <div class="container">
+<body class="modo-admin">
+
+<div class="container">
     
     <div class="admin-only">
         <h2>📊 Gestão de Cobrança</h2>
         
         <div class="pix-config">
-            <strong>Minha Chave PIX:</strong>
-            <input type="text" id="chavePix" value="seu-email@pix.com" onchange="salvarConfig()">
+            <strong>Sua Chave PIX:</strong>
+            <input type="text" id="chavePix" onchange="salvarConfig()">
             <div id="qrcodeAdmin" style="margin-top:10px"></div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <strong>Mês de Referência:</strong>
+            <select id="filtroMes" onchange="trocarMes()"></select>
+            <small style="color: #64748b; display: block; margin-top: 4px;">* Novos meses geram após dia 20 com base nos usuários cadastrados.</small>
         </div>
 
         <div class="stats">
@@ -56,13 +60,13 @@
             <div class="stat-card" style="background:var(--danger)">Pendente<br>R$ <span id="tPend">0</span></div>
         </div>
 
-        <button class="btn btn-add" onclick="adicionarPessoa()">+ Adicionar Nova Pessoa</button>
+        <button class="btn btn-add" onclick="adicionarPessoa()">+ Adicionar Pessoa à Base</button>
 
         <div class="table-res">
             <table>
                 <thead>
                     <tr>
-                        <th>Nome / WhatsApp</th>
+                        <th>Nome / Tel</th>
                         <th>Valor</th>
                         <th>Status</th>
                         <th>Ações</th>
@@ -81,28 +85,38 @@
             <div id="qrcodeCliente" style="display:flex; justify-content:center; margin:15px 0"></div>
         </div>
 
-        <p style="margin-top:20px"><strong>Envie o comprovante:</strong></p>
-        <label for="fotoInput" class="file-label">📸 Escolher da Galeria ou Câmera</label>
+        <p style="margin-top:20px"><strong>Selecione o comprovante:</strong></p>
+        <label for="fotoInput" class="file-label">📸 Galeria ou Câmera</label>
         <input type="file" id="fotoInput" accept="image/*" onchange="lerFoto(this)" style="display:none">
         
         <img id="imgPreview" class="preview-img">
         
-        <button class="btn" style="background:var(--success); color:white; width:100%; padding:15px; margin-top:20px; font-size:16px" onclick="confirmarPagamento()">
-            ENVIAR COMPROVANTE
+        <button id="btnConfirmar" class="btn" style="background:var(--success); color:white; width:100%; padding:15px; margin-top:20px; font-size:16px" onclick="confirmarPagamento()">
+            CONFIRMAR E MARCAR COMO PAGO
         </button>
     </div>
 
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('cobranca_v5')) || {};
-    let config = JSON.parse(localStorage.getItem('config_v5')) || { chave: "seu-email@pix.com" };
-    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}/${new Date().getFullYear()}`;
+    // Recuperação de dados
+    let db = JSON.parse(localStorage.getItem('cobranca_v6')) || {};
+    let baseUsuarios = JSON.parse(localStorage.getItem('base_v6')) || [];
+    let config = JSON.parse(localStorage.getItem('config_v6')) || { chave: "seu-email@pix.com" };
+    
+    function getMesAno() {
+        const d = new Date();
+        return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+
+    let mesVisivel = getMesAno();
     let idUsuarioAtivo = null;
 
     function init() {
         const params = new URLSearchParams(window.location.search);
         idUsuarioAtivo = params.get('p');
+
+        verificarViradaDeMes();
 
         if (idUsuarioAtivo) {
             document.body.className = "modo-cliente";
@@ -110,13 +124,37 @@
         } else {
             document.body.className = "modo-admin";
             document.getElementById('chavePix').value = config.chave;
+            renderizarFiltro();
             atualizarTudo();
         }
     }
 
-    // --- FUNÇÕES ADMIN ---
+    function verificarViradaDeMes() {
+        const hoje = new Date();
+        const mesAtual = getMesAno();
+        
+        // Se após dia 20 e o mês atual não existe no DB, cria baseado na base de usuários
+        if (hoje.getDate() >= 20 && !db[mesAtual]) {
+            db[mesAtual] = baseUsuarios.map(u => ({ ...u, pago: false, comprovante: null }));
+            salvar();
+        }
+        if (!db[mesAtual]) db[mesAtual] = [];
+    }
+
+    function renderizarFiltro() {
+        const sel = document.getElementById('filtroMes');
+        const meses = Object.keys(db).length ? Object.keys(db) : [getMesAno()];
+        sel.innerHTML = meses.sort().reverse().map(m => `<option value="${m}" ${m === mesVisivel ? 'selected' : ''}>${m}</option>`).join('');
+    }
+
+    function trocarMes() {
+        mesVisivel = document.getElementById('filtroMes').value;
+        atualizarTudo();
+    }
+
+    // --- ADMIN ---
     function atualizarTudo() {
-        const lista = db[mesAtual] || [];
+        const lista = db[mesVisivel] || [];
         const corpo = document.getElementById('corpoTabela');
         corpo.innerHTML = "";
         
@@ -129,12 +167,12 @@
             corpo.innerHTML += `
                 <tr>
                     <td>
-                        <input type="text" value="${p.nome}" onchange="editar(${p.id},'nome',this.value)" style="margin-bottom:4px"><br>
-                        <input type="text" value="${p.tel}" onchange="editar(${p.id},'tel',this.value)" style="font-size:11px">
+                        <input type="text" value="${p.nome}" onchange="editar(${p.id},'nome',this.value)" style="margin-bottom:2px"><br>
+                        <input type="text" value="${p.tel}" onchange="editar(${p.id},'tel',this.value)" style="font-size:11px; color:#666">
                     </td>
                     <td><input type="number" value="${p.valor}" onchange="editar(${p.id},'valor',this.value)"></td>
                     <td>
-                        <button onclick="alternar(${p.id})" style="border:none; background:none; cursor:pointer">
+                        <button onclick="alternar(${p.id})" style="border:none; background:none; cursor:pointer; font-size:20px">
                             ${p.pago ? '✅' : '⏳'}
                         </button>
                     </td>
@@ -159,50 +197,70 @@
     }
 
     function adicionarPessoa() {
-        const nova = { id: Date.now(), nome: "Novo Cliente", tel: "55", valor: 0, pago: false, comprovante: null };
-        if(!db[mesAtual]) db[mesAtual] = [];
-        db[mesAtual].push(nova);
+        const id = Date.now();
+        const nova = { id, nome: "Novo Cliente", tel: "55", valor: 0, pago: false, comprovante: null };
+        
+        baseUsuarios.push(nova);
+        if(!db[mesVisivel]) db[mesVisivel] = [];
+        db[mesVisivel].push({...nova});
+        
         salvar();
         atualizarTudo();
     }
 
     function cobrar(id, nome, tel, valor) {
         const link = window.location.href.split('?')[0] + "?p=" + id;
-        const msg = encodeURIComponent(`Olá ${nome}!\nSeguem os dados para pagamento:\n\nValor: R$ ${valor.toFixed(2)}\nPIX: ${config.chave}\n\nApós pagar, envie o comprovante por este link:\n${link}`);
+        const msg = encodeURIComponent(`Olá ${nome}!\nLembrete de pagamento (${mesVisivel}):\n\nValor: R$ ${valor.toFixed(2)}\nPIX: ${config.chave}\n\nEnvie o comprovante pelo link:\n${link}`);
         window.open(`https://wa.me/${tel}?text=${msg}`);
     }
 
     function editar(id, campo, valor) {
-        const p = db[mesAtual].find(x => x.id === id);
+        // Atualiza no mês
+        const p = db[mesVisivel].find(x => x.id === id);
         if(p) p[campo] = campo === 'valor' ? parseFloat(valor) : valor;
+        // Atualiza na base para meses futuros
+        const pb = baseUsuarios.find(x => x.id === id);
+        if(pb) pb[campo] = campo === 'valor' ? parseFloat(valor) : valor;
         salvar();
         atualizarTudo();
     }
 
     function alternar(id) {
-        const p = db[mesAtual].find(x => x.id === id);
+        const p = db[mesVisivel].find(x => x.id === id);
         if(p) { p.pago = !p.pago; if(!p.pago) p.comprovante = null; }
         salvar();
         atualizarTudo();
     }
 
     function excluir(id) {
-        if(confirm("Remover permanentemente?")) {
-            db[mesAtual] = db[mesAtual].filter(x => x.id !== id);
+        if(confirm("Remover da base e deste mês?")) {
+            db[mesVisivel] = db[mesVisivel].filter(x => x.id !== id);
+            baseUsuarios = baseUsuarios.filter(x => x.id !== id);
             salvar();
             atualizarTudo();
         }
     }
 
-    // --- FUNÇÕES CLIENTE ---
+    // --- CLIENTE ---
     function exibirPainelCliente(id) {
-        const p = (db[mesAtual] || []).find(x => x.id == id);
-        if (p) {
-            document.getElementById('cNome').innerText = "Olá, " + p.nome;
-            document.getElementById('cValor').innerText = p.valor.toFixed(2);
+        // Busca o usuário em qualquer mês que exista no DB para garantir que o valor apareça
+        let usuarioEncontrado = null;
+        let mesDaCobranca = "";
+
+        for (let mes in db) {
+            let u = db[mes].find(x => x.id == id);
+            if(u) { usuarioEncontrado = u; mesDaCobranca = mes; break; }
+        }
+
+        if (usuarioEncontrado) {
+            document.getElementById('cNome').innerText = "Olá, " + usuarioEncontrado.nome;
+            document.getElementById('cValor').innerText = usuarioEncontrado.valor.toFixed(2);
             new QRCode(document.getElementById("qrcodeCliente"), { text: config.chave, width: 150, height: 150 });
+            
+            // Guarda o mês correto para salvar o comprovante
+            mesVisivel = mesDaCobranca; 
         } else {
-            alert("Erro: Cobrança não encontrada.");
+            alert("Erro: Dados não encontrados.");
         }
     }
 
@@ -219,27 +277,34 @@
     }
 
     function confirmarPagamento() {
-        const imgBase64 = document.getElementById('imgPreview').src;
-        if (!imgBase64 || imgBase64.includes('display:none')) return alert("Selecione a foto do comprovante primeiro!");
+        const img = document.getElementById('imgPreview').src;
+        if (!img || img.startsWith('data:image') === false) return alert("Selecione a foto do comprovante.");
 
-        const p = db[mesAtual].find(x => x.id == idUsuarioAtivo);
+        const p = db[mesVisivel].find(x => x.id == idUsuarioAtivo);
         if (p) {
             p.pago = true;
-            p.comprovante = imgBase64;
+            p.comprovante = img;
             salvar();
-            alert("Pronto! Seu comprovante foi enviado com sucesso.");
-            window.location.search = ""; // Limpa para não ficar na tela do cliente
+            alert("Sucesso! O administrador recebeu seu comprovante.");
+            window.location.search = ""; 
         }
     }
 
-    // --- AUXILIARES ---
     function salvarConfig() {
         config.chave = document.getElementById('chavePix').value;
-        localStorage.setItem('config_v5', JSON.stringify(config));
+        localStorage.setItem('config_v6', JSON.stringify(config));
         atualizarTudo();
     }
-    function salvar() { localStorage.setItem('cobranca_v5', JSON.stringify(db)); }
-    function verFoto(img) { const w = window.open(""); w.document.write(`<img src="${img}" style="width:100%">`); }
+
+    function salvar() { 
+        localStorage.setItem('cobranca_v6', JSON.stringify(db)); 
+        localStorage.setItem('base_v6', JSON.stringify(baseUsuarios));
+    }
+
+    function verFoto(img) { 
+        const w = window.open(""); 
+        w.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-width:100%; max-height:100%"></body>`); 
+    }
 
     init();
 </script>
