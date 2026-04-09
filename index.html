@@ -1,115 +1,395 @@
 <!DOCTYPE html>
 <html lang="pt-br" class="transition-colors duration-300">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pool Manager</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-<script>tailwind.config={darkMode:'class',theme:{extend:{colors:{slate:{850:'#1e293b',950:'#020617'}}}}}</script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-html.dark{background-color:#020617!important}
-html.dark body{background-color:#020617!important;color:#f1f5f9!important}
-body{font-family:'Inter',sans-serif;min-height:100vh}
-.admin-only,.client-only{display:none}
-body.modo-admin .admin-only,body.modo-cliente .client-only{display:block}
-.editable-input{background:transparent;border:1px solid transparent;padding:2px 5px;border-radius:4px;transition:0.2s}
-.editable-input:focus{background:#fff;border-color:#3b82f6;outline:0;color:#1e293b}
-.dark .editable-input:focus{background:#0f172a!important;color:#fff!important}
-#modalImport{display:none;align-items:center;justify-content:center;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px)}
-.filter-btn.active{background-color:#3b82f6!important;color:#fff!important;opacity:1!important}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pool Manager Pro</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { slate: { 850: '#1e293b', 950: '#020617' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        /* Garantia de Fundo Dark Mode */
+        html.dark { background-color: #020617 !important; }
+        html.dark body { background-color: #020617 !important; color: #f1f5f9 !important; }
+
+        body { font-family: 'Inter', sans-serif; transition: all 0.3s ease; min-height: 100vh; }
+        
+        /* Inputs Editáveis */
+        .editable-input {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .editable-input:hover { background: rgba(0,0,0,0.05); }
+        .dark .editable-input:hover { background: rgba(255,255,255,0.05); }
+        .editable-input:focus {
+            background: white;
+            border-color: #3b82f6;
+            outline: none;
+            color: #1e293b;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        .dark .editable-input:focus { background: #0f172a !important; color: white !important; }
+
+        /* Modal */
+        #modalImport {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .filter-btn.active {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            opacity: 1 !important;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8 pb-32">
 
-<div id="bulkActions" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 z-50 transition-all scale-0 opacity-0 translate-y-20">
-<span class="text-sm font-bold uppercase"><span id="selectedCount">0</span> Selecionados</span>
-<button onclick="bulkDelete()" class="hover:text-rose-300 font-bold flex items-center gap-2 text-xs uppercase"><i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Vários</button>
-<button onclick="clearSelection()"><i data-lucide="x" class="w-5 h-5 opacity-50"></i></button>
-</div>
+    <div id="bulkActions" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-8 z-50 transition-all scale-0 opacity-0 translate-y-20">
+        <div class="flex flex-col">
+            <span class="text-[10px] uppercase font-black opacity-60">Selecionados</span>
+            <span class="text-lg font-bold" id="selectedCount">0</span>
+        </div>
+        <div class="h-8 w-px bg-white/20"></div>
+        <button onclick="bulkDelete()" class="flex items-center gap-2 hover:text-rose-300 transition font-black uppercase text-xs tracking-widest">
+            <i data-lucide="trash-2" class="w-5 h-5 text-rose-400"></i> Excluir Selecionados
+        </button>
+        <button onclick="clearSelection()" class="opacity-40 hover:opacity-100 transition">
+            <i data-lucide="x-circle" class="w-6 h-6"></i>
+        </button>
+    </div>
 
-<div id="modalImport" onclick="fecharModal()">
-<div class="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-3xl mx-4" onclick="event.stopPropagation()">
-<h3 class="text-xl font-black mb-4 uppercase italic">Importar CSV</h3>
-<input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="document.getElementById('nArq').innerText=this.files[0].name">
-<label for="arquivoCSV" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-10 block text-center cursor-pointer hover:border-blue-500"><i data-lucide="upload-cloud" class="w-10 h-10 mx-auto mb-2 opacity-20"></i><p id="nArq" class="text-sm font-bold opacity-60">Selecionar arquivo CSV</p></label>
-<div class="flex gap-3 mt-8"><button onclick="fecharModal()" class="flex-1 py-3 text-xs uppercase font-bold">Sair</button><button onclick="processarCSV()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold uppercase text-xs">Importar</button></div>
-</div>
-</div>
+    <div id="modalImport" onclick="fecharModal()">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-3xl mx-4 shadow-2xl border dark:border-slate-800" onclick="event.stopPropagation()">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600">
+                    <i data-lucide="file-spreadsheet"></i>
+                </div>
+                <h3 class="text-xl font-black dark:text-white uppercase italic">Importar Planilha CSV</h3>
+            </div>
+            
+            <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="document.getElementById('nArq').innerText=this.files[0].name">
+            <label for="arquivoCSV" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 block text-center cursor-pointer hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-850 transition-all">
+                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-4 opacity-20"></i>
+                <p id="nArq" class="text-sm font-bold opacity-60 dark:text-slate-400">Clique para selecionar seu arquivo .csv</p>
+            </label>
 
-<div class="max-w-6xl mx-auto space-y-6">
-<div class="admin-only space-y-6">
-<header class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-6">
-<div><h1 class="text-2xl font-black uppercase italic dark:text-white">Pool Manager</h1><select id="filtroMes" onchange="mudarMes(this.value)" class="mt-1 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 text-xs font-black italic border-none"></select></div>
-<div class="flex flex-wrap items-center gap-2">
-<div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex gap-1">
-<button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active px-3 py-1.5 text-[10px] font-black uppercase rounded-lg">Todos</button>
-<button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-lg opacity-40">Pendentes</button>
-<button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn px-3 py-1.5 text-[10px] font-black uppercase rounded-lg opacity-40 text-rose-500">Cobrar</button>
-</div>
-<button onclick="abrirModal()" class="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl"><i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-500"></i></button>
-<button onclick="adicionarPessoa()" class="bg-blue-600 text-white p-2.5 rounded-xl"><i data-lucide="plus" class="w-5 h-5"></i></button>
-<button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i data-lucide="moon" class="dark:hidden"></i><i data-lucide="sun" class="hidden dark:block text-yellow-400"></i></button>
-</div>
-</header>
+            <div class="flex gap-4 mt-8">
+                <button onclick="fecharModal()" class="flex-1 py-4 text-xs font-black uppercase text-slate-400 hover:text-slate-600 transition">Cancelar</button>
+                <button onclick="processarCSV()" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-emerald-500/20">Processar Agora</button>
+            </div>
+        </div>
+    </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200"><p class="text-[10px] font-black opacity-40 uppercase italic">Previsão</p><div class="text-3xl font-black italic">R$ <span id="tGeral">0,00</span></div></div>
-<div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl"><p class="opacity-70 text-[10px] font-black uppercase italic">Pago</p><div class="text-3xl font-black italic">R$ <span id="tPago">0,00</span></div></div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-l-rose-500 border border-slate-200"><p class="text-slate-400 text-[10px] font-black uppercase italic">Pendente</p><div class="text-3xl font-black text-rose-500 italic">R$ <span id="tPend">0,00</span></div></div>
-</div>
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <header class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-6 shadow-sm">
+            <div class="text-center lg:text-left">
+                <h1 class="text-2xl font-black tracking-tighter uppercase italic dark:text-white">Pool Manager</h1>
+                <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-1 bg-slate-100 dark:bg-slate-800 dark:text-white rounded-xl px-4 py-2 text-xs font-black italic border-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
+            </div>
+            
+            <div class="flex flex-wrap justify-center items-center gap-3">
+                <div class="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl flex gap-1">
+                    <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active px-4 py-2 text-[10px] font-black uppercase rounded-xl transition">Todos</button>
+                    <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-xl opacity-40 transition">Pendentes</button>
+                    <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-xl opacity-40 text-rose-500 transition">Cobrar</button>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="abrirModal()" class="bg-slate-100 dark:bg-slate-800 dark:text-white p-3 rounded-2xl transition hover:scale-105" title="Importar CSV">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-500"></i>
+                    </button>
+                    <button onclick="adicionarPessoa()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shadow-blue-500/20 transition hover:scale-105" title="Adicionar Manual">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="toggleDarkMode()" class="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 transition hover:bg-slate-200 dark:hover:bg-slate-700">
+                        <i data-lucide="moon" class="dark:hidden"></i><i data-lucide="sun" class="hidden dark:block text-yellow-400"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-<div class="overflow-x-auto"><table class="w-full text-left">
-<thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-<tr><th class="px-6 py-4 w-10"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th><th class="px-2 py-4">Participante</th><th class="px-6 py-4 text-center">Valor</th><th class="px-6 py-4 text-center">Status</th><th class="px-6 py-4 text-right">Ações</th></tr>
-</thead>
-<tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs"></tbody>
-</table></div></div></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                <p class="text-[10px] font-black uppercase text-slate-400 italic mb-1 tracking-widest">Previsão Total</p>
+                <div class="text-3xl font-black italic dark:text-white">R$ <span id="tGeral">0,00</span></div>
+            </div>
+            <div class="bg-emerald-500 p-6 rounded-3xl text-white shadow-xl shadow-emerald-500/20">
+                <p class="opacity-70 text-[10px] font-black uppercase italic mb-1 tracking-widest">Recebido</p>
+                <div class="text-3xl font-black italic">R$ <span id="tPago">0,00</span></div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border-l-4 border-l-rose-500 border border-slate-200 dark:border-slate-800">
+                <p class="text-slate-400 text-[10px] font-black uppercase italic mb-1 tracking-widest">Pendente</p>
+                <div class="text-3xl font-black text-rose-500 italic">R$ <span id="tPend">0,00</span></div>
+            </div>
+        </div>
 
-<script>
-const firebaseConfig={apiKey:"AIzaSyBKuldmBQEuNyEWVZ-0sPW0ItGn8QqPxd8",authDomain:"pool-e439a.firebaseapp.com",databaseURL:"https://pool-e439a-default-rtdb.firebaseio.com",projectId:"pool-e439a",storageBucket:"pool-e439a.firebasestorage.app",messagingSenderId:"94463318724",appId:"1:94463318724:web:05208de1c8a9cbfd014791"};
-firebase.initializeApp(firebaseConfig);const db=firebase.database();
-let mesAtual=`${String(new Date().getMonth()+1).padStart(2,'0')}-${new Date().getFullYear()}`,dadosLocais=[],filtroStatus='todos',ordemCrescente=true,configGeral={chavePix:"",valorPadrao:0},selecionados=new Set();
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-slate-900 dark:bg-blue-950 p-5 rounded-2xl text-white flex items-center gap-4 border border-slate-800 shadow-md">
+                <i data-lucide="key" class="text-blue-400"></i>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black uppercase opacity-50 italic">Sua Chave PIX</p>
+                    <input type="text" id="chavePix" onchange="salvarConfig('chavePix', this.value)" class="bg-transparent border-none p-0 text-sm w-full font-mono text-white italic focus:ring-0" placeholder="Digite sua chave aqui...">
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex items-center gap-4 shadow-sm">
+                <i data-lucide="dollar-sign" class="text-blue-600"></i>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-slate-400 uppercase italic">Valor Padrão Individual</p>
+                    <input type="number" id="valorPadrao" onchange="salvarConfig('valorPadrao', parseFloat(this.value))" class="bg-transparent border-none p-0 text-sm w-full font-bold dark:text-white focus:ring-0" placeholder="0.00">
+                </div>
+            </div>
+        </div>
 
-function iniciar(){
-if(localStorage.theme==='dark'||(!('theme' in localStorage)&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');
-db.ref('configuracoes').on('value',s=>{configGeral=s.val()||{chavePix:"",valorPadrao:0};});
-gerarOpcoesMes();carregarDadosAdmin();lucide.createIcons();}
+        <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        <tr>
+                            <th class="px-6 py-5 w-10">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded border-slate-300 text-blue-600">
+                            </th>
+                            <th class="px-2 py-5 cursor-pointer">Participante / Tel</th>
+                            <th class="px-6 py-5 text-center">Valor</th>
+                            <th class="px-6 py-5 text-center">Status</th>
+                            <th class="px-6 py-5 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-function carregarDadosAdmin(){db.ref(`cobrancas/${mesAtual}`).on('value',s=>{const d=s.val()||{};dadosLocais=Object.keys(d).map(id=>({id,...d[id]}));renderizarTabela();});}
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKuldmBQEuNyEWVZ-0sPW0ItGn8QqPxd8",
+            authDomain: "pool-e439a.firebaseapp.com",
+            databaseURL: "https://pool-e439a-default-rtdb.firebaseio.com",
+            projectId: "pool-e439a",
+            storageBucket: "pool-e439a.firebasestorage.app",
+            messagingSenderId: "94463318724",
+            appId: "1:94463318724:web:05208de1c8a9cbfd014791"
+        };
 
-function renderizarTabela(){
-const c=document.getElementById('corpoTabela');let f=[...dadosLocais];
-if(filtroStatus==='pago')f=f.filter(p=>p.pago);if(filtroStatus==='pendente')f=f.filter(p=>!p.pago);if(filtroStatus==='nao_enviado')f=f.filter(p=>!p.msgEnviada);
-f.sort((a,b)=>a.nome.localeCompare(b.nome));
-c.innerHTML="";let t=0,pg=0,pd=0;
-f.forEach(p=>{const v=parseFloat(p.valor)||0;t+=v;if(p.pago)pg+=v;else pd+=v;const sel=selecionados.has(p.id);
-c.innerHTML+=`<tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50 ${sel?'bg-blue-50 dark:bg-blue-900/20':''}">
-<td class="px-6 py-4"><input type="checkbox" ${sel?'checked':''} onclick="toggleSelect('${p.id}')"></td>
-<td class="px-2 py-4"><input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white w-full block"><div class="flex items-center gap-1"><span class="text-[9px] opacity-30 font-bold">ZAP:</span><input type="text" value="${p.tel||'55'}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-blue-500 font-bold w-full"></div></td>
-<td class="px-6 py-4 text-center font-mono font-bold">R$ <input type="number" step="0.01" value="${v.toFixed(2)}" onblur="editar('${p.id}','valor',this.value)" class="editable-input w-20 text-center dark:text-white"></td>
-<td class="px-6 py-4 text-center"><button onclick="togglePago('${p.id}',${p.pago})" class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${p.pago?'bg-emerald-100 text-emerald-600':'bg-amber-100 text-amber-600'}">${p.pago?'Pago':'Pendente'}</button></td>
-<td class="px-6 py-4 text-right space-x-1"><button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${v})" class="p-2 ${p.msgEnviada?'text-blue-500':'opacity-20'}"><i data-lucide="${p.msgEnviada?'check-check':'send'}" class="w-4 h-4"></i></button><button onclick="excluir('${p.id}')" class="p-2 text-slate-400 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;});
-document.getElementById('tGeral').innerText=t.toLocaleString('pt-br',{minimumFractionDigits:2});document.getElementById('tPago').innerText=pg.toLocaleString('pt-br',{minimumFractionDigits:2});document.getElementById('tPend').innerText=pd.toLocaleString('pt-br',{minimumFractionDigits:2});lucide.createIcons();}
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-function toggleSelect(id){if(selecionados.has(id))selecionados.delete(id);else selecionados.add(id);renderBarra();renderizarTabela();}
-function toggleSelectAll(el){if(el.checked)dadosLocais.forEach(p=>selecionados.add(p.id));else selecionados.clear();renderBarra();renderizarTabela();}
-function clearSelection(){selecionados.clear();document.getElementById('selectAll').checked=false;renderBarra();renderizarTabela();}
-function renderBarra(){const b=document.getElementById('bulkActions');document.getElementById('selectedCount').innerText=selecionados.size;if(selecionados.size>0)b.classList.remove('scale-0','opacity-0','translate-y-20');else b.classList.add('scale-0','opacity-0','translate-y-20');}
-function bulkDelete(){if(confirm("Excluir selecionados?")){selecionados.forEach(id=>db.ref(`cobrancas/${mesAtual}/${id}`).remove());clearSelection();}}
-function editar(id,c,v){db.ref(`cobrancas/${mesAtual}/${id}`).update({[c]:v});}
-function togglePago(id,s){db.ref(`cobrancas/${mesAtual}/${id}`).update({pago:!s});}
-function excluir(id){if(confirm("Apagar?"))db.ref(`cobrancas/${mesAtual}/${id}`).remove();}
-function mudarMes(v){clearSelection();mesAtual=v;carregarDadosAdmin();}
-function setFiltroStatus(s){filtroStatus=s;document.querySelectorAll('.filter-btn').forEach(btn=>btn.classList.remove('active'));document.getElementById(`btn-${s}`).classList.add('active');renderizarTabela();}
-function enviarZap(id,n,t,v){db.ref(`cobrancas/${mesAtual}/${id}`).update({msgEnviada:true});const link=window.location.href.split('?')[0]+"?p="+id;const msg=encodeURIComponent(`Ola, ${n}! Valor: R$ ${v.toFixed(2).replace('.',',')}.\nPIX: ${configGeral.chavePix}\nLink: ${link}`);window.open(`https://wa.me/${t}?text=${msg}`);}
-function processarCSV(){const f=document.getElementById('arquivoCSV').files[0];if(!f)return;const r=new FileReader();r.onload=function(e){const l=e.target.result.split('\n');const u={};for(let i=1;i<l.length;i++){let c=l[i].split(/[;,]/);if(c[0]){const id=Date.now()+i;u[id]={nome:c[0].trim(),tel:c[1]?c[1].trim():"55",valor:configGeral.valorPadrao||0,pago:false,msgEnviada:false};}}db.ref(`cobrancas/${mesAtual}`).update(u).then(()=>fecharModal());};r.readAsText(f,'UTF-8');}
-function adicionarPessoa(){const n=prompt("Nome:");if(n)db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({nome:n,tel:"55",valor:configGeral.valorPadrao||0,pago:false,msgEnviada:false});}
-function abrirModal(){document.getElementById('modalImport').style.display='flex';}
-function fecharModal(){document.getElementById('modalImport').style.display='none';}
-function toggleDarkMode(){const h=document.documentElement;if(h.classList.contains('dark')){h.classList.remove('dark');localStorage.theme='light';}else{h.classList.add('dark');localStorage.theme='dark';}}
-function gerarOpcoesMes(){const s=document.getElementById('filtroMes');const a=new Date();for(let i=-2;i<=4;i++){const d=new Date(a.getFullYear(),a.getMonth()+i,1);const k=`${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;const o=document.createElement('option');o.value=k;o.innerText=d.toLocaleDateString('pt-br',{month:'long',year:'numeric'});if(k===mesAtual)o.selected=true;s.appendChild(o);}}
-iniciar();</script></body></html>
+        let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
+        let dadosLocais = [];
+        let filtroStatus = 'todos';
+        let configGeral = { chavePix: "", valorPadrao: 0 };
+        let selecionados = new Set();
+
+        function iniciar() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+
+            db.ref('configuracoes').on('value', s => {
+                configGeral = s.val() || { chavePix: "", valorPadrao: 0 };
+                document.getElementById('chavePix').value = configGeral.chavePix || "";
+                document.getElementById('valorPadrao').value = configGeral.valorPadrao || 0;
+            });
+
+            gerarOpcoesMes();
+            carregarDadosAdmin();
+            lucide.createIcons();
+        }
+
+        function carregarDadosAdmin() {
+            db.ref(`cobrancas/${mesAtual}`).on('value', s => {
+                const d = s.val() || {};
+                dadosLocais = Object.keys(d).map(id => ({ id, ...d[id] }));
+                renderizarTabela();
+            });
+        }
+
+        function renderizarTabela() {
+            const corpo = document.getElementById('corpoTabela');
+            let f = [...dadosLocais];
+            
+            if (filtroStatus === 'pago') f = f.filter(p => p.pago);
+            if (filtroStatus === 'pendente') f = f.filter(p => !p.pago);
+            if (filtroStatus === 'nao_enviado') f = f.filter(p => !p.msgEnviada);
+
+            f.sort((a,b) => a.nome.localeCompare(b.nome));
+
+            corpo.innerHTML = "";
+            let t = 0, pg = 0, pd = 0;
+
+            f.forEach(p => {
+                const v = parseFloat(p.valor) || 0;
+                t += v; if(p.pago) pg += v; else pd += v;
+                const sel = selecionados.has(p.id);
+                const msgIcone = p.msgEnviada ? 'check-check' : 'send';
+                const msgEstilo = p.msgEnviada ? 'text-blue-500' : 'text-slate-300 dark:text-slate-600';
+
+                corpo.innerHTML += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition ${sel ? 'bg-blue-50 dark:bg-blue-900/20' : ''}">
+                        <td class="px-6 py-5">
+                            <input type="checkbox" ${sel ? 'checked' : ''} onclick="toggleSelect('${p.id}')" class="w-4 h-4 rounded border-slate-300 text-blue-600">
+                        </td>
+                        <td class="px-2 py-5">
+                            <input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white w-full block">
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="text-[9px] opacity-30 font-black uppercase">Zap:</span>
+                                <input type="text" value="${p.tel || '55'}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-[10px] text-blue-500 font-bold w-full">
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 text-center font-mono font-bold italic">
+                            R$ <input type="number" step="0.01" value="${v.toFixed(2)}" onblur="editar('${p.id}','valor',this.value)" class="editable-input w-24 text-center dark:text-white italic">
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <button onclick="togglePago('${p.id}',${p.pago})" class="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition ${p.pago ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
+                                ${p.pago ? 'Pago' : 'Pendente'}
+                            </button>
+                        </td>
+                        <td class="px-6 py-5 text-right space-x-2">
+                            <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${v})" class="p-2 ${msgEstilo} transition hover:scale-110">
+                                <i data-lucide="${msgIcone}" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="excluir('${p.id}')" class="p-2 text-slate-300 dark:text-slate-700 hover:text-rose-500 transition">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+            
+            document.getElementById('tGeral').innerText = t.toLocaleString('pt-br',{minimumFractionDigits:2});
+            document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
+            document.getElementById('tPend').innerText = pd.toLocaleString('pt-br',{minimumFractionDigits:2});
+            lucide.createIcons();
+        }
+
+        // --- AÇÕES EM MASSA ---
+        function toggleSelect(id) {
+            if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id);
+            renderBarra(); renderizarTabela();
+        }
+        function toggleSelectAll(el) {
+            if (el.checked) dadosLocais.forEach(p => selecionados.add(p.id)); else selecionados.clear();
+            renderBarra(); renderizarTabela();
+        }
+        function clearSelection() {
+            selecionados.clear(); document.getElementById('selectAll').checked = false;
+            renderBarra(); renderizarTabela();
+        }
+        function renderBarra() {
+            const b = document.getElementById('bulkActions');
+            document.getElementById('selectedCount').innerText = selecionados.size;
+            if (selecionados.size > 0) {
+                b.classList.remove('scale-0', 'opacity-0', 'translate-y-20');
+            } else {
+                b.classList.add('scale-0', 'opacity-0', 'translate-y-20');
+            }
+        }
+        function bulkDelete() {
+            if (confirm(`Excluir ${selecionados.size} participantes selecionados?`)) {
+                selecionados.forEach(id => db.ref(`cobrancas/${mesAtual}/${id}`).remove());
+                clearSelection();
+            }
+        }
+
+        // --- FUNÇÕES DE APOIO ---
+        function editar(id, c, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }); }
+        function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
+        function excluir(id) { if(confirm("Deseja apagar este participante?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
+        function salvarConfig(c, v) { db.ref('configuracoes').update({ [c]: v }); }
+        function mudarMes(v) { clearSelection(); mesAtual = v; carregarDadosAdmin(); }
+        
+        function setFiltroStatus(s) {
+            filtroStatus = s;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${s}`).classList.add('active');
+            renderizarTabela();
+        }
+
+        function enviarZap(id, n, t, v) {
+            db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true });
+            const link = window.location.href.split('?')[0] + "?p=" + id;
+            const msg = encodeURIComponent(`Ola, ${n}! O valor e R$ ${v.toFixed(2).replace('.',',')}.\nPIX: ${configGeral.chavePix}\nLink: ${link}`);
+            window.open(`https://wa.me/${t}?text=${msg}`);
+        }
+
+        function processarCSV() {
+            const f = document.getElementById('arquivoCSV').files[0];
+            if(!f) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const l = e.target.result.split('\n');
+                const u = {};
+                for(let i=1; i<l.length; i++){
+                    let c = l[i].split(/[;,]/);
+                    if(c[0]){
+                        const id = Date.now() + i;
+                        u[id] = { nome: c[0].trim(), tel: c[1] ? c[1].trim() : "55", valor: configGeral.valorPadrao || 0, pago: false, msgEnviada: false };
+                    }
+                }
+                db.ref(`cobrancas/${mesAtual}`).update(u).then(() => fecharModal());
+            };
+            reader.readAsText(f, 'UTF-8');
+        }
+
+        function adicionarPessoa() {
+            const n = prompt("Nome do participante:");
+            if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({
+                nome: n, tel: "55", valor: configGeral.valorPadrao || 0, pago: false, msgEnviada: false
+            });
+        }
+
+        function abrirModal() { document.getElementById('modalImport').style.display='flex'; }
+        function fecharModal() { document.getElementById('modalImport').style.display='none'; }
+
+        function toggleDarkMode() {
+            const h = document.documentElement;
+            if (h.classList.contains('dark')) {
+                h.classList.remove('dark'); localStorage.theme = 'light';
+            } else {
+                h.classList.add('dark'); localStorage.theme = 'dark';
+            }
+        }
+
+        function gerarOpcoesMes() {
+            const s = document.getElementById('filtroMes');
+            const a = new Date();
+            for(let i = -2; i <= 4; i++) {
+                const d = new Date(a.getFullYear(), a.getMonth() + i, 1);
+                const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                const o = document.createElement('option');
+                o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month:'long',year:'numeric'});
+                if(k === mesAtual) o.selected = true;
+                s.appendChild(o);
+            }
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
