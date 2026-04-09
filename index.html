@@ -1,358 +1,247 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Financeiro - Cloud Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cobrança Pro - Oficial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .date-input-container { position: relative; display: flex; align-items: center; cursor: pointer; }
-        input[type="month"] { position: relative; background: transparent; z-index: 1; cursor: pointer; }
-        input[type="month"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
-        #sidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; }
-        .sidebar-closed { transform: translateX(100%); }
-        .dark input { color-scheme: dark; }
+        :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --whatsapp: #25d366; --bg: #f8fafc; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1e293b; }
+        
+        /* Controle de Visão */
+        .admin-only, .client-only { display: none; }
+        body.modo-admin .admin-only { display: block; }
+        body.modo-cliente .client-only { display: flex; flex-direction: column; align-items: center; }
+
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* Admin Styles */
+        .pix-config { background: #eff6ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #dbeafe; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 10px; border-radius: 8px; color: white; text-align: center; font-weight: bold; font-size: 13px; }
+        
+        .table-res { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 13px; }
+        td { padding: 8px; border-bottom: 1px solid #eee; }
+
+        /* Inputs e Botões */
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; }
+        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; justify-content: center; }
+        .btn-add { background: var(--primary); color: white; width: 100%; margin-bottom: 15px; }
+        .btn-zap { background: var(--whatsapp); color: white; text-decoration: none; }
+        
+        /* Portal Cliente */
+        .client-box { width: 100%; max-width: 400px; text-align: center; }
+        .preview-img { width: 100%; max-height: 250px; object-fit: contain; margin-top: 15px; border: 2px dashed #ccc; display: none; }
+        .file-label { background: #475569; color: white; padding: 15px; border-radius: 8px; display: block; margin: 15px 0; cursor: pointer; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300 min-h-screen">
+<body class="modo-admin"> <div class="container">
+    
+    <div class="admin-only">
+        <h2>📊 Gestão de Cobrança</h2>
+        
+        <div class="pix-config">
+            <strong>Minha Chave PIX:</strong>
+            <input type="text" id="chavePix" value="seu-email@pix.com" onchange="salvarConfig()">
+            <div id="qrcodeAdmin" style="margin-top:10px"></div>
+        </div>
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-900/95 z-[2000] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-800">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-blue-500/40">
-                    <i data-lucide="lock" class="text-white w-8 h-8"></i>
-                </div>
-                <h2 class="text-2xl font-bold dark:text-white">Meu Financeiro</h2>
-                <p class="text-slate-500 text-sm">Acesse para sincronizar PC e Celular</p>
-            </div>
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="password" id="login-pass" placeholder="Senha" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="handleAuth()" id="auth-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg">Entrar / Criar Conta</button>
-            </div>
-            <p id="auth-error" class="text-rose-500 text-xs mt-4 text-center hidden"></p>
+        <div class="stats">
+            <div class="stat-card" style="background:var(--primary)">Total<br>R$ <span id="tGeral">0</span></div>
+            <div class="stat-card" style="background:var(--success)">Pago<br>R$ <span id="tPago">0</span></div>
+            <div class="stat-card" style="background:var(--danger)">Pendente<br>R$ <span id="tPend">0</span></div>
+        </div>
+
+        <button class="btn btn-add" onclick="adicionarPessoa()">+ Adicionar Nova Pessoa</button>
+
+        <div class="table-res">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome / WhatsApp</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
         </div>
     </div>
 
-    <div id="app-content" class="hidden">
-        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden" onclick="toggleSidebar()"></div>
+    <div class="client-only client-box">
+        <h2 id="cNome">Olá!</h2>
+        <div style="background:#f0fdf4; padding:20px; border-radius:10px; width:100%">
+            <p>Valor a pagar:</p>
+            <h1 style="color:var(--primary); margin:0">R$ <span id="cValor">0,00</span></h1>
+            <div id="qrcodeCliente" style="display:flex; justify-content:center; margin:15px 0"></div>
+        </div>
+
+        <p style="margin-top:20px"><strong>Envie o comprovante:</strong></p>
+        <label for="fotoInput" class="file-label">📸 Escolher da Galeria ou Câmera</label>
+        <input type="file" id="fotoInput" accept="image/*" onchange="lerFoto(this)" style="display:none">
         
-        <aside id="sidebar" class="fixed right-0 top-0 h-full w-full sm:w-80 bg-white dark:bg-slate-900 shadow-2xl p-6 sidebar-closed border-l border-slate-200 dark:border-slate-800 overflow-y-auto">
-            <div class="flex items-center justify-between mb-8">
-                <h3 class="text-lg font-bold dark:text-white uppercase tracking-tighter">Ajustes Base</h3>
-                <button onclick="logout()" class="text-rose-500 text-[10px] font-black uppercase flex items-center gap-1 border border-rose-200 px-2 py-1 rounded-md hover:bg-rose-50">Sair</button>
-            </div>
-            
-            <div class="space-y-6">
-                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
-                    <label class="block text-[10px] font-black uppercase text-emerald-600 mb-1">Comissão Padrão (R$)</label>
-                    <input type="number" id="comissao-padrao" oninput="atualizarCalculosAutomáticos()" class="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-700 rounded-lg outline-none font-bold">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Salário Base</label>
-                    <input type="number" id="base-sal" oninput="atualizarCalculosAutomáticos()" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
-                </div>
-                
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Plano de Saúde</label>
-                    <input type="number" id="desc-saude" oninput="atualizarCalculosAutomáticos()" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none">
-                </div>
-
-                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50">
-                    <div class="flex items-center justify-between mb-3 text-[10px] font-black text-blue-600 uppercase">
-                        <span>Vale Transporte</span><input type="checkbox" id="active-vt" onchange="atualizarCalculosAutomáticos()">
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <div class="flex items-center gap-1">
-                            <input type="number" id="perc-vt" oninput="atualizarCalculosAutomáticos()" class="w-12 bg-white dark:bg-slate-900 border rounded p-1 text-center font-bold">%
-                        </div>
-                        <span id="val-vt-display" class="font-bold text-blue-600">R$ 0,00</span>
-                    </div>
-                </div>
-
-                <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/50">
-                    <div class="flex items-center justify-between mb-3 text-[10px] font-black text-indigo-600 uppercase">
-                        <span>Adiantamento</span><input type="checkbox" id="active-adm" onchange="atualizarCalculosAutomáticos()">
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <div class="flex items-center gap-1">
-                            <input type="number" id="perc-adm" oninput="atualizarCalculosAutomáticos()" class="w-12 bg-white dark:bg-slate-900 border rounded p-1 text-center font-bold">%
-                        </div>
-                        <span id="val-adm-display" class="font-bold text-indigo-600">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="toggleSidebar()" class="w-full mt-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold shadow-lg">Fechar e Sincronizar</button>
-        </aside>
-
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-            <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
-                <div class="text-center lg:text-left">
-                    <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Financeiro Cloud</h1>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest" id="user-display">Usuário Ativo</p>
-                </div>
-                <div class="flex flex-wrap justify-center items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button onclick="toggleDarkMode()" class="p-2 text-slate-400 dark:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"><i data-lucide="sun"></i></button>
-                    <div class="flex border border-slate-100 dark:border-slate-800 rounded-xl px-2 bg-slate-50/50">
-                        <div class="date-input-container px-2 py-1.5"><input type="month" id="data-inicio" onchange="renderizarTabela()" class="text-[10px] font-bold w-20 outline-none uppercase bg-transparent"></div>
-                        <span class="text-slate-300 py-1.5">→</span>
-                        <div class="date-input-container px-2 py-1.5"><input type="month" id="data-fim" onchange="renderizarTabela()" class="text-[10px] font-bold w-20 outline-none uppercase bg-transparent text-right"></div>
-                    </div>
-                    <button onclick="novaLinha()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-200 dark:shadow-none transition-all"><i data-lucide="plus-circle"></i> Cliente</button>
-                </div>
-            </header>
-
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-10">
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border-l-4 border-blue-500 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">Bruto</p><p id="res-bruto" class="font-bold text-slate-800 dark:text-slate-100 leading-tight">R$ 0,00</p></div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border-l-4 border-amber-500 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">INSS</p><p id="res-inss" class="font-bold text-slate-800 dark:text-slate-100 leading-tight">R$ 0,00</p></div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border-l-4 border-rose-500 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">IRRF</p><p id="res-irrf" class="font-bold text-slate-800 dark:text-slate-100 leading-tight">R$ 0,00</p></div>
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border-l-4 border-indigo-500 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">Fixos</p><p id="res-descontos" class="font-bold text-slate-800 dark:text-slate-100 leading-tight">R$ 0,00</p></div>
-                <div class="col-span-2 lg:col-span-1 bg-emerald-600 p-4 rounded-2xl shadow-xl border border-emerald-500"><p class="text-[9px] font-black text-emerald-100 uppercase">Líquido</p><p id="res-liquido" class="text-xl font-black text-white leading-tight">R$ 0,00</p></div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden hidden sm:block">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-900 text-white uppercase text-[10px] font-bold tracking-widest">
-                        <tr>
-                            <th class="px-6 py-4">Contrato / Celular</th>
-                            <th class="text-center">Lic.</th>
-                            <th class="text-center">Ref.</th>
-                            <th>PIX / Link</th>
-                            <th class="text-center">Comissão</th>
-                            <th class="text-center">Status</th>
-                            <th class="px-6"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="corpo-tabela" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                </table>
-            </div>
-            <div id="mobile-lista" class="sm:hidden space-y-4"></div>
-        </main>
+        <img id="imgPreview" class="preview-img">
         
-        <button onclick="toggleSidebar()" class="fixed bottom-6 right-6 w-14 h-14 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"><i data-lucide="settings"></i></button>
+        <button class="btn" style="background:var(--success); color:white; width:100%; padding:15px; margin-top:20px; font-size:16px" onclick="confirmarPagamento()">
+            ENVIAR COMPROVANTE
+        </button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAhGH_zr0zMBGuvd4Ggz9M8mlxbstKJuyI",
-            authDomain: "meufinanceiro-c6536.firebaseapp.com",
-            projectId: "meufinanceiro-c6536",
-            storageBucket: "meufinanceiro-c6536.firebasestorage.app",
-            messagingSenderId: "472630772518",
-            appId: "1:472630772518:web:d3f16146a4ce498e4f37e7"
-        };
+<script>
+    let db = JSON.parse(localStorage.getItem('cobranca_v5')) || {};
+    let config = JSON.parse(localStorage.getItem('config_v5')) || { chave: "seu-email@pix.com" };
+    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}/${new Date().getFullYear()}`;
+    let idUsuarioAtivo = null;
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        let currentUser = null;
-        window.configs = { salBase: 2190.1, saude: 243.58, vtPerc: 6, vtActive: true, admPerc: 40, admActive: true, comissaoPadrao: 40 };
-        window.dados = [];
+    function init() {
+        const params = new URLSearchParams(window.location.search);
+        idUsuarioAtivo = params.get('p');
 
-        // Auth
-        window.handleAuth = async () => {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            const btn = document.getElementById('auth-btn');
-            try {
-                btn.innerText = "Conectando...";
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (e) {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, pass);
-                } catch (e2) {
-                    document.getElementById('auth-error').innerText = "Erro ao acessar.";
-                    document.getElementById('auth-error').classList.remove('hidden');
-                    btn.innerText = "Entrar / Criar Conta";
-                }
-            }
-        };
+        if (idUsuarioAtivo) {
+            document.body.className = "modo-cliente";
+            exibirPainelCliente(idUsuarioAtivo);
+        } else {
+            document.body.className = "modo-admin";
+            document.getElementById('chavePix').value = config.chave;
+            atualizarTudo();
+        }
+    }
 
-        window.logout = () => signOut(auth);
+    // --- FUNÇÕES ADMIN ---
+    function atualizarTudo() {
+        const lista = db[mesAtual] || [];
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+        
+        let total = 0, pago = 0, pend = 0;
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-display').innerText = user.email.split('@')[0];
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                sync();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
-            }
+        lista.forEach(p => {
+            total += p.valor;
+            if(p.pago) pago += p.valor; else pend += p.valor;
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>
+                        <input type="text" value="${p.nome}" onchange="editar(${p.id},'nome',this.value)" style="margin-bottom:4px"><br>
+                        <input type="text" value="${p.tel}" onchange="editar(${p.id},'tel',this.value)" style="font-size:11px">
+                    </td>
+                    <td><input type="number" value="${p.valor}" onchange="editar(${p.id},'valor',this.value)"></td>
+                    <td>
+                        <button onclick="alternar(${p.id})" style="border:none; background:none; cursor:pointer">
+                            ${p.pago ? '✅' : '⏳'}
+                        </button>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:5px">
+                            <button class="btn btn-zap" onclick="cobrar(${p.id},'${p.nome}','${p.tel}',${p.valor})">📲</button>
+                            ${p.comprovante ? `<button class="btn" onclick="verFoto('${p.comprovante}')">👁️</button>` : ''}
+                            <button class="btn" onclick="excluir(${p.id})" style="background:#fee2e2">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
 
-        function sync() {
-            onValue(ref(db, `users/${currentUser.uid}/configs`), (snap) => {
-                const c = snap.val();
-                if (c) {
-                    window.configs = c;
-                    document.getElementById('base-sal').value = c.salBase;
-                    document.getElementById('desc-saude').value = c.saude;
-                    document.getElementById('perc-vt').value = c.vtPerc;
-                    document.getElementById('active-vt').checked = c.vtActive;
-                    document.getElementById('perc-adm').value = c.admPerc;
-                    document.getElementById('active-adm').checked = c.admActive;
-                    document.getElementById('comissao-padrao').value = c.comissaoPadrao || 40;
-                    atualizarCalculosAutomáticos(false);
-                }
-            });
+        document.getElementById('tGeral').innerText = total.toFixed(2);
+        document.getElementById('tPago').innerText = pago.toFixed(2);
+        document.getElementById('tPend').innerText = pend.toFixed(2);
+        
+        const qrDiv = document.getElementById("qrcodeAdmin");
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, { text: config.chave, width: 80, height: 80 });
+    }
 
-            onValue(ref(db, `users/${currentUser.uid}/clientes`), (snap) => {
-                window.dados = [];
-                const val = snap.val();
-                for (let id in val) { window.dados.push({ id, ...val[id] }); }
-                renderizarTabela();
-            });
+    function adicionarPessoa() {
+        const nova = { id: Date.now(), nome: "Novo Cliente", tel: "55", valor: 0, pago: false, comprovante: null };
+        if(!db[mesAtual]) db[mesAtual] = [];
+        db[mesAtual].push(nova);
+        salvar();
+        atualizarTudo();
+    }
+
+    function cobrar(id, nome, tel, valor) {
+        const link = window.location.href.split('?')[0] + "?p=" + id;
+        const msg = encodeURIComponent(`Olá ${nome}!\nSeguem os dados para pagamento:\n\nValor: R$ ${valor.toFixed(2)}\nPIX: ${config.chave}\n\nApós pagar, envie o comprovante por este link:\n${link}`);
+        window.open(`https://wa.me/${tel}?text=${msg}`);
+    }
+
+    function editar(id, campo, valor) {
+        const p = db[mesAtual].find(x => x.id === id);
+        if(p) p[campo] = campo === 'valor' ? parseFloat(valor) : valor;
+        salvar();
+        atualizarTudo();
+    }
+
+    function alternar(id) {
+        const p = db[mesAtual].find(x => x.id === id);
+        if(p) { p.pago = !p.pago; if(!p.pago) p.comprovante = null; }
+        salvar();
+        atualizarTudo();
+    }
+
+    function excluir(id) {
+        if(confirm("Remover permanentemente?")) {
+            db[mesAtual] = db[mesAtual].filter(x => x.id !== id);
+            salvar();
+            atualizarTudo();
         }
+    }
 
-        window.atualizarCalculosAutomáticos = (deveSalvar = true) => {
-            const base = parseFloat(document.getElementById('base-sal').value) || 0;
-            const saude = parseFloat(document.getElementById('desc-saude').value) || 0;
-            const pVT = parseFloat(document.getElementById('perc-vt').value) || 0;
-            const pAdm = parseFloat(document.getElementById('perc-adm').value) || 0;
-            const cPadrao = parseFloat(document.getElementById('comissao-padrao').value) || 0;
-            const vtAtivo = document.getElementById('active-vt').checked;
-            const admAtivo = document.getElementById('active-adm').checked;
-            
-            document.getElementById('val-vt-display').innerText = (vtAtivo ? base * (pVT/100) : 0).toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            document.getElementById('val-adm-display').innerText = (admAtivo ? base * (pAdm/100) : 0).toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            
-            window.configs = { salBase: base, saude: saude, vtPerc: pVT, vtActive: vtAtivo, admPerc: pAdm, admActive: admAtivo, comissaoPadrao: cPadrao };
-            
-            if (deveSalvar && currentUser) set(ref(db, `users/${currentUser.uid}/configs`), window.configs);
-            calcularTudo();
-        };
+    // --- FUNÇÕES CLIENTE ---
+    function exibirPainelCliente(id) {
+        const p = (db[mesAtual] || []).find(x => x.id == id);
+        if (p) {
+            document.getElementById('cNome').innerText = "Olá, " + p.nome;
+            document.getElementById('cValor').innerText = p.valor.toFixed(2);
+            new QRCode(document.getElementById("qrcodeCliente"), { text: config.chave, width: 150, height: 150 });
+        } else {
+            alert("Erro: Cobrança não encontrada.");
+        }
+    }
 
-        window.novaLinha = () => {
-            const novo = { 
-                cliente: "", 
-                telefone: "", // Restaurado campo de telefone
-                licencas: 1, 
-                mes: new Date().toISOString().slice(0, 7), 
-                vindi: "", 
-                valorUnitario: window.configs.comissaoPadrao || 40, 
-                pago: false 
+    function lerFoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('imgPreview');
+                img.src = e.target.result;
+                img.style.display = 'block';
             };
-            push(ref(db, `users/${currentUser.uid}/clientes`), novo);
-        };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 
-        window.atualizarDado = (id, campo, valor) => {
-            const up = {};
-            up[campo] = (['licencas', 'valorUnitario'].includes(campo)) ? parseFloat(valor) : valor;
-            update(ref(db, `users/${currentUser.uid}/clientes/${id}`), up);
-            // Chama o cálculo logo após mudar o checkbox de pago
-            if(campo === 'pago') calcularTudo();
-        };
+    function confirmarPagamento() {
+        const imgBase64 = document.getElementById('imgPreview').src;
+        if (!imgBase64 || imgBase64.includes('display:none')) return alert("Selecione a foto do comprovante primeiro!");
 
-        window.renderizarTabela = () => {
-            const dI = document.getElementById('data-inicio').value;
-            const dF = document.getElementById('data-fim').value;
-            const corpo = document.getElementById('corpo-tabela');
-            const mobile = document.getElementById('mobile-lista');
-            corpo.innerHTML = ""; mobile.innerHTML = "";
-            
-            const filtrados = window.dados.filter(i => (!dI || i.mes >= dI) && (!dF || i.mes <= dF));
+        const p = db[mesAtual].find(x => x.id == idUsuarioAtivo);
+        if (p) {
+            p.pago = true;
+            p.comprovante = imgBase64;
+            salvar();
+            alert("Pronto! Seu comprovante foi enviado com sucesso.");
+            window.location.search = ""; // Limpa para não ficar na tela do cliente
+        }
+    }
 
-            filtrados.forEach(i => {
-                const tr = document.createElement('tr'); tr.className="hover:bg-slate-50 dark:hover:bg-slate-800/40";
-                tr.innerHTML = `
-                <td class="px-6 py-4">
-                    <input type="text" value="${i.cliente}" onchange="atualizarDado('${i.id}', 'cliente', this.value)" class="w-full bg-transparent outline-none font-bold block" placeholder="Nome">
-                    <input type="text" value="${i.telefone || ''}" onchange="atualizarDado('${i.id}', 'telefone', this.value)" class="text-[10px] text-slate-400 bg-transparent outline-none block w-full" placeholder="Whats: (00) 00000-0000">
-                </td>
-                <td class="text-center font-bold"><input type="number" value="${i.licencas}" onchange="atualizarDado('${i.id}', 'licencas', this.value)" class="w-10 bg-slate-100 dark:bg-slate-800 rounded text-center"></td>
-                <td class="text-center font-bold uppercase text-[9px]"><div class="date-input-container w-24 mx-auto bg-slate-50 dark:bg-slate-800 rounded px-1 py-1"><input type="month" value="${i.mes}" onchange="atualizarDado('${i.id}', 'mes', this.value)" class="bg-transparent w-full outline-none"></div></td>
-                <td><input type="text" value="${i.vindi}" onchange="atualizarDado('${i.id}', 'vindi', this.value)" class="text-[10px] bg-transparent border-b border-slate-100 w-full outline-none" placeholder="Link ou PIX..."></td>
-                <td class="text-center font-black"><div class="flex items-center justify-center gap-1 text-xs"><span class="text-slate-400">R$</span><input type="number" value="${i.valorUnitario}" onchange="atualizarDado('${i.id}', 'valorUnitario', this.value)" class="w-12 bg-transparent outline-none"></div></td>
-                <td class="text-center">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" ${i.pago ? 'checked' : ''} onchange="atualizarDado('${i.id}', 'pago', this.checked)" class="sr-only peer">
-                        <div class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
-                    </label>
-                </td>
-                <td class="px-6 text-right"><button onclick="if(confirm('Apagar?')) remove(ref(db, 'users/${currentUser.uid}/clientes/${i.id}'))" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`;
-                corpo.appendChild(tr);
+    // --- AUXILIARES ---
+    function salvarConfig() {
+        config.chave = document.getElementById('chavePix').value;
+        localStorage.setItem('config_v5', JSON.stringify(config));
+        atualizarTudo();
+    }
+    function salvar() { localStorage.setItem('cobranca_v5', JSON.stringify(db)); }
+    function verFoto(img) { const w = window.open(""); w.document.write(`<img src="${img}" style="width:100%">`); }
 
-                const card = document.createElement('div'); card.className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3";
-                card.innerHTML = `
-                    <div class="flex justify-between font-black uppercase text-xs"> 
-                        <div class="flex-1">
-                            <input type="text" value="${i.cliente}" onchange="atualizarDado('${i.id}', 'cliente', this.value)" class="bg-transparent outline-none w-full block">
-                            <input type="text" value="${i.telefone || ''}" onchange="atualizarDado('${i.id}', 'telefone', this.value)" class="text-[9px] text-slate-400 bg-transparent block" placeholder="Tel/Celular">
-                        </div>
-                        <button onclick="if(confirm('Apagar?')) remove(ref(db, 'users/${currentUser.uid}/clientes/${i.id}'))"><i data-lucide="trash-2" class="w-4 h-4 text-slate-300"></i></button> 
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs"> 
-                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl"> <p class="text-[8px] text-slate-400 uppercase">Licenças</p> <input type="number" value="${i.licencas}" onchange="atualizarDado('${i.id}', 'licencas', this.value)" class="font-bold bg-transparent"> </div> 
-                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl"> <p class="text-[8px] text-slate-400 uppercase">Mês</p> <input type="month" value="${i.mes}" onchange="atualizarDado('${i.id}', 'mes', this.value)" class="font-bold bg-transparent w-full"> </div> 
-                    </div>
-                    <div class="flex justify-between items-center pt-2"> 
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" ${i.pago ? 'checked' : ''} onchange="atualizarDado('${i.id}', 'pago', this.checked)" class="sr-only peer">
-                            <div class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
-                            <span class="ml-2 text-[9px] font-black text-slate-400 uppercase">${i.pago?'Pago':'Pendente'}</span>
-                        </label> 
-                        <input type="text" value="${i.vindi}" onchange="atualizarDado('${i.id}', 'vindi', this.value)" class="text-[9px] w-24 bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 outline-none" placeholder="Link PIX">
-                    </div>`;
-                mobile.appendChild(card);
-            });
-            lucide.createIcons();
-            calcularTudo();
-        };
-
-        window.calcularTudo = () => {
-            const dI = document.getElementById('data-inicio').value;
-            const dF = document.getElementById('data-fim').value;
-            let totalComissao = 0;
-            
-            // Recalcula total de comissões apenas para os pagos e filtrados
-            window.dados.forEach(i => {
-                const mesValido = (!dI || i.mes >= dI) && (!dF || i.mes <= dF);
-                if(i.pago && mesValido) {
-                    totalComissao += (i.licencas * i.valorUnitario);
-                }
-            });
-
-            const c = window.configs;
-            let bruto = (c.salBase || 0) + totalComissao;
-            
-            // Cálculos Impostos
-            let inss = bruto <= 1620 ? bruto*0.075 : bruto <= 2850 ? 121.5+(bruto-1620)*0.09 : bruto <= 4200 ? 121.5+110.7+(bruto-2850)*0.12 : bruto <= 8500 ? 121.5+110.7+162+(bruto-4200)*0.14 : 995.5;
-            let bI = bruto - inss;
-            let ir = bI <= 5000 ? 0 : bI <= 5500 ? (bI*0.225-675.49)*0.5 : bI <= 6500 ? bI*0.225-675.49 : bI*0.275-908.73;
-            let fixos = (c.saude || 0) + (c.vtActive ? c.salBase*(c.vtPerc/100) : 0) + (c.admActive ? c.salBase*(c.admPerc/100) : 0);
-            
-            // Atualiza Interface
-            document.getElementById('res-bruto').innerText = bruto.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            document.getElementById('res-inss').innerText = inss.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            document.getElementById('res-irrf').innerText = ir.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            document.getElementById('res-descontos').innerText = fixos.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-            document.getElementById('res-liquido').innerText = (bruto - inss - ir - fixos).toLocaleString('pt-br',{style:'currency',currency:'BRL'});
-        };
-
-        window.toggleDarkMode = () => {
-            const d = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', d ? 'dark' : 'light');
-        };
-
-        window.toggleSidebar = () => {
-            document.getElementById('sidebar').classList.toggle('sidebar-closed');
-            document.getElementById('sidebar-overlay').classList.toggle('hidden');
-        };
-
-        if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark');
-        lucide.createIcons();
-    </script>
+    init();
+</script>
 </body>
 </html>
