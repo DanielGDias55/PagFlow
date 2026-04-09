@@ -36,7 +36,7 @@
     <div id="bulkActions" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-8 z-50 transition-all scale-0 opacity-0 translate-y-20">
         <span class="text-sm font-black uppercase tracking-tighter"><span id="selectedCount">0</span> Selecionados</span>
         <button onclick="bulkDelete()" class="hover:text-rose-300 font-bold flex items-center gap-2 text-xs uppercase tracking-widest">
-            <i data-lucide="trash-2" class="w-5 h-5"></i> Excluir Selecionados
+            <i data-lucide="trash-2" class="w-5 h-5 text-rose-400"></i> Excluir Selecionados
         </button>
         <button onclick="clearSelection()" class="opacity-50 hover:opacity-100"><i data-lucide="x" class="w-6 h-6"></i></button>
     </div>
@@ -79,7 +79,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><p class="text-[10px] font-black opacity-40 uppercase italic">Previsão</p><div class="text-3xl font-black italic">R$ <span id="tGeral">0,00</span></div></div>
-            <div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl shadow-emerald-500/20"><p class="opacity-70 text-[10px] font-black uppercase italic text-white">Recebido</p><div class="text-3xl font-black italic text-white">R$ <span id="tPago">0,00</span></div></div>
+            <div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl shadow-emerald-500/20"><p class="opacity-70 text-[10px] font-black uppercase italic">Recebido</p><div class="text-3xl font-black italic text-white">R$ <span id="tPago">0,00</span></div></div>
             <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-l-rose-500 border border-slate-200 dark:border-slate-800 shadow-sm"><p class="text-slate-400 text-[10px] font-black uppercase italic">Pendente</p><div class="text-3xl font-black text-rose-500 italic">R$ <span id="tPend">0,00</span></div></div>
         </div>
 
@@ -89,7 +89,9 @@
                     <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         <tr>
                             <th class="px-6 py-5 w-10"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
-                            <th class="px-2 py-5">Participante</th>
+                            <th class="px-2 py-5 cursor-pointer hover:text-blue-500 transition flex items-center gap-1" onclick="toggleOrdemAlfabetica()">
+                                Participante <i data-lucide="chevrons-up-down" class="w-3 h-3"></i>
+                            </th>
                             <th class="px-6 py-5 text-center">Valor</th>
                             <th class="px-6 py-5 text-center">Status</th>
                             <th class="px-6 py-5 text-right">Ações</th>
@@ -115,7 +117,8 @@
         const db = firebase.database();
 
         let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`,
-            dadosLocais = [], filtroStatus = 'todos', selecionados = new Set(), configGeral = { chavePix: "", valorPadrao: 0 };
+            dadosLocais = [], filtroStatus = 'todos', selecionados = new Set(), configGeral = { chavePix: "", valorPadrao: 0 },
+            ordemCrescente = true;
 
         function iniciar() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
@@ -137,7 +140,11 @@
             if (filtroStatus === 'pagos') f = f.filter(p => p.pago);
             if (filtroStatus === 'pendente') f = f.filter(p => !p.pago);
             if (filtroStatus === 'nao_enviado') f = f.filter(p => !p.msgEnviada);
-            f.sort((a, b) => a.nome.localeCompare(b.nome));
+            
+            // Lógica de Ordenação Alfabética
+            f.sort((a, b) => {
+                return ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome);
+            });
 
             c.innerHTML = ""; let t = 0, pg = 0, pd = 0;
             f.forEach(p => {
@@ -173,6 +180,7 @@
             lucide.createIcons();
         }
 
+        // AÇÕES EM MASSA
         function toggleSelect(id) { if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id); renderBarra(); renderizarTabela(); }
         function toggleSelectAll(el) { if (el.checked) dadosLocais.forEach(p => selecionados.add(p.id)); else selecionados.clear(); renderBarra(); renderizarTabela(); }
         function clearSelection() { selecionados.clear(); document.getElementById('selectAll').checked = false; renderBarra(); renderizarTabela(); }
@@ -191,6 +199,7 @@
         function toggleDarkMode() { const h = document.documentElement; if (h.classList.contains('dark')) { h.classList.remove('dark'); localStorage.theme = 'light'; } else { h.classList.add('dark'); localStorage.theme = 'dark'; } }
         function abrirModal() { document.getElementById('modalImport').style.display = 'flex'; }
         function fecharModal() { document.getElementById('modalImport').style.display = 'none'; }
+        function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
         
         function processarCSV() {
             const f = document.getElementById('arquivoCSV').files[0]; if (!f) return;
