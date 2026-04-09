@@ -3,84 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cobrança Pro Mobile</title>
+    <title>Sistema de Cobrança</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --whatsapp: #25d366; --bg: #f8fafc; }
-        
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        .container { max-width: 1100px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* Esconde o admin por padrão se for link de cliente */
+        .view-admin { display: block; }
+        .view-cliente { display: none; }
         
-        .header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
-        
-        .pix-container { display: flex; flex-wrap: wrap; gap: 15px; background: #eff6ff; padding: 15px; border-radius: 10px; align-items: center; border: 1px solid #dbeafe; }
-        #qrcode { background: white; padding: 5px; border-radius: 5px; }
+        body.modo-cliente .view-admin { display: none !important; }
+        body.modo-cliente .view-cliente { display: flex !important; }
 
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .stat-card { padding: 10px; border-radius: 8px; color: white; text-align: center; font-weight: bold; font-size: 14px; }
-
-        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { text-align: left; padding: 10px; background: #f1f5f9; font-size: 12px; }
-        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-
-        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-add { background: var(--primary); color: white; width: 100%; }
-        .btn-pago { background: var(--success); color: white; }
-        .btn-pendente { background: #94a3b8; color: white; }
-        .btn-whatsapp { background: var(--whatsapp); color: white; text-decoration: none; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .pix-box { background: #eff6ff; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
         
-        input, select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; width: 100%; }
-        
-        /* Modal Portal */
-        #modalPortal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; padding: 20px; }
-        .modal-content { background:white; padding:20px; border-radius:12px; width:100%; max-width:400px; text-align:center; }
-        .preview-img { width:100%; max-height:250px; object-fit:contain; margin-top:10px; border: 2px dashed #cbd5e1; border-radius: 8px; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 10px; border-radius: 8px; color: white; text-align: center; font-size: 12px; font-weight: bold; }
 
-        @media (max-width: 600px) {
-            h2 { font-size: 18px; }
-            .pix-container { justify-content: center; text-align: center; }
-        }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+
+        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-pago { background: var(--success); color: white; width: 100%; padding: 15px; font-size: 16px; }
+        .btn-add { background: var(--primary); color: white; margin-bottom: 15px; }
+        
+        /* Estilo do Portal do Cliente */
+        .portal-cliente { flex-direction: column; align-items: center; text-align: center; gap: 20px; padding: 20px; }
+        .preview-img { width: 100%; max-height: 300px; object-fit: contain; border: 2px dashed #ccc; margin-top: 15px; display: none; }
+        input[type="file"] { display: none; }
+        .label-file { background: #64748b; color: white; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body>
 
-<div class="container" id="mainApp">
-    <div class="header">
-        <h2>📊 Gestão de Cobrança</h2>
-        <button class="btn btn-add" onclick="adicionarPessoa()">+ Adicionar Pessoa</button>
-    </div>
-
-    <div class="pix-container">
-        <div id="qrcode"></div>
-        <div style="flex: 1; min-width: 200px;">
-            <strong>Chave PIX:</strong>
-            <input type="text" id="chavePix" value="seu-email@pix.com" onchange="atualizarTudo()">
-        </div>
-    </div>
-
-    <div style="margin: 15px 0;">
-        <strong>Mês:</strong>
-        <select id="filtroMes" onchange="trocarMes()"></select>
-    </div>
-
+<div class="container view-admin">
+    <h2>📊 Minha Gestão</h2>
+    
     <div class="stats">
-        <div class="stat-card" style="background: var(--primary);">Total<br>R$ <span id="totalMes">0</span></div>
-        <div class="stat-card" style="background: var(--success);">Pago<br>R$ <span id="totalPago">0</span></div>
-        <div class="stat-card" style="background: var(--danger);">Pendente<br>R$ <span id="totalPendente">0</span></div>
+        <div class="stat-card" style="background:var(--primary)">Total<br><span id="totalMes">0</span></div>
+        <div class="stat-card" style="background:var(--success)">Pago<br><span id="totalPago">0</span></div>
+        <div class="stat-card" style="background:var(--danger)">Pendente<br><span id="totalPendente">0</span></div>
     </div>
+
+    <button class="btn btn-add" onclick="adicionarPessoa()">+ Adicionar Cobrança</button>
 
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>WhatsApp</th>
                     <th>Valor</th>
                     <th>Status</th>
-                    <th>Ações</th>
+                    <th>Ação</th>
                 </tr>
             </thead>
             <tbody id="tabelaCorpo"></tbody>
@@ -88,182 +67,136 @@
     </div>
 </div>
 
-<div id="modalPortal">
-    <div class="modal-content">
-        <h3 id="portalNome">Portal do Pagador</h3>
-        <p>Valor a pagar: <strong>R$ <span id="portalValor"></span></strong></p>
-        <hr>
-        <p>Selecione ou tire foto do comprovante:</p>
+<div class="container view-cliente portal-cliente">
+    <h2 id="clienteMsg">Olá!</h2>
+    <div class="pix-box">
+        <p>Valor a pagar: <strong style="font-size: 20px; color: var(--primary);">R$ <span id="clienteValor">0,00</span></strong></p>
+        <div id="qrcode" style="display: flex; justify-content: center; margin: 10px 0;"></div>
+        <p><small>Pague pelo QR Code acima ou Chave PIX</small></p>
+    </div>
+
+    <div style="width: 100%;">
+        <p><strong>Envie o comprovante abaixo:</strong></p>
+        <label for="inputComprovante" class="label-file">📸 Abrir Galeria ou Câmera</label>
         <input type="file" id="inputComprovante" accept="image/*" onchange="previewImagem(this)">
-        <img id="preview" class="preview-img" style="display:none">
+        
+        <img id="preview" class="preview-img">
+        
         <br><br>
-        <button class="btn btn-pago" style="width:100%; padding:15px;" onclick="salvarComprovante()">✅ ENVIAR AGORA</button>
-        <button class="btn" style="margin-top:10px; color: grey;" onclick="fecharPortal()">Cancelar</button>
+        <button id="btnConfirmar" class="btn btn-pago" onclick="salvarComprovante()">CONFIRMAR PAGAMENTO</button>
     </div>
 </div>
 
 <script>
     let db = JSON.parse(localStorage.getItem('cobranca_v4')) || {};
     let baseUsuarios = JSON.parse(localStorage.getItem('base_v4')) || [];
-    let mesVisivel = getMesAnoAtual();
-    let idUsuarioPortal = null;
-
-    function getMesAnoAtual() {
-        const d = new Date();
-        return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-    }
+    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}/${new Date().getFullYear()}`;
+    let idSessao = null;
 
     function inicializar() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const pId = urlParams.get('p');
-        if(pId) abrirPortal(pId);
+        const params = new URLSearchParams(window.location.search);
+        idSessao = params.get('p');
 
-        verificarViradaDeMes();
-        renderizarFiltro();
-        atualizarTudo();
-    }
-
-    function abrirPortal(id) {
-        idUsuarioPortal = id;
-        const p = (db[mesVisivel] || []).find(x => x.id == id);
-        if(p) {
-            document.getElementById('portalNome').innerText = "Olá, " + p.nome;
-            document.getElementById('portalValor').innerText = p.valor.toFixed(2);
-            document.getElementById('modalPortal').style.display = 'flex';
+        if (idSessao) {
+            // Entra no modo CLIENTE
+            document.body.classList.add('modo-cliente');
+            carregarDadosCliente(idSessao);
+        } else {
+            // Entra no modo ADMIN
+            renderizarAdmin();
         }
     }
 
-    function fecharPortal() {
-        document.getElementById('modalPortal').style.display = 'none';
-        window.history.replaceState({}, '', window.location.pathname);
+    // --- LÓGICA DO CLIENTE ---
+    function carregarDadosCliente(id) {
+        const p = (db[mesAtual] || []).find(x => x.id == id);
+        if (p) {
+            document.getElementById('clienteMsg').innerText = "Olá, " + p.nome;
+            document.getElementById('clienteValor').innerText = p.valor.toFixed(2);
+            new QRCode(document.getElementById("qrcode"), { text: "SUA_CHAVE_PIX_AQUI", width: 120, height: 120 });
+        } else {
+            alert("Cobrança não encontrada ou já expirou.");
+        }
     }
 
     function previewImagem(input) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const img = document.getElementById('preview');
-            img.src = e.target.result;
-            img.style.display = 'block';
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('preview');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
         }
-        if(input.files[0]) reader.readAsDataURL(input.files[0]);
     }
 
     function salvarComprovante() {
         const img = document.getElementById('preview').src;
-        if(!img || img.includes('display:none')) return alert("Anexe a foto do comprovante primeiro!");
+        if (!img || img.startsWith('data') === false) return alert("Por favor, selecione a foto do comprovante.");
 
-        const p = db[mesVisivel].find(x => x.id == idUsuarioPortal);
-        if(p) {
+        const lista = db[mesAtual] || [];
+        const p = lista.find(x => x.id == idSessao);
+        if (p) {
             p.pago = true;
             p.comprovante = img;
-            salvar();
-            alert("Comprovante enviado com sucesso!");
-            fecharPortal();
-            atualizarTudo();
+            localStorage.setItem('cobranca_v4', JSON.stringify(db));
+            alert("✅ Comprovante enviado com sucesso!");
+            window.location.search = ""; // Recarrega limpo
         }
     }
 
-    function enviarCobranca(id, nome, tel, valor) {
-        const chave = document.getElementById('chavePix').value;
-        // ATENÇÃO: Se rodar localmente, o link no WhatsApp não será azul (clicável)
-        // O WhatsApp exige que comece com http/https para virar link.
-        const link = `${window.location.href.split('?')[0]}?p=${id}`;
-        const texto = `Olá ${nome}! Segue cobrança de ${mesVisivel}:\n\nValor: R$ ${valor.toFixed(2)}\nPIX: ${chave}\n\nConfirme o pagamento aqui:\n${link}`;
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
-    }
-
-    function adicionarPessoa() {
-        const id = Date.now();
-        const nova = { id, nome: "Novo", tel: "55", valor: 0, pago: false, comprovante: null };
-        baseUsuarios.push(nova);
-        if (!db[mesVisivel]) db[mesVisivel] = [];
-        db[mesVisivel].push({...nova});
-        salvar();
-        atualizarTudo();
-    }
-
-    function editar(id, campo, valor) {
-        const p = db[mesVisivel].find(x => x.id === id);
-        if(p) p[campo] = campo === 'valor' ? parseFloat(valor) : valor;
-        const pb = baseUsuarios.find(x => x.id === id);
-        if(pb) pb[campo] = campo === 'valor' ? parseFloat(valor) : valor;
-        salvar();
-        calcularTotais();
-    }
-
-    function alternarStatus(id) {
-        const p = db[mesVisivel].find(x => x.id === id);
-        if(p) { p.pago = !p.pago; if(!p.pago) p.comprovante = null; }
-        salvar();
-        atualizarTudo();
-    }
-
-    function excluir(id) {
-        if(confirm("Excluir?")) {
-            db[mesVisivel] = db[mesVisivel].filter(x => x.id !== id);
-            baseUsuarios = baseUsuarios.filter(x => x.id !== id);
-            salvar();
-            atualizarTudo();
-        }
-    }
-
-    function renderizarTabela() {
+    // --- LÓGICA DO ADMIN ---
+    function renderizarAdmin() {
         const corpo = document.getElementById('tabelaCorpo');
         corpo.innerHTML = "";
-        (db[mesVisivel] || []).forEach(p => {
+        const lista = db[mesAtual] || [];
+        
+        let t = 0, pg = 0, pd = 0;
+
+        lista.forEach(p => {
+            t += p.valor;
+            if(p.pago) pg += p.valor; else pd += p.valor;
+
             corpo.innerHTML += `
                 <tr>
-                    <td><input type="text" value="${p.nome}" onchange="editar(${p.id}, 'nome', this.value)"></td>
-                    <td><input type="text" value="${p.tel}" onchange="editar(${p.id}, 'tel', this.value)"></td>
-                    <td><input type="number" value="${p.valor}" onchange="editar(${p.id}, 'valor', this.value)"></td>
+                    <td>${p.nome}</td>
+                    <td>R$ ${p.valor.toFixed(2)}</td>
+                    <td>${p.pago ? '✅' : '⏳'}</td>
                     <td>
-                        <button class="btn ${p.pago ? 'btn-pago' : 'btn-pendente'}" onclick="alternarStatus(${p.id})">
-                            ${p.pago ? 'Pago' : 'Pendente'}
-                        </button>
-                    </td>
-                    <td>
-                        <div style="display:flex; gap:4px;">
-                            <button class="btn btn-whatsapp" onclick="enviarCobranca(${p.id}, '${p.nome}', '${p.tel}', ${p.valor})">📲</button>
-                            ${p.comprovante ? `<button class="btn" onclick="window.open().document.write('<img src=\\'${p.comprovante}\\'>')">👁️</button>` : ''}
-                            <button class="btn" style="background:#fee2e2" onclick="excluir(${p.id})">🗑️</button>
-                        </div>
+                        <button class="btn" onclick="enviarZap(${p.id},'${p.nome}','${p.tel}',${p.valor})" style="background:var(--whatsapp); color:white">📲</button>
+                        ${p.comprovante ? `<button class="btn" onclick="verFoto('${p.comprovante}')">👁️</button>` : ''}
                     </td>
                 </tr>
             `;
         });
+        document.getElementById('totalMes').innerText = "R$ "+t.toFixed(2);
+        document.getElementById('totalPago').innerText = "R$ "+pg.toFixed(2);
+        document.getElementById('totalPendente').innerText = "R$ "+pd.toFixed(2);
     }
 
-    function calcularTotais() {
-        const lista = db[mesVisivel] || [];
-        let t = 0, pg = 0, pd = 0;
-        lista.forEach(p => { t += p.valor; if(p.pago) pg += p.valor; else pd += p.valor; });
-        document.getElementById('totalMes').innerText = t.toFixed(2);
-        document.getElementById('totalPago').innerText = pg.toFixed(2);
-        document.getElementById('totalPendente').innerText = pd.toFixed(2);
+    function enviarZap(id, nome, tel, valor) {
+        const link = window.location.href.split('?')[0] + "?p=" + id;
+        const msg = encodeURIComponent(`Olá ${nome}! Segue link para pagamento e envio do comprovante:\n\n${link}`);
+        window.open(`https://wa.me/${tel}?text=${msg}`);
     }
 
-    function renderizarFiltro() {
-        const sel = document.getElementById('filtroMes');
-        const meses = Object.keys(db).length ? Object.keys(db) : [getMesAnoAtual()];
-        sel.innerHTML = meses.sort().reverse().map(m => `<option value="${m}" ${m === mesVisivel ? 'selected' : ''}>${m}</option>`).join('');
+    function adicionarPessoa() {
+        const nome = prompt("Nome:");
+        const tel = prompt("WhatsApp (Ex: 5511999999999):");
+        const valor = parseFloat(prompt("Valor:"));
+        if(!nome || !tel || isNaN(valor)) return;
+
+        const nova = { id: Date.now(), nome, tel, valor, pago: false, comprovante: null };
+        if(!db[mesAtual]) db[mesAtual] = [];
+        db[mesAtual].push(nova);
+        localStorage.setItem('cobranca_v4', JSON.stringify(db));
+        renderizarAdmin();
     }
 
-    function trocarMes() { mesVisivel = document.getElementById('filtroMes').value; atualizarTudo(); }
-    function salvar() { localStorage.setItem('cobranca_v4', JSON.stringify(db)); localStorage.setItem('base_v4', JSON.stringify(baseUsuarios)); }
-    function atualizarTudo() { renderizarTabela(); calcularTotais(); gerarQR(); }
-    function gerarQR() { 
-        const qrDiv = document.getElementById("qrcode");
-        qrDiv.innerHTML = "";
-        new QRCode(qrDiv, { text: document.getElementById('chavePix').value, width: 70, height: 70 });
-    }
-    function verificarViradaDeMes() {
-        const hoje = new Date();
-        const mesAnoHoje = getMesAnoAtual();
-        if (hoje.getDate() >= 20 && !db[mesAnoHoje]) {
-            db[mesAnoHoje] = baseUsuarios.map(u => ({ ...u, pago: false, comprovante: null }));
-            salvar();
-        }
-        if (!db[mesAnoHoje]) db[mesAnoHoje] = [];
+    function verFoto(img) {
+        const w = window.open("");
+        w.document.write(`<img src="${img}" style="width:100%">`);
     }
 
     inicializar();
