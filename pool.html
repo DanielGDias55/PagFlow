@@ -68,16 +68,17 @@
     <header class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-sm">
         <div class="w-full lg:w-auto text-center lg:text-left">
             <h1 class="text-2xl font-black tracking-tight dark:text-white uppercase italic text-amber-600">TEST ENVIRONMENT 2</h1>
-            <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-2 bg-slate-100 dark:bg-slate-800 dark:text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold cursor-pointer"></select>
+            <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-2 bg-slate-100 dark:bg-slate-800 dark:text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold cursor-pointer outline-none ring-2 ring-transparent focus:ring-amber-500"></select>
         </div>
         <div class="flex flex-wrap justify-center gap-2">
             <div class="relative group">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Buscar..." class="bg-slate-100 dark:bg-slate-800 dark:text-white pl-9 pr-4 py-2 rounded-xl text-sm outline-none w-40 md:w-56">
+                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Buscar participante..." class="bg-slate-100 dark:bg-slate-800 dark:text-white pl-9 pr-4 py-2 rounded-xl text-sm outline-none w-40 md:w-56 focus:ring-2 focus:ring-blue-500">
             </div>
-            <button onclick="exportarExcel()" class="bg-emerald-600 text-white p-2.5 rounded-xl"><i data-lucide="download" class="w-4 h-4"></i></button>
-            <button onclick="abrirModal()" class="bg-amber-600 text-white p-2.5 rounded-xl"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i></button>
-            <button onclick="adicionarPessoa()" class="bg-blue-600 text-white p-2.5 rounded-xl"><i data-lucide="plus" class="w-4 h-4"></i></button>
+            <button onclick="exportarExcel()" class="bg-emerald-600 text-white p-2.5 rounded-xl hover:bg-emerald-700 transition" title="Exportar CSV"><i data-lucide="download" class="w-4 h-4"></i></button>
+            <button onclick="abrirModal()" class="bg-amber-600 text-white p-2.5 rounded-xl hover:bg-amber-700 transition" title="Importar CSV"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i></button>
+            <button onclick="adicionarPessoa()" class="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition" title="Adicionar Manual"><i data-lucide="plus" class="w-4 h-4"></i></button>
+            <button onclick="toggleDarkMode()" class="bg-slate-200 dark:bg-slate-700 p-2.5 rounded-xl"><i data-lucide="moon" class="w-4 h-4"></i></button>
         </div>
     </header>
 
@@ -107,19 +108,21 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <table class="w-full text-left">
-            <thead class="bg-slate-50 dark:bg-slate-850 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <tr>
-                    <th class="px-6 py-4">Participante</th>
-                    <th class="px-6 py-4 text-center">Valor Cobrado</th>
-                    <th class="px-6 py-4 text-center">Adiantadas</th>
-                    <th class="px-6 py-4 text-center">Status</th>
-                    <th class="px-6 py-4 text-right">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-        </table>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-850 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <tr>
+                        <th class="px-6 py-4">Participante</th>
+                        <th class="px-6 py-4 text-center">Valor Cobrado</th>
+                        <th class="px-6 py-4 text-center">Adiantadas</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -143,29 +146,59 @@
     let dadosLocais = [];
     let configGeral = { chavePix: "", valorPadrao: 0 };
 
+    // --- INICIALIZAÇÃO ---
     async function iniciar() {
-        console.log("Debug: Iniciando sistema...");
-        const configSnap = await db.ref(PASTA_CONFIG).once('value');
-        configGeral = configSnap.val() || { chavePix: "TESTE", valorPadrao: 50 };
-        document.getElementById('chavePix').value = configGeral.chavePix;
-        document.getElementById('valorPadrao').value = configGeral.valorPadrao;
+        try {
+            console.log("Iniciando carregamento...");
+            
+            // 1. Carregar Configurações
+            const configSnap = await db.ref(PASTA_CONFIG).once('value');
+            if(configSnap.exists()) {
+                configGeral = configSnap.val();
+                document.getElementById('chavePix').value = configGeral.chavePix || "";
+                document.getElementById('valorPadrao').value = configGeral.valorPadrao || 0;
+            }
 
-        gerarOpcoesMes();
-        await verificarResetMensal();
-        carregarDadosAdmin();
-        lucide.createIcons();
+            // 2. Gerar Filtro de Meses
+            gerarOpcoesMes();
+
+            // 3. Verificar Reset e Carregar Dados
+            await verificarResetMensal();
+            carregarDadosAdmin();
+            
+            lucide.createIcons();
+        } catch (e) {
+            console.error("Erro na inicialização:", e);
+        }
+    }
+
+    function gerarOpcoesMes() { 
+        const select = document.getElementById('filtroMes'); 
+        if (!select) return;
+        select.innerHTML = "";
+        
+        // Gera 2 meses antes até 3 meses depois
+        for(let i = -2; i <= 3; i++) { 
+            const d = new Date(); 
+            d.setMonth(d.getMonth() + i); 
+            const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
+            const o = document.createElement('option'); 
+            o.value = k; 
+            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
+            if (k === mesAtual) o.selected = true; 
+            select.appendChild(o); 
+        } 
     }
 
     async function verificarResetMensal() {
         const hoje = new Date();
-        // MUDADO PARA DIA 1 PARA TESTE FACIL
+        // Lógica de reset (exemplo: se for dia 1, gera o próximo mês se não existir)
         if (hoje.getDate() >= 1) { 
             const prox = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
             const keyProx = `${String(prox.getMonth() + 1).padStart(2, '0')}-${prox.getFullYear()}`;
             const s = await db.ref(`${PASTA_BANCO}/${keyProx}`).once('value');
             
             if (!s.exists()) {
-                console.log("Debug: Mês seguinte não existe. Verificando dados de " + mesAtual);
                 const atualSnap = await db.ref(`${PASTA_BANCO}/${mesAtual}`).once('value');
                 if (atualSnap.exists()) {
                     const lista = atualSnap.val();
@@ -177,15 +210,13 @@
                         novaLista[id] = {
                             ...p,
                             pago: temCredito,
-                            valor: temCredito ? 0 : configGeral.valorPadrao,
+                            valor: temCredito ? 0 : (configGeral.valorPadrao || 50),
                             adiantadas: temCredito ? (adiantadas - 1) : 0,
                             msgEnviada: temCredito,
                             comprovante: null
                         };
                     });
                     await db.ref(`${PASTA_BANCO}/${keyProx}`).set(novaLista);
-                    alert("Novo mês gerado: " + keyProx);
-                    location.reload();
                 }
             }
         }
@@ -206,6 +237,7 @@
         corpo.innerHTML = "";
 
         dadosLocais.forEach(p => {
+            // Filtro de Busca por Nome
             if (termoBusca && !p.nome.toLowerCase().includes(termoBusca)) return;
 
             const val = parseFloat(p.valor) || 0;
@@ -213,23 +245,25 @@
             
             t += val;
             if (p.pago) {
-                const baseCalculo = (val > 0) ? val : configGeral.valorPadrao;
+                const baseCalculo = (val > 0) ? val : (configGeral.valorPadrao || 50);
                 pg += val + (adiantadas * baseCalculo);
             } else {
                 pd += val;
             }
 
             corpo.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50">
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition">
                     <td class="px-6 py-4 font-bold dark:text-white">${p.nome}</td>
                     <td class="px-6 py-4 text-center">R$ <input type="number" step="0.01" value="${val.toFixed(2)}" onblur="editar('${p.id}','valor',parseFloat(this.value))" class="editable-input w-24 text-center"></td>
                     <td class="px-6 py-4 text-center"><input type="number" value="${adiantadas}" onblur="editar('${p.id}','adiantadas',parseInt(this.value))" class="editable-input w-16 text-center text-blue-500 font-bold"></td>
                     <td class="px-6 py-4 text-center">
-                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${p.pago ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
+                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all ${p.pago ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
                             ${p.pago ? 'Pago' : 'Pendente'}
                         </button>
                     </td>
-                    <td class="px-6 py-4 text-right"><button onclick="excluir('${p.id}')" class="text-slate-400 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="excluir('${p.id}')" class="text-slate-400 hover:text-rose-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
                 </tr>`;
         });
 
@@ -239,10 +273,39 @@
         lucide.createIcons();
     }
 
+    // --- AÇÕES ---
+    function editar(id, c, v) { db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).update({ [c]: v }); }
+    function togglePago(id, s) { db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).update({ pago: !s }); }
+    function excluir(id) { if(confirm("Apagar participante?")) db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).remove(); }
+    function salvarConfig(c, v) { db.ref(PASTA_CONFIG).update({ [c]: v }); }
+    function mudarMes(v) { 
+        mesAtual = v; 
+        carregarDadosAdmin(); 
+    }
+    
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
+    function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
+    function validarArquivo(i) { document.getElementById('nomeArquivo').innerText = i.files[0].name; }
+
+    function adicionarPessoa() { 
+        const n = prompt("Nome do participante:"); 
+        if(n) {
+            db.ref(`${PASTA_BANCO}/${mesAtual}/${Date.now()}`).set({ 
+                nome: n, 
+                valor: configGeral.valorPadrao || 50, 
+                adiantadas: 0, 
+                pago: false 
+            }); 
+        }
+    }
+
     function exportarExcel() {
-        if (dadosLocais.length === 0) return alert("Vazio!");
+        if (dadosLocais.length === 0) return alert("Não há dados para exportar!");
         let csv = "ID;Nome;Telefone;Valor;Adiantadas;Status\n";
-        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'}\n`; });
+        dadosLocais.forEach(p => { 
+            csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'}\n`; 
+        });
         const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -262,36 +325,24 @@
                 let cols = linha.split(/[;,]/);
                 let id = cols[0] && cols[0].trim() !== "" ? cols[0].trim() : (Date.now() + i);
                 updates[id] = { 
-                    nome: cols[1]?.trim() || "Sem Nome", tel: cols[2]?.trim() || "", 
-                    valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : configGeral.valorPadrao,
+                    nome: cols[1]?.trim() || "Sem Nome", 
+                    tel: cols[2]?.trim() || "", 
+                    valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : (configGeral.valorPadrao || 50),
                     adiantadas: cols[4] ? parseInt(cols[4]) : 0, 
-                    pago: cols[5]?.trim() === "Pago", msgEnviada: false 
+                    pago: cols[5]?.trim().toLowerCase() === "pago", 
+                    msgEnviada: false 
                 };
             });
-            db.ref(`${PASTA_BANCO}/${mesAtual}`).update(updates).then(() => { fecharModal(); alert("Sincronizado!"); });
+            db.ref(`${PASTA_BANCO}/${mesAtual}`).update(updates).then(() => { 
+                fecharModal(); 
+                alert("Importação concluída!"); 
+            });
         };
         reader.readAsText(fileInput.files[0], 'UTF-8');
     }
 
-    function editar(id, c, v) { db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).update({ [c]: v }); }
-    function togglePago(id, s) { db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).update({ pago: !s }); }
-    function excluir(id) { if(confirm("Apagar?")) db.ref(`${PASTA_BANCO}/${mesAtual}/${id}`).remove(); }
-    function salvarConfig(c, v) { db.ref(PASTA_CONFIG).update({ [c]: v }); }
-    function mudarMes(v) { mesAtual = v; carregarDadosAdmin(); }
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
-    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
-    function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
-    function validarArquivo(i) { document.getElementById('nomeArquivo').innerText = i.files[0].name; }
-    function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`${PASTA_BANCO}/${mesAtual}/${Date.now()}`).set({ nome: n, valor: configGeral.valorPadrao, adiantadas: 0, pago: false }); }
-    function gerarOpcoesMes() { 
-        const s = document.getElementById('filtroMes'); s.innerHTML = "";
-        for(let i = -1; i <= 2; i++) { 
-            const d = new Date(); d.setMonth(d.getMonth() + i); const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
-            const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); 
-        } 
-    }
-
-    iniciar();
+    // --- START ---
+    window.addEventListener('load', iniciar);
 </script>
 </body>
 </html>
