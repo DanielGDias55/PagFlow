@@ -197,7 +197,7 @@
                         <i data-lucide="layers" class="text-white w-6 h-6"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
+                        <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Saldanhar</h1>
                         <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.3</span>
                     </div>
                 </div>
@@ -688,7 +688,7 @@
     }
     
     function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
-    function enviarZap(id, n, t, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); const link = window.location.href.split('?')[0] + "?p=" + id; const msg = encodeURIComponent(`Olá, ${n}!\nValor: R$ ${v.toFixed(2)}\nLink: ${link}`); window.open(`https://wa.me/${t}?text=${msg}`); }
+    function enviarZap(id, n, t, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); const link = window.location.href.split('?')[0] + "?p=" + id; const msg = encodeURIComponent(`Olá, ${n}!\nValor do Pool saldanha desse mês: R$ ${v.toFixed(2)}\nMe manda o comprovante nesse link: ${link}`); window.open(`https://wa.me/${t}?text=${msg}`); }
     function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
 
     iniciar();
