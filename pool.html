@@ -37,6 +37,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             transition: background-color var(--transition-speed) ease; 
             min-height: 100vh; 
+            padding-bottom: 6rem; /* Espaço para a barra flutuante */
         }
 
         html.dark { background-color: #020617 !important; }
@@ -97,7 +98,6 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Estilos Refinados da Gaveta (Corrigido para esconder completamente) */
         #drawerWrapper {
             max-height: 0;
             opacity: 0;
@@ -116,10 +116,9 @@
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: auto;
-            margin-top: 1.5rem; /* Margem apenas quando aberto */
+            margin-top: 1.5rem; 
         }
 
-        /* Botão de Toggle Ativo */
         #btnToggleDrawer.active {
             background-color: #3b82f6;
             color: white;
@@ -130,9 +129,33 @@
             color: white;
             border-color: transparent;
         }
+        
+        /* Estilos do Checkbox */
+        .check-custom {
+            accent-color: #3b82f6;
+            width: 1.125rem;
+            height: 1.125rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10 relative">
+
+<!-- Barra de Exclusão em Massa Flutuante -->
+<div id="bulkActionsBar" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-4 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+    <div class="flex items-center gap-3">
+        <div class="bg-brand-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-inner" id="bulkCount">0</div>
+        <span class="text-sm font-extrabold tracking-wide hidden sm:block">Selecionados</span>
+    </div>
+    <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1"></div>
+    <button onclick="excluirSelecionados()" class="bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/30 transition-all active:scale-95 flex items-center gap-2">
+        <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Todos
+    </button>
+    <button onclick="clearSelection()" class="text-slate-400 dark:text-slate-500 hover:text-white dark:hover:text-slate-900 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors">
+        Cancelar
+    </button>
+</div>
 
 <!-- Modal Importação CSV -->
 <div id="modalImport" onclick="fecharModal()">
@@ -164,11 +187,8 @@
 </div>
 
 <div class="max-w-6xl mx-auto space-y-6">
-    
     <!-- ADMIN VIEW -->
     <div class="admin-only space-y-6">
-        
-        <!-- Header Principal e Gaveta (Agrupados para evitar espaço extra do space-y-6) -->
         <div>
             <!-- Header Principal -->
             <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center shadow-soft relative z-10">
@@ -178,7 +198,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
-                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.2</span>
+                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.3</span>
                     </div>
                 </div>
                 
@@ -195,12 +215,10 @@
                 </div>
             </header>
 
-            <!-- Gaveta de Filtros e Opções (Wrapper animado) -->
+            <!-- Gaveta de Filtros e Opções -->
             <div id="drawerWrapper">
                 <div class="glass-card rounded-[2rem] p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
-                        
-                        <!-- Busca -->
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
                             <div class="relative group">
@@ -209,13 +227,11 @@
                             </div>
                         </div>
 
-                        <!-- Mês -->
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês de Referência</label>
                             <select id="filtroMes" onchange="mudarMes(this.value)" class="w-full bg-white dark:bg-slate-950 dark:text-white px-4 py-3 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm cursor-pointer transition"></select>
                         </div>
 
-                        <!-- Status -->
                         <div class="space-y-2 lg:col-span-2">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
                             <div class="bg-white dark:bg-slate-950 p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
@@ -226,7 +242,6 @@
                             </div>
                         </div>
 
-                        <!-- Ações Extra -->
                         <div class="lg:col-span-4 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
                             <button onclick="abrirModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
                                 <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
@@ -266,11 +281,15 @@
                 <table class="w-full text-left">
                     <thead class="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
                         <tr>
-                            <th class="px-8 py-5 cursor-pointer hover:text-brand-500 transition flex items-center gap-2" onclick="toggleOrdemAlfabetica()">
+                            <!-- Checkbox Principal -->
+                            <th class="px-6 py-5 w-12 text-center">
+                                <input type="checkbox" id="selectAll" onclick="toggleAll(this)" class="check-custom">
+                            </th>
+                            <th class="px-4 py-5 cursor-pointer hover:text-brand-500 transition flex items-center gap-2" onclick="toggleOrdemAlfabetica()">
                                 Participante <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
                             </th>
                             <th class="px-8 py-5 text-center">Mensalidade</th>
-                            <th class="px-8 py-5 text-center">Adiantadas</th>
+                            <th class="px-8 py-5 text-center" title="Meses pagos adiantados">Adiantadas</th>
                             <th class="px-8 py-5 text-center">Status</th>
                             <th class="px-8 py-5 text-right">Ações</th>
                         </tr>
@@ -303,6 +322,8 @@
     let dadosLocais = [];
     let filtroStatus = 'todos';
     let ordemCrescente = true;
+    let selecionados = new Set(); // Armazena os IDs para exclusão em massa
+    
     let idCliente = new URLSearchParams(window.location.search).get('p');
     let configGeral = { chavePix: "financeiro@poolpro.com", valorPadrao: 150 };
 
@@ -322,18 +343,16 @@
         const btn = document.getElementById('btnToggleDrawer');
         wrapper.classList.toggle('aberto');
         btn.classList.toggle('active');
-        
-        // Atualiza o texto do botão
         const span = btn.querySelector('span');
-        if (span) {
-            span.innerText = wrapper.classList.contains('aberto') ? 'Fechar Filtros' : 'Painel de Filtros';
-        }
+        if (span) { span.innerText = wrapper.classList.contains('aberto') ? 'Fechar Filtros' : 'Painel de Filtros'; }
     }
 
     function carregarDadosAdmin() {
         db.ref(`cobrancas/${mesAtual}`).on('value', s => {
             const dados = s.val() || {};
             dadosLocais = Object.keys(dados).map(id => ({ id, ...dados[id] }));
+            // Ao carregar os dados, limpa seleções que não existem mais
+            selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
             renderizarTabela();
         });
     }
@@ -360,17 +379,26 @@
         filtrados.forEach(p => {
             const val = parseFloat(p.valor) || 0;
             const adiantadas = p.adiantadas || 0;
-            t += val; if(p.pago) pg += val; else pd += val;
+            
+            // NOVO: Cálculo do valor com adiantamentos multiplicados
+            const totalPessoa = val + (val * adiantadas);
+            t += totalPessoa; 
+            if(p.pago) pg += totalPessoa; else pd += totalPessoa;
+
             const msgIcone = p.msgEnviada ? 'check-circle-2' : 'send';
             const msgEstilo = p.msgEnviada ? 'text-blue-500' : 'text-slate-300 hover:text-brand-500';
             
             corpo.innerHTML += `
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group">
-                    <td class="px-8 py-5">
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
+                    <!-- Checkbox da Linha -->
+                    <td class="px-6 py-5 text-center">
+                        <input type="checkbox" class="check-custom row-checkbox" value="${p.id}" ${selecionados.has(p.id) ? 'checked' : ''} onchange="toggleRowSelection('${p.id}')">
+                    </td>
+                    <td class="px-4 py-5">
                         <div class="flex flex-col">
                             <div class="flex items-center gap-2">
                                 <input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white w-full text-sm">
-                                ${adiantadas > 0 ? `<span class="bg-brand-100 text-brand-600 text-[9px] px-2 py-0.5 rounded-full font-extrabold">+${adiantadas}</span>` : ''}
+                                ${adiantadas > 0 ? `<span class="bg-brand-100 text-brand-600 text-[9px] px-2 py-0.5 rounded-full font-extrabold" title="Meses adiantados">+${adiantadas}</span>` : ''}
                             </div>
                             <input type="text" value="${p.tel || ''}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-[10px] text-slate-400 font-bold w-full -mt-1">
                         </div>
@@ -405,9 +433,109 @@
         document.getElementById('tGeral').innerText = t.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPend').innerText = pd.toLocaleString('pt-br',{minimumFractionDigits:2});
+        
+        updateBulkUI(); // Atualiza a barra de exclusão
         lucide.createIcons();
     }
 
+    // --- LÓGICA DE EXCLUSÃO EM MASSA ---
+    function toggleRowSelection(id) {
+        if (selecionados.has(id)) selecionados.delete(id);
+        else selecionados.add(id);
+        renderizarTabela(); // Para aplicar a cor de fundo na linha
+    }
+
+    function toggleAll(source) {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        if(source.checked) {
+            checkboxes.forEach(cb => selecionados.add(cb.value));
+        } else {
+            selecionados.clear();
+        }
+        renderizarTabela();
+    }
+
+    function updateBulkUI() {
+        const bar = document.getElementById('bulkActionsBar');
+        const selectAllInput = document.getElementById('selectAll');
+        
+        if(selectAllInput) {
+            const allVisibleIds = Array.from(document.querySelectorAll('.row-checkbox')).map(cb => cb.value);
+            const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selecionados.has(id));
+            selectAllInput.checked = allSelected;
+        }
+
+        if (selecionados.size > 0) {
+            document.getElementById('bulkCount').innerText = selecionados.size;
+            bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            bar.classList.add('translate-y-0', 'opacity-100');
+        } else {
+            bar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            bar.classList.remove('translate-y-0', 'opacity-100');
+        }
+    }
+
+    function clearSelection() {
+        selecionados.clear();
+        renderizarTabela();
+    }
+
+    function excluirSelecionados() {
+        if(selecionados.size === 0) return;
+        if(confirm(`Tem certeza que deseja excluir ${selecionados.size} participante(s) simultaneamente?`)) {
+            const updates = {};
+            selecionados.forEach(id => {
+                updates[id] = null; // null exclui o registro no Firebase
+            });
+            
+            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
+                selecionados.clear();
+                // O renderizarTabela() será chamado automaticamente pelo .on('value')
+            });
+        }
+    }
+
+    // --- LÓGICA DE ADIANTAMENTOS E FUTUROS MESES ---
+    function editar(id, c, v) { 
+        db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }).then(() => {
+            // Se o campo editado foi "adiantadas" e é maior que zero, propaga o crédito pros próximos meses
+            if (c === 'adiantadas' && parseInt(v) > 0) {
+                propagarAdiantamento(id, parseInt(v));
+            }
+        }); 
+    }
+
+    function propagarAdiantamento(id, qtdMeses) {
+        const user = dadosLocais.find(u => u.id === id);
+        if (!user) return;
+
+        let [mesStr, anoStr] = mesAtual.split('-');
+        let mes = parseInt(mesStr);
+        let ano = parseInt(anoStr);
+
+        const updates = {};
+
+        for (let i = 1; i <= qtdMeses; i++) {
+            mes++;
+            if (mes > 12) { mes = 1; ano++; }
+            let futuroMes = `${String(mes).padStart(2, '0')}-${ano}`;
+            
+            // Cria o usuário nos próximos meses com valor 0, adiantadas descontadas e status Pago
+            updates[`cobrancas/${futuroMes}/${id}`] = {
+                nome: user.nome,
+                tel: user.tel || "",
+                valor: 0, 
+                adiantadas: qtdMeses - i,
+                pago: true,
+                msgEnviada: false // Nao precisa mandar msg pra ele cobrar 0 reais
+            };
+        }
+
+        // Executa atualização em múltiplos caminhos do Firebase (Multi-path update) super rápido
+        db.ref().update(updates);
+    }
+
+    // --- FUNÇÕES DE ROTINA ---
     function setFiltroStatus(s) { 
         filtroStatus = s; 
         document.querySelectorAll('.filter-btn').forEach(b => {
@@ -502,7 +630,7 @@
         reader.onload = e => {
             db.ref(`cobrancas/${mesAtual}/${idCliente}`).update({ 
                 comprovante: e.target.result,
-                pago: true // Agora o sistema marca como pago automaticamente
+                pago: true 
             }).then(() => alert("Comprovante enviado com sucesso!"));
         };
         reader.readAsDataURL(file);
@@ -511,11 +639,10 @@
     function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
-    function editar(id, c, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }); }
     function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
     function removerComprovante(id) { if(confirm("Deseja apagar este comprovante e marcar a cobrança como pendente?")) db.ref(`cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
     function excluir(id) { if(confirm("Deseja apagar?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
-    function mudarMes(v) { mesAtual = v; carregarDadosAdmin(); }
+    function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); }
     function gerarOpcoesMes() { const s = document.getElementById('filtroMes'); if(!s) return; for(let i = -2; i <= 4; i++) { const d = new Date(); d.setMonth(d.getMonth() + i); const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); } }
