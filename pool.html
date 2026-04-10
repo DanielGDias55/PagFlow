@@ -6,8 +6,9 @@
     <title>STAGING - Pool Manager SaaS Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.474.0/dist/umd/lucide.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
@@ -25,28 +26,140 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         html.dark { background-color: #020617 !important; }
         html.dark body { background-color: #020617 !important; color: #f1f5f9 !important; }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; min-height: 100vh; overflow-x: hidden; }
+        
         .editable-input { background: transparent; border: 1px solid transparent; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
         .editable-input:hover { background: rgba(0,0,0,0.05); border-color: #cbd5e1; }
         .dark .editable-input:hover { background: rgba(255,255,255,0.1); border-color: #334155; }
         .editable-input:focus { background: white; border-color: #3b82f6; outline: none; color: #1e293b; }
         .dark .editable-input:focus { background: #0f172a; color: white !important; }
-        .filter-btn.active { background-color: white; color: #1e293b; font-weight: 700; opacity: 1; }
-        .dark .filter-btn.active { background-color: #3b82f6 !important; color: white !important; opacity: 1 !important; }
+        
+        .modal-overlay { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+        .modal-overlay.flex { display: flex; }
+        
+        #toast { position: fixed; bottom: 20px; right: 20px; z-index: 100; transform: translateY(150%); transition: transform 0.3s ease; }
+        #toast.show { transform: translateY(0); }
+
+        /* Drawer / Gaveta Lateral */
+        #drawerFilters { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; z-index: 60; transition: left 0.3s ease; }
+        #drawerFilters.open { left: 0; }
+        .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 55; }
+        .drawer-overlay.show { display: block; }
+
+        .filter-btn-side { width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 14px; transition: 0.2s; margin-bottom: 8px; }
+        .filter-btn-side.active { background: #3b82f6; color: white; }
+        .filter-btn-side:not(.active) { background: transparent; color: #64748b; }
+        .dark .filter-btn-side:not(.active) { color: #94a3b8; }
+        .filter-btn-side:not(.active):hover { background: rgba(0,0,0,0.05); }
+        .dark .filter-btn-side:not(.active):hover { background: rgba(255,255,255,0.05); }
+
+        .custom-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8">
 
+<!-- Toast de Notificação -->
+<div id="toast" class="bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold border border-slate-700">
+    <div id="toastIcon"><i data-lucide="info" class="w-5 h-5 text-blue-400"></i></div>
+    <span id="toastMsg">Mensagem</span>
+</div>
+
+<!-- Overlay da Gaveta -->
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer(false)"></div>
+
+<!-- Gaveta Lateral de Filtros -->
+<aside id="drawerFilters" class="bg-white dark:bg-slate-900 shadow-2xl border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col">
+    <div class="flex items-center justify-between mb-8">
+        <h2 class="text-xl font-black uppercase italic tracking-tight">Filtros</h2>
+        <button onclick="toggleDrawer(false)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <div class="space-y-2 flex-1">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Exibição</p>
+        <button onclick="setFiltroStatus('todos')" id="side-todos" class="filter-btn-side active">
+            <span class="flex items-center gap-3"><i data-lucide="users" class="w-4 h-4"></i> Todos</span>
+        </button>
+        <button onclick="setFiltroStatus('pago')" id="side-pago" class="filter-btn-side">
+            <span class="flex items-center gap-3"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i> Pagos / Créditos</span>
+        </button>
+        <button onclick="setFiltroStatus('pendente')" id="side-pendente" class="filter-btn-side">
+            <span class="flex items-center gap-3"><i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> Pendentes</span>
+        </button>
+        <button onclick="setFiltroStatus('nao_enviado')" id="side-nao_enviado" class="filter-btn-side">
+            <span class="flex items-center gap-3"><i data-lucide="message-square-off" class="w-4 h-4 text-rose-500"></i> Não Cobrados</span>
+        </button>
+    </div>
+</aside>
+
+<!-- Modal de Confirmação -->
+<div id="modalConfirm" class="modal-overlay" onclick="fecharConfirm()">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-3xl shadow-2xl mx-4" onclick="event.stopPropagation()">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-black mb-2 dark:text-white">Confirma a exclusão?</h3>
+            <p id="confirmDesc" class="text-slate-500 text-sm mb-6 italic">Atenção: Esta ação é definitiva no ambiente STG.</p>
+            <div class="flex gap-3">
+                <button onclick="fecharConfirm()" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Cancelar</button>
+                <button id="btnConfirmarAcao" class="flex-1 py-3 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-500/20">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Importação -->
+<div id="modalImport" class="modal-overlay" onclick="fecharModal()">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-3xl shadow-2xl mx-4" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600"><i data-lucide="file-spreadsheet"></i></div>
+            <h3 class="text-xl font-black dark:text-white uppercase italic">Importar Planilha</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">Colunas esperadas: <b class="text-slate-600 dark:text-slate-200">ID; Nome; Telefone; Valor; Parcelas</b></p>
+        <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center bg-slate-50 dark:bg-slate-850/50">
+            <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
+            <label for="arquivoCSV" class="cursor-pointer group">
+                <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto mb-2 text-slate-300 group-hover:text-blue-500 transition"></i>
+                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Clique para selecionar o CSV</p>
+            </label>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="fecharModal()" class="flex-1 py-3 font-bold text-slate-500">Cancelar</button>
+            <button onclick="processarCSV()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20">Processar</button>
+        </div>
+    </div>
+</div>
+
 <div class="max-w-6xl mx-auto space-y-6">
     <header class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-sm">
         <div class="w-full lg:w-auto text-center lg:text-left">
-            <h1 class="text-2xl font-black tracking-tight dark:text-white uppercase italic">Pool Manager <span class="text-amber-500">STAGING</span></h1>
-            <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-2 bg-slate-100 dark:bg-slate-800 dark:text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold"></select>
+            <div class="flex items-center justify-center lg:justify-start gap-2">
+                <button onclick="toggleDrawer(true)" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-slate-500 hover:text-blue-500 transition mr-2">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h1 class="text-2xl font-black tracking-tight dark:text-white uppercase italic">Pool Manager <span class="text-amber-500">STG</span></h1>
+            </div>
+            <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-2 bg-slate-100 dark:bg-slate-800 dark:text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold cursor-pointer outline-none focus:ring-2 focus:ring-blue-500"></select>
         </div>
         
         <div class="flex flex-wrap justify-center items-center gap-2">
-            <button onclick="exportarExcel()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex hover:bg-emerald-700 transition"><i data-lucide="download" class="w-4 h-4 mr-2"></i> CSV</button>
-            <button onclick="adicionarPessoa()" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold flex hover:bg-blue-700 transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
+            <div class="relative group mr-2">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Buscar participante..." class="bg-slate-100 dark:bg-slate-800 dark:text-white pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none border-none w-40 md:w-64 transition-all">
+            </div>
+
+            <button id="btnApagarMassa" onclick="abrirConfirmMassa()" class="hidden bg-rose-500 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-rose-600 transition shadow-lg shadow-rose-500/20">
+                <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Apagar (<span id="countSelecionados">0</span>)
+            </button>
+
+            <button onclick="abrirModal()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-emerald-700 transition shadow-sm" title="Importar">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Importar
+            </button>
+            <button onclick="adicionarPessoa()" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-blue-700 transition shadow-sm" title="Novo">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo
+            </button>
             <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-yellow-400 border dark:border-slate-700">
                 <i data-lucide="moon" class="dark:hidden"></i><i data-lucide="sun" class="hidden dark:block"></i>
             </button>
@@ -55,33 +168,36 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">Previsão Mês</p>
-            <div class="text-3xl font-black dark:text-white italic text-slate-800">R$ <span id="tGeral">0,00</span></div>
+            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest italic mb-1">Previsão Mês</p>
+            <div class="text-3xl font-black dark:text-white italic">R$ <span id="tGeral">0,00</span></div>
         </div>
-        <div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl">
-            <p class="opacity-70 text-[10px] font-black uppercase italic">Recebido</p>
+        <div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl shadow-emerald-500/20">
+            <p class="opacity-70 text-[10px] font-black uppercase italic mb-1">Confirmado</p>
             <div class="text-3xl font-black italic">R$ <span id="tPago">0,00</span></div>
         </div>
         <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-l-4 border-l-rose-500 shadow-sm">
-            <p class="text-slate-400 text-[10px] font-black uppercase italic">A receber</p>
+            <p class="text-slate-400 text-[10px] font-black uppercase italic mb-1">Pendente</p>
             <div class="text-3xl font-black text-rose-500 italic">R$ <span id="tPend">0,00</span></div>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase">
+                <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     <tr>
-                        <th class="px-6 py-4">Participante</th>
-                        <th class="px-6 py-4 text-center">Valor Base</th>
-                        <th class="px-6 py-4 text-center">Meses de Crédito</th>
-                        <th class="px-6 py-4 text-center">Total Pago Inicial</th>
-                        <th class="px-6 py-4 text-center">A Pagar (Mês)</th>
-                        <th class="px-6 py-4 text-right">Ações</th>
+                        <th class="px-6 py-5 w-10 text-center">
+                            <input type="checkbox" id="checkTodos" onclick="marcarTodos(this.checked)" class="custom-checkbox">
+                        </th>
+                        <th class="px-6 py-5">Participante</th>
+                        <th class="px-6 py-5 text-center">Valor Base</th>
+                        <th class="px-6 py-5 text-center">Crédito</th>
+                        <th class="px-6 py-5 text-center">A Pagar (Mês)</th>
+                        <th class="px-6 py-5 text-center">Status</th>
+                        <th class="px-6 py-5 text-right">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
             </table>
         </div>
     </div>
@@ -99,29 +215,48 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
     const AMBIENTE = "staging";
 
     let mesAtualKey = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
     let dadosLocais = [];
+    let filtroStatus = 'todos';
+    let selecionados = new Set();
+    let idParaApagar = null;
 
-    function iniciar() {
-        if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
-        gerarOpcoesMes();
-        carregarDados();
-        lucide.createIcons();
+    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function iniciar() {
+        try {
+            await auth.signInAnonymously();
+            if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+            gerarOpcoesMes();
+            carregarDados();
+        } catch (e) { showToast("Erro de conexão."); }
+    }
+
+    function toggleDrawer(open) {
+        document.getElementById('drawerFilters').classList.toggle('open', open);
+        document.getElementById('drawerOverlay').classList.toggle('show', open);
     }
 
     function carregarDados() {
-        // Buscamos os participantes na raiz do ambiente para manter histórico de adiantamento global
         db.ref(`${AMBIENTE}/participantes`).on('value', s => {
             const participantes = s.val() || {};
-            // Buscamos o status de pagamento do mês específico
-            db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}`).once('value', sp => {
-                const pagosNoMes = sp.val() || {};
+            db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}`).on('value', sp => {
+                const pagamentosMês = sp.val() || {};
                 dadosLocais = Object.keys(participantes).map(id => ({
                     id,
                     ...participantes[id],
-                    pago: pagosNoMes[id] ? true : false
+                    pago: pagamentosMês[id]?.pago || false,
+                    msgEnviada: pagamentosMês[id]?.msgEnviada || false
                 }));
                 renderizarTabela();
             });
@@ -130,67 +265,84 @@
 
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
+        const busca = document.getElementById('inputPesquisa').value.toLowerCase();
         if(!corpo) return;
         corpo.innerHTML = "";
 
         let tGeral = 0, tPago = 0, tPend = 0;
 
-        dadosLocais.forEach(p => {
+        const processados = dadosLocais.map(p => {
             const valorBase = parseFloat(p.valor) || 50;
-            const mesesCreditoTotal = parseInt(p.mesesAdiantados) || 0;
-            const dataInicio = p.dataAdiantamento ? new Date(p.dataAdiantamento) : null;
-            
-            let mesesRestantes = 0;
-            let aPagarMês = valorBase;
+            const mesesTotal = parseInt(p.mesesAdiantados) || 0;
+            const dataStart = p.dataAdiantamento;
+            let parcelasRestantes = 0, aPagarMês = valorBase, noInic = false;
 
-            if (dataInicio && mesesCreditoTotal > 0) {
-                // Cálculo de quantos meses se passaram desde o início do adiantamento
-                const [m, y] = mesAtualKey.split('-').map(Number);
-                const dataSelecionada = new Date(y, m - 1, 1);
-                const dataInicioReset = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), 1);
-                
-                const diffMeses = (dataSelecionada.getFullYear() - dataInicioReset.getFullYear()) * 12 + (dataSelecionada.getMonth() - dataInicioReset.getMonth());
+            if (dataStart && mesesTotal > 0) {
+                const [mS, yS] = dataStart.split('-').map(Number);
+                const [mV, yV] = mesAtualKey.split('-').map(Number);
+                const diff = (yV - yS) * 12 + (mV - mS);
+                parcelasRestantes = mesesTotal - diff;
 
-                // Lógica de Amortização
-                mesesRestantes = mesesCreditoTotal - diffMeses;
-
-                if (diffMeses === 0) {
-                    // Mês Inicial: Multiplica valor pelo total adiantado
-                    aPagarMês = valorBase * mesesCreditoTotal;
-                } else if (mesesRestantes > 0) {
-                    // Meses seguintes: Fica 0 enquanto houver crédito
-                    aPagarMês = 0;
-                } else {
-                    // Crédito acabou
-                    mesesRestantes = 0;
-                    aPagarMês = valorBase;
-                }
+                if (diff === 0) { aPagarMês = valorBase * mesesTotal; noInic = true; }
+                else if (diff > 0 && diff < mesesTotal) { aPagarMês = 0; }
+                else { parcelasRestantes = 0; aPagarMês = valorBase; }
             }
+            const statusPagoFinal = p.pago || (parcelasRestantes > 0 && aPagarMês === 0);
+            return { ...p, aPagarMês, parcelasRestantes, statusPagoFinal, noInic, valorBase };
+        });
 
-            tGeral += aPagarMês;
-            if (p.pago || (mesesRestantes > 0 && aPagarMês === 0)) tPago += aPagarMês;
-            else tPend += aPagarMês;
+        let filtrados = processados.filter(p => p.nome.toLowerCase().includes(busca));
+        
+        if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.statusPagoFinal);
+        if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.statusPagoFinal);
+        if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
+
+        filtrados.sort((a,b) => a.nome.localeCompare(b.nome));
+
+        filtrados.forEach(p => {
+            tGeral += p.aPagarMês;
+            if (p.statusPagoFinal) tPago += p.aPagarMês; else tPend += p.aPagarMês;
 
             corpo.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition">
-                    <td class="px-6 py-4 font-bold">${p.nome}</td>
-                    <td class="px-6 py-4 text-center">R$ ${valorBase.toFixed(2)}</td>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition border-b border-slate-50 dark:border-slate-800/50">
                     <td class="px-6 py-4 text-center">
-                        <input type="number" value="${mesesRestantes}" 
-                            onblur="setAdiantamento('${p.id}', this.value)" 
-                            class="editable-input w-12 text-center text-blue-500 font-bold">
+                        <input type="checkbox" onchange="toggleSelecionar('${p.id}', this.checked)" ${selecionados.has(p.id) ? 'checked' : ''} class="custom-checkbox">
                     </td>
-                    <td class="px-6 py-4 text-center text-xs text-slate-400">
-                        ${diffMeses === 0 ? '<b>R$ ' + (valorBase * mesesCreditoTotal).toFixed(2) + '</b>' : '---'}
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <input type="text" value="${p.nome}" onblur="editarParticipante('${p.id}', 'nome', this.value)" class="editable-input font-bold dark:text-white w-full">
+                            <input type="text" value="${p.tel || ''}" onblur="editarParticipante('${p.id}', 'tel', this.value)" placeholder="Telefone" class="editable-input text-[10px] text-slate-400 font-bold w-full italic">
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center font-mono text-slate-500">
+                        R$ <input type="number" value="${p.valorBase}" onblur="editarParticipante('${p.id}', 'valor', this.value)" class="editable-input w-12 text-center">
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <input type="number" value="${p.parcelasRestantes > 0 ? p.parcelasRestantes : 0}" 
+                                onblur="setNovoAdiantamento('${p.id}', this.value)" 
+                                class="editable-input w-10 text-center text-blue-600 font-black">
+                        </div>
                     </td>
                     <td class="px-6 py-4 text-center font-black">
-                        ${aPagarMês === 0 ? '<span class="text-emerald-500">CRÉDITO</span>' : 'R$ ' + aPagarMês.toFixed(2)}
+                        <span class="${p.aPagarMês === 0 ? 'text-emerald-500' : 'dark:text-white'}">
+                            ${p.aPagarMês === 0 ? 'CRÉDITO' : 'R$ ' + p.aPagarMês.toFixed(2)}
+                        </span>
                     </td>
-                    <td class="px-6 py-4 text-right space-x-2">
-                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${p.pago || (mesesRestantes > 0 && aPagarMês === 0) ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
-                            ${p.pago || (mesesRestantes > 0 && aPagarMês === 0) ? 'Pago' : 'Pendente'}
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="togglePago('${p.id}', ${p.pago})" 
+                            class="px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all
+                            ${p.statusPagoFinal ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
+                            ${p.statusPagoFinal ? 'Confirmado' : 'Pendente'}
                         </button>
-                        <button onclick="excluir('${p.id}')" class="text-slate-400 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+                    </td>
+                    <td class="px-6 py-4 text-right space-x-1">
+                        <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${p.aPagarMês})" class="p-2 text-slate-400 hover:text-emerald-500 transition">
+                            <i data-lucide="${p.msgEnviada ? 'check-check' : 'send'}" class="w-4 h-4 ${p.msgEnviada ? 'text-blue-500' : ''}"></i>
+                        </button>
+                        <button onclick="abrirConfirmIndividual('${p.id}')" class="p-2 text-slate-300 hover:text-rose-500 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </td>
                 </tr>`;
         });
@@ -198,60 +350,83 @@
         document.getElementById('tGeral').innerText = tGeral.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPago').innerText = tPago.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPend').innerText = tPend.toLocaleString('pt-br',{minimumFractionDigits:2});
-        lucide.createIcons();
+        atualizarUISelecionados();
+        refreshIcons();
     }
 
-    function setAdiantamento(id, qtd) {
-        const num = parseInt(qtd) || 0;
-        if (num <= 0) {
-            db.ref(`${AMBIENTE}/participantes/${id}`).update({ mesesAdiantados: 0, dataAdiantamento: null });
-        } else {
-            // Salva a data do início do adiantamento para poder calcular os meses seguintes
-            const [m, y] = mesAtualKey.split('-').map(Number);
-            const dataRef = new Date(y, m - 1, 1).toISOString();
-            db.ref(`${AMBIENTE}/participantes/${id}`).update({ 
-                mesesAdiantados: num, 
-                dataAdiantamento: dataRef 
-            });
-        }
+    function setFiltroStatus(s) {
+        filtroStatus = s;
+        document.querySelectorAll('.filter-btn-side').forEach(b => b.classList.toggle('active', b.id === `side-${s}`));
+        renderizarTabela();
+        toggleDrawer(false);
     }
 
     function togglePago(id, status) {
-        db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}/${id}`).set(status ? null : true);
-        carregarDados();
+        db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}/${id}/pago`).set(status ? null : true);
     }
 
+    function enviarZap(id, nome, tel, valor) {
+        if (!tel || tel === "55") return showToast("Telefone inválido.");
+        db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}/${id}/msgEnviada`).set(true);
+        const msg = encodeURIComponent(`Olá, ${nome}! Passando para lembrar da parcela.\nValor: R$ ${valor.toFixed(2)}`);
+        window.open(`https://wa.me/${tel}?text=${msg}`);
+    }
+
+    function processarCSV() {
+        const file = document.getElementById('arquivoCSV').files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const linhas = e.target.result.split('\n');
+            const updates = {};
+            linhas.forEach((l, i) => {
+                if (i === 0 || !l.trim()) return;
+                const c = l.split(/[;,]/);
+                const id = c[0]?.trim() || Date.now() + i;
+                updates[id] = { 
+                    nome: c[1]?.trim() || "Sem Nome", 
+                    tel: c[2]?.trim() || "", 
+                    valor: parseFloat(c[3]) || 50, 
+                    mesesAdiantados: parseInt(c[4]) || 0,
+                    dataAdiantamento: (parseInt(c[4]) || 0) > 0 ? mesAtualKey : null
+                };
+            });
+            db.ref(`${AMBIENTE}/participantes`).update(updates).then(() => {
+                fecharModal();
+                showToast("Importado com sucesso!");
+            });
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    function abrirConfirmIndividual(id) { idParaApagar = id; document.getElementById('confirmDesc').innerText = "Deseja apagar este registro do ambiente STG?"; document.getElementById('btnConfirmarAcao').onclick = () => executarExclusao(id); document.getElementById('modalConfirm').classList.add('flex'); }
+    function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); idParaApagar = null; }
+    async function executarExclusao(id) { await db.ref(`${AMBIENTE}/participantes/${id}`).remove(); fecharConfirm(); showToast("Removido."); }
+    async function executarExclusaoMassa() { await Promise.all(Array.from(selecionados).map(id => db.ref(`${AMBIENTE}/participantes/${id}`).remove())); selecionados.clear(); fecharConfirm(); showToast("Exclusão concluída."); }
+    function abrirConfirmMassa() { idParaApagar = "MASSA"; document.getElementById('confirmDesc').innerText = `Deseja apagar os ${selecionados.size} registros selecionados?`; document.getElementById('btnConfirmarAcao').onclick = executarExclusaoMassa; document.getElementById('modalConfirm').classList.add('flex'); }
+    function toggleSelecionar(id, check) { if (check) selecionados.add(id); else selecionados.delete(id); atualizarUISelecionados(); }
+    function marcarTodos(check) { if (check) dadosLocais.forEach(p => selecionados.add(p.id)); else selecionados.clear(); renderizarTabela(); }
+    function atualizarUISelecionados() { const btn = document.getElementById('btnApagarMassa'); document.getElementById('countSelecionados').innerText = selecionados.size; btn.classList.toggle('hidden', selecionados.size === 0); }
+    function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
+    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
+    function validarArquivo(i) { document.getElementById('nomeArquivo').innerText = i.files[0]?.name || "Selecionar arquivo"; }
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
+    function mudarMes(v) { mesAtualKey = v; selecionados.clear(); carregarDados(); }
+    function setNovoAdiantamento(id, qtd) { const n = parseInt(qtd) || 0; db.ref(`${AMBIENTE}/participantes/${id}`).update({ mesesAdiantados: n, dataAdiantamento: n > 0 ? mesAtualKey : null }); }
+    function editarParticipante(id, c, v) { db.ref(`${AMBIENTE}/participantes/${id}/${c}`).set(v); }
+    function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`${AMBIENTE}/participantes/${Date.now()}`).set({ nome: n, valor: 50, mesesAdiantados: 0 }); }
+    function gerarOpcoesMes() { const s = document.getElementById('filtroMes'); s.innerHTML = ""; for(let i=-3; i<=6; i++){ const d=new Date(); d.setMonth(d.getMonth()+i); const k=`${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; const o=document.createElement('option'); o.value=k; o.innerText=d.toLocaleDateString('pt-br',{month:'long',year:'numeric'}); o.selected = k === mesAtualKey; s.appendChild(o); } }
+
     function exportarExcel() {
-        let csv = "Nome;Valor Base;Meses Credito;A Pagar Mês\n";
-        dadosLocais.forEach(p => csv += `${p.nome};${p.valor};${p.mesesAdiantados||0};${p.pago ? 'Sim' : 'Não'}\n`);
+        let csv = "ID;Nome;Telefone;Valor;Parcelas\n";
+        dadosLocais.forEach(p => csv += `${p.id};${p.nome};${p.tel||''};${p.valor};${p.mesesAdiantados}\n`);
         const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `pool_export.csv`;
-        link.click();
+        link.download = `pool_stg_${mesAtualKey}.csv`; link.click();
     }
 
-    function adicionarPessoa() {
-        const n = prompt("Nome:");
-        if(n) db.ref(`${AMBIENTE}/participantes/${Date.now()}`).set({ nome: n, valor: 50, mesesAdiantados: 0 });
-    }
-
-    function excluir(id) { if(confirm("Remover?")) db.ref(`${AMBIENTE}/participantes/${id}`).remove(); }
-    function mudarMes(v) { mesAtualKey = v; carregarDados(); }
-    function gerarOpcoesMes() {
-        const s = document.getElementById('filtroMes');
-        s.innerHTML = "";
-        for(let i=-2; i<=6; i++){
-            const d=new Date(); d.setMonth(d.getMonth()+i);
-            const k=`${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
-            const o=document.createElement('option'); o.value=k; o.innerText=d.toLocaleDateString('pt-br',{month:'long',year:'numeric'});
-            o.selected = k === mesAtualKey;
-            s.appendChild(o);
-        }
-    }
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
-
-    iniciar();
+    window.onload = iniciar;
 </script>
 </body>
 </html>
