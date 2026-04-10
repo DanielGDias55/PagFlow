@@ -318,14 +318,20 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
+    // Lógica para avançar o mês automaticamente no dia 20
+    let dataReferencia = new Date();
+    if (dataReferencia.getDate() >= 20) {
+        dataReferencia.setMonth(dataReferencia.getMonth() + 1);
+    }
+    let mesAtual = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
+    
     let dadosLocais = [];
     let filtroStatus = 'todos';
     let ordemCrescente = true;
     let selecionados = new Set(); // Armazena os IDs para exclusão em massa
     
     let idCliente = new URLSearchParams(window.location.search).get('p');
-    let configGeral = { chavePix: "financeiro@poolpro.com", valorPadrao: 150 };
+    let configGeral = { chavePix: "financeiro@poolpro.com", valorPadrao: 50 };
 
     function iniciar() {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -531,6 +537,20 @@
             };
         }
 
+        // NOVO: Quando acaba o adiantamento, no próximo mês a mensalidade volta para 50 (valor padrão)
+        mes++;
+        if (mes > 12) { mes = 1; ano++; }
+        let mesRetorno = `${String(mes).padStart(2, '0')}-${ano}`;
+        
+        updates[`cobrancas/${mesRetorno}/${id}`] = {
+            nome: user.nome,
+            tel: user.tel || "",
+            valor: configGeral.valorPadrao, // Retorna para 50 automaticamente
+            adiantadas: 0,
+            pago: false,
+            msgEnviada: false
+        };
+
         // Executa atualização em múltiplos caminhos do Firebase (Multi-path update) super rápido
         db.ref().update(updates);
     }
@@ -645,7 +665,28 @@
     function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); }
-    function gerarOpcoesMes() { const s = document.getElementById('filtroMes'); if(!s) return; for(let i = -2; i <= 4; i++) { const d = new Date(); d.setMonth(d.getMonth() + i); const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); } }
+    
+    // Gera as opções do dropdown também considerando o avanço do dia 20
+    function gerarOpcoesMes() { 
+        const s = document.getElementById('filtroMes'); 
+        if(!s) return; 
+        
+        let baseDate = new Date();
+        if (baseDate.getDate() >= 20) {
+            baseDate.setMonth(baseDate.getMonth() + 1);
+        }
+
+        for(let i = -2; i <= 4; i++) { 
+            const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
+            const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
+            const o = document.createElement('option'); 
+            o.value = k; 
+            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
+            o.selected = k === mesAtual; 
+            s.appendChild(o); 
+        } 
+    }
+    
     function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
     function enviarZap(id, n, t, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); const link = window.location.href.split('?')[0] + "?p=" + id; const msg = encodeURIComponent(`Olá, ${n}!\nValor: R$ ${v.toFixed(2)}\nLink: ${link}`); window.open(`https://wa.me/${t}?text=${msg}`); }
     function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
