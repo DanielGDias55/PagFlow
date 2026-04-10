@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STAGING - Pool Manager SaaS Pro</title>
+    <title>Pool Manager SaaS Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@0.474.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
@@ -16,191 +15,268 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { slate: { 850: '#1e293b', 950: '#020617' } }
+                    colors: { 
+                        slate: { 850: '#1e293b', 950: '#020617' },
+                        brand: { 500: '#3b82f6', 600: '#2563eb' }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 20px rgba(59, 130, 246, 0.15)'
+                    }
                 }
             }
         }
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root { --transition-speed: 0.3s; }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            transition: background-color var(--transition-speed) ease; 
+            min-height: 100vh; 
+        }
+
         html.dark { background-color: #020617 !important; }
-        html.dark body { background-color: #020617 !important; color: #f1f5f9 !important; }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; min-height: 100vh; overflow-x: hidden; }
         
-        .editable-input { background: transparent; border: 1px solid transparent; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
-        .editable-input:hover { background: rgba(0,0,0,0.05); border-color: #cbd5e1; }
-        .dark .editable-input:hover { background: rgba(255,255,255,0.1); border-color: #334155; }
-        .editable-input:focus { background: white; border-color: #3b82f6; outline: none; color: #1e293b; }
+        .admin-only, .client-only { display: none; }
+        body.modo-admin .admin-only { display: block; }
+        body.modo-cliente .client-only { display: block; }
+
+        .editable-input { 
+            background: transparent; 
+            border: 1px solid transparent; 
+            padding: 4px 8px; 
+            border-radius: 8px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .editable-input:hover { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); }
+        .dark .editable-input:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+        .editable-input:focus { 
+            background: white; 
+            border-color: #3b82f6; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            color: #1e293b; 
+        }
         .dark .editable-input:focus { background: #0f172a; color: white !important; }
-        
-        .modal-overlay { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
-        .modal-overlay.flex { display: flex; }
-        
-        #toast { position: fixed; bottom: 20px; right: 20px; z-index: 100; transform: translateY(150%); transition: transform 0.3s ease; }
-        #toast.show { transform: translateY(0); }
 
-        /* Drawer / Gaveta Lateral */
-        #drawerFilters { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; z-index: 60; transition: left 0.3s ease; }
-        #drawerFilters.open { left: 0; }
-        .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 55; }
-        .drawer-overlay.show { display: block; }
+        #modalImport { 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            position: fixed; 
+            inset: 0; 
+            z-index: 100; 
+            background: rgba(2, 6, 23, 0.6); 
+            backdrop-filter: blur(8px); 
+        }
+        #modalImport.flex { display: flex; }
 
-        .filter-btn-side { width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 14px; transition: 0.2s; margin-bottom: 8px; }
-        .filter-btn-side.active { background: #3b82f6; color: white; }
-        .filter-btn-side:not(.active) { background: transparent; color: #64748b; }
-        .dark .filter-btn-side:not(.active) { color: #94a3b8; }
-        .filter-btn-side:not(.active):hover { background: rgba(0,0,0,0.05); }
-        .dark .filter-btn-side:not(.active):hover { background: rgba(255,255,255,0.05); }
+        .filter-btn.active { 
+            background-color: white; 
+            color: #1e293b; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            opacity: 1 !important;
+        }
+        .dark .filter-btn.active { 
+            background-color: #3b82f6 !important; 
+            color: white !important; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
 
-        .custom-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Estilos Refinados da Gaveta */
+        #drawerFiltros {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-10px) scale(0.98);
+            pointer-events: none;
+            transition: 
+                max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.3s ease, 
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                margin 0.3s ease;
+        }
+        #drawerFiltros.aberto {
+            max-height: 800px;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Botão de Toggle Ativo */
+        #btnToggleDrawer.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .dark #btnToggleDrawer.active {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 md:p-8">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10">
 
-<!-- Toast de Notificação -->
-<div id="toast" class="bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold border border-slate-700">
-    <div id="toastIcon"><i data-lucide="info" class="w-5 h-5 text-blue-400"></i></div>
-    <span id="toastMsg">Mensagem</span>
-</div>
-
-<!-- Overlay da Gaveta -->
-<div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer(false)"></div>
-
-<!-- Gaveta Lateral de Filtros -->
-<aside id="drawerFilters" class="bg-white dark:bg-slate-900 shadow-2xl border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col">
-    <div class="flex items-center justify-between mb-8">
-        <h2 class="text-xl font-black uppercase italic tracking-tight">Filtros</h2>
-        <button onclick="toggleDrawer(false)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">
-            <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-    </div>
-
-    <div class="space-y-2 flex-1">
-        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Exibição</p>
-        <button onclick="setFiltroStatus('todos')" id="side-todos" class="filter-btn-side active">
-            <span class="flex items-center gap-3"><i data-lucide="users" class="w-4 h-4"></i> Todos</span>
-        </button>
-        <button onclick="setFiltroStatus('pago')" id="side-pago" class="filter-btn-side">
-            <span class="flex items-center gap-3"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i> Pagos / Créditos</span>
-        </button>
-        <button onclick="setFiltroStatus('pendente')" id="side-pendente" class="filter-btn-side">
-            <span class="flex items-center gap-3"><i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> Pendentes</span>
-        </button>
-        <button onclick="setFiltroStatus('nao_enviado')" id="side-nao_enviado" class="filter-btn-side">
-            <span class="flex items-center gap-3"><i data-lucide="message-square-off" class="w-4 h-4 text-rose-500"></i> Não Cobrados</span>
-        </button>
-    </div>
-</aside>
-
-<!-- Modal de Confirmação -->
-<div id="modalConfirm" class="modal-overlay" onclick="fecharConfirm()">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-3xl shadow-2xl mx-4" onclick="event.stopPropagation()">
-        <div class="text-center">
-            <div class="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+<!-- Modal Importação CSV -->
+<div id="modalImport" onclick="fecharModal()">
+    <div class="glass-card w-full max-w-lg p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="p-4 bg-emerald-500/10 rounded-2xl text-emerald-600">
+                <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
             </div>
-            <h3 class="text-xl font-black mb-2 dark:text-white">Confirma a exclusão?</h3>
-            <p id="confirmDesc" class="text-slate-500 text-sm mb-6 italic">Atenção: Esta ação é definitiva no ambiente STG.</p>
-            <div class="flex gap-3">
-                <button onclick="fecharConfirm()" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Cancelar</button>
-                <button id="btnConfirmarAcao" class="flex-1 py-3 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition shadow-lg shadow-rose-500/20">Confirmar</button>
+            <div>
+                <h3 class="text-xl font-extrabold dark:text-white">Importar Dados</h3>
+                <p class="text-xs text-slate-500 font-medium">Sincronize sua planilha de cobranças rapidamente.</p>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Modal Importação -->
-<div id="modalImport" class="modal-overlay" onclick="fecharModal()">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-3xl shadow-2xl mx-4" onclick="event.stopPropagation()">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600"><i data-lucide="file-spreadsheet"></i></div>
-            <h3 class="text-xl font-black dark:text-white uppercase italic">Importar Planilha</h3>
-        </div>
-        <p class="text-xs text-slate-400 mb-4">Colunas esperadas: <b class="text-slate-600 dark:text-slate-200">ID; Nome; Telefone; Valor; Parcelas</b></p>
-        <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center bg-slate-50 dark:bg-slate-850/50">
+        <div class="group relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center bg-slate-50/50 dark:bg-slate-900/50 hover:border-brand-500 transition-all cursor-pointer">
             <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
-            <label for="arquivoCSV" class="cursor-pointer group">
-                <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto mb-2 text-slate-300 group-hover:text-blue-500 transition"></i>
-                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Clique para selecionar o CSV</p>
+            <label for="arquivoCSV" class="cursor-pointer">
+                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
+                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Arraste ou selecione o arquivo CSV</p>
+                <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">Colunas: ID, Nome, Tel, Valor, Adiantadas, Status</p>
             </label>
         </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="fecharModal()" class="flex-1 py-3 font-bold text-slate-500">Cancelar</button>
-            <button onclick="processarCSV()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20">Processar</button>
+
+        <div class="flex gap-4 mt-8">
+            <button onclick="fecharModal()" class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Voltar</button>
+            <button onclick="processarCSV()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Importar Agora</button>
         </div>
     </div>
 </div>
 
 <div class="max-w-6xl mx-auto space-y-6">
-    <header class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-sm">
-        <div class="w-full lg:w-auto text-center lg:text-left">
-            <div class="flex items-center justify-center lg:justify-start gap-2">
-                <button onclick="toggleDrawer(true)" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-slate-500 hover:text-blue-500 transition mr-2">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-                <h1 class="text-2xl font-black tracking-tight dark:text-white uppercase italic">Pool Manager <span class="text-amber-500">STG</span></h1>
-            </div>
-            <select id="filtroMes" onchange="mudarMes(this.value)" class="mt-2 bg-slate-100 dark:bg-slate-800 dark:text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold cursor-pointer outline-none focus:ring-2 focus:ring-blue-500"></select>
-        </div>
+    
+    <!-- ADMIN VIEW -->
+    <div class="admin-only space-y-6">
         
-        <div class="flex flex-wrap justify-center items-center gap-2">
-            <div class="relative group mr-2">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Buscar participante..." class="bg-slate-100 dark:bg-slate-800 dark:text-white pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none border-none w-40 md:w-64 transition-all">
+        <!-- Header Principal -->
+        <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center shadow-soft">
+            <div class="flex items-center gap-4">
+                <div class="bg-brand-500 p-3 rounded-2xl shadow-glow">
+                    <i data-lucide="layers" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
+                    <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.2</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="btnToggleDrawer" onclick="toggleDrawer()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 shadow-sm border border-transparent">
+                    <i data-lucide="filter" class="w-4 h-4"></i> <span class="hidden sm:inline">Painel de Filtros</span>
+                </button>
+                <button onclick="adicionarPessoa()" class="bg-brand-600 text-white p-2.5 sm:px-5 sm:py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 shadow-lg shadow-brand-500/20 transition active:scale-95">
+                    <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">Novo</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-400 dark:text-yellow-400 border border-slate-100 dark:border-slate-700 shadow-soft">
+                    <i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Gaveta de Filtros e Opções (Oculta por padrão) -->
+        <div id="drawerFiltros" class="glass-card rounded-[2rem] p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                
+                <!-- Busca -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
+                    <div class="relative group">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                        <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Nome ou telefone..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Mês -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês de Referência</label>
+                    <select id="filtroMes" onchange="mudarMes(this.value)" class="w-full bg-white dark:bg-slate-950 dark:text-white px-4 py-3 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm cursor-pointer"></select>
+                </div>
+
+                <!-- Status -->
+                <div class="space-y-2 lg:col-span-2">
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
+                    <div class="bg-white dark:bg-slate-950 p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900">
+                        <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-50">Todos</button>
+                        <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all">Pendentes</button>
+                        <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all">Pagos</button>
+                        <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-rose-500">Não Cobrados</button>
+                    </div>
+                </div>
+
+                <!-- Ações Extra -->
+                <div class="lg:col-span-4 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button onclick="abrirModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
+                        <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
+                    </button>
+                    <button onclick="exportarExcel()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-500/10 text-brand-600 font-bold text-[10px] uppercase tracking-widest hover:bg-brand-500/20 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i> Baixar Relatório (CSV)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card p-8 rounded-[2rem] shadow-soft relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/5 rounded-full transition-transform group-hover:scale-150"></div>
+                <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-2 italic">Volume Projetado</p>
+                <div class="text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral">0,00</span></div>
+            </div>
+            
+            <div class="bg-brand-600 p-8 rounded-[2rem] text-white shadow-xl shadow-brand-500/25 relative overflow-hidden group">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full transition-transform group-hover:scale-150"></div>
+                <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-2 italic text-white">Total Recebido</p>
+                <div class="text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago">0,00</span></div>
             </div>
 
-            <button id="btnApagarMassa" onclick="abrirConfirmMassa()" class="hidden bg-rose-500 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-rose-600 transition shadow-lg shadow-rose-500/20">
-                <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Apagar (<span id="countSelecionados">0</span>)
-            </button>
+            <div class="glass-card p-8 rounded-[2rem] border-l-8 border-l-rose-500 shadow-soft relative overflow-hidden">
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 italic">Aguardando Pagamento</p>
+                <div class="text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend">0,00</span></div>
+            </div>
+        </div>
 
-            <button onclick="abrirModal()" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-emerald-700 transition shadow-sm" title="Importar">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Importar
-            </button>
-            <button onclick="adicionarPessoa()" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center hover:bg-blue-700 transition shadow-sm" title="Novo">
-                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo
-            </button>
-            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-yellow-400 border dark:border-slate-700">
-                <i data-lucide="moon" class="dark:hidden"></i><i data-lucide="sun" class="hidden dark:block"></i>
-            </button>
-        </div>
-    </header>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest italic mb-1">Previsão Mês</p>
-            <div class="text-3xl font-black dark:text-white italic">R$ <span id="tGeral">0,00</span></div>
-        </div>
-        <div class="bg-emerald-500 p-6 rounded-2xl text-white shadow-xl shadow-emerald-500/20">
-            <p class="opacity-70 text-[10px] font-black uppercase italic mb-1">Confirmado</p>
-            <div class="text-3xl font-black italic">R$ <span id="tPago">0,00</span></div>
-        </div>
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-l-4 border-l-rose-500 shadow-sm">
-            <p class="text-slate-400 text-[10px] font-black uppercase italic mb-1">Pendente</p>
-            <div class="text-3xl font-black text-rose-500 italic">R$ <span id="tPend">0,00</span></div>
+        <!-- Tabela -->
+        <div class="glass-card rounded-[2rem] overflow-hidden shadow-soft">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                        <tr>
+                            <th class="px-8 py-5 cursor-pointer hover:text-brand-500 transition flex items-center gap-2" onclick="toggleOrdemAlfabetica()">
+                                Participante <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
+                            </th>
+                            <th class="px-8 py-5 text-center">Mensalidade</th>
+                            <th class="px-8 py-5 text-center">Adiantadas</th>
+                            <th class="px-8 py-5 text-center">Status</th>
+                            <th class="px-8 py-5 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    <tr>
-                        <th class="px-6 py-5 w-10 text-center">
-                            <input type="checkbox" id="checkTodos" onclick="marcarTodos(this.checked)" class="custom-checkbox">
-                        </th>
-                        <th class="px-6 py-5">Participante</th>
-                        <th class="px-6 py-5 text-center">Valor Base</th>
-                        <th class="px-6 py-5 text-center">Crédito</th>
-                        <th class="px-6 py-5 text-center">A Pagar (Mês)</th>
-                        <th class="px-6 py-5 text-center">Status</th>
-                        <th class="px-6 py-5 text-right">Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
-            </table>
-        </div>
-    </div>
+    <!-- CLIENT PORTAL -->
+    <div class="client-only max-w-lg mx-auto py-10" id="portalCliente"></div>
 </div>
 
 <script>
@@ -210,223 +286,231 @@
         databaseURL: "https://pool-e439a-default-rtdb.firebaseio.com",
         projectId: "pool-e439a",
         storageBucket: "pool-e439a.firebasestorage.app",
+        messagingSenderId: "94463318724",
         appId: "1:94463318724:web:05208de1c8a9cbfd014791"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
-    const AMBIENTE = "staging";
 
-    let mesAtualKey = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
+    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
     let dadosLocais = [];
     let filtroStatus = 'todos';
-    let selecionados = new Set();
-    let idParaApagar = null;
+    let ordemCrescente = true;
+    let idCliente = new URLSearchParams(window.location.search).get('p');
+    let configGeral = { chavePix: "financeiro@poolpro.com", valorPadrao: 150 };
 
-    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
-
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        document.getElementById('toastMsg').innerText = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+    function iniciar() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+        db.ref('configuracoes').on('value', s => { configGeral = s.val() || configGeral; });
+        gerarOpcoesMes();
+        if (idCliente) { carregarPortalCliente(); document.body.className = "modo-cliente"; }
+        else { carregarDadosAdmin(); document.body.className = "modo-admin"; }
+        lucide.createIcons();
     }
 
-    async function iniciar() {
-        try {
-            await auth.signInAnonymously();
-            if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
-            gerarOpcoesMes();
-            carregarDados();
-        } catch (e) { showToast("Erro de conexão."); }
+    function toggleDrawer() {
+        const drawer = document.getElementById('drawerFiltros');
+        const btn = document.getElementById('btnToggleDrawer');
+        drawer.classList.toggle('aberto');
+        btn.classList.toggle('active');
+        
+        // Atualiza o texto do botão se necessário
+        const span = btn.querySelector('span');
+        if (span) {
+            span.innerText = drawer.classList.contains('aberto') ? 'Fechar Filtros' : 'Painel de Filtros';
+        }
     }
 
-    function toggleDrawer(open) {
-        document.getElementById('drawerFilters').classList.toggle('open', open);
-        document.getElementById('drawerOverlay').classList.toggle('show', open);
-    }
-
-    function carregarDados() {
-        db.ref(`${AMBIENTE}/participantes`).on('value', s => {
-            const participantes = s.val() || {};
-            db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}`).on('value', sp => {
-                const pagamentosMês = sp.val() || {};
-                dadosLocais = Object.keys(participantes).map(id => ({
-                    id,
-                    ...participantes[id],
-                    pago: pagamentosMês[id]?.pago || false,
-                    msgEnviada: pagamentosMês[id]?.msgEnviada || false
-                }));
-                renderizarTabela();
-            });
+    function carregarDadosAdmin() {
+        db.ref(`cobrancas/${mesAtual}`).on('value', s => {
+            const dados = s.val() || {};
+            dadosLocais = Object.keys(dados).map(id => ({ id, ...dados[id] }));
+            renderizarTabela();
         });
     }
 
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
-        const busca = document.getElementById('inputPesquisa').value.toLowerCase();
+        const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
         if(!corpo) return;
-        corpo.innerHTML = "";
 
-        let tGeral = 0, tPago = 0, tPend = 0;
-
-        const processados = dadosLocais.map(p => {
-            const valorBase = parseFloat(p.valor) || 50;
-            const mesesTotal = parseInt(p.mesesAdiantados) || 0;
-            const dataStart = p.dataAdiantamento;
-            let parcelasRestantes = 0, aPagarMês = valorBase, noInic = false;
-
-            if (dataStart && mesesTotal > 0) {
-                const [mS, yS] = dataStart.split('-').map(Number);
-                const [mV, yV] = mesAtualKey.split('-').map(Number);
-                const diff = (yV - yS) * 12 + (mV - mS);
-                parcelasRestantes = mesesTotal - diff;
-
-                if (diff === 0) { aPagarMês = valorBase * mesesTotal; noInic = true; }
-                else if (diff > 0 && diff < mesesTotal) { aPagarMês = 0; }
-                else { parcelasRestantes = 0; aPagarMês = valorBase; }
-            }
-            const statusPagoFinal = p.pago || (parcelasRestantes > 0 && aPagarMês === 0);
-            return { ...p, aPagarMês, parcelasRestantes, statusPagoFinal, noInic, valorBase };
-        });
-
-        let filtrados = processados.filter(p => p.nome.toLowerCase().includes(busca));
-        
-        if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.statusPagoFinal);
-        if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.statusPagoFinal);
+        let filtrados = [...dadosLocais];
+        if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.pago);
+        if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.pago);
         if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
 
-        filtrados.sort((a,b) => a.nome.localeCompare(b.nome));
+        if (termoBusca) {
+            filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(termoBusca) || (p.tel && p.tel.includes(termoBusca)));
+        }
+
+        filtrados.sort((a,b) => ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
+
+        corpo.innerHTML = "";
+        let t = 0, pg = 0, pd = 0;
 
         filtrados.forEach(p => {
-            tGeral += p.aPagarMês;
-            if (p.statusPagoFinal) tPago += p.aPagarMês; else tPend += p.aPagarMês;
-
+            const val = parseFloat(p.valor) || 0;
+            const adiantadas = p.adiantadas || 0;
+            t += val; if(p.pago) pg += val; else pd += val;
+            const msgIcone = p.msgEnviada ? 'check-circle-2' : 'send';
+            const msgEstilo = p.msgEnviada ? 'text-blue-500' : 'text-slate-300 hover:text-brand-500';
+            
             corpo.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition border-b border-slate-50 dark:border-slate-800/50">
-                    <td class="px-6 py-4 text-center">
-                        <input type="checkbox" onchange="toggleSelecionar('${p.id}', this.checked)" ${selecionados.has(p.id) ? 'checked' : ''} class="custom-checkbox">
-                    </td>
-                    <td class="px-6 py-4">
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group">
+                    <td class="px-8 py-5">
                         <div class="flex flex-col">
-                            <input type="text" value="${p.nome}" onblur="editarParticipante('${p.id}', 'nome', this.value)" class="editable-input font-bold dark:text-white w-full">
-                            <input type="text" value="${p.tel || ''}" onblur="editarParticipante('${p.id}', 'tel', this.value)" placeholder="Telefone" class="editable-input text-[10px] text-slate-400 font-bold w-full italic">
+                            <div class="flex items-center gap-2">
+                                <input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white w-full text-sm">
+                                ${adiantadas > 0 ? `<span class="bg-brand-100 text-brand-600 text-[9px] px-2 py-0.5 rounded-full font-extrabold">+${adiantadas}</span>` : ''}
+                            </div>
+                            <input type="text" value="${p.tel || ''}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-[10px] text-slate-400 font-bold w-full -mt-1">
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-center font-mono text-slate-500">
-                        R$ <input type="number" value="${p.valorBase}" onblur="editarParticipante('${p.id}', 'valor', this.value)" class="editable-input w-12 text-center">
-                    </td>
-                    <td class="px-6 py-4 text-center">
+                    <td class="px-8 py-5 text-center font-bold dark:text-white text-sm">
                         <div class="flex items-center justify-center gap-1">
-                            <input type="number" value="${p.parcelasRestantes > 0 ? p.parcelasRestantes : 0}" 
-                                onblur="setNovoAdiantamento('${p.id}', this.value)" 
-                                class="editable-input w-10 text-center text-blue-600 font-black">
+                            <span class="text-[10px] text-slate-400">R$</span>
+                            <input type="number" step="0.01" value="${val.toFixed(2)}" onblur="editar('${p.id}','valor',this.value)" class="editable-input w-20 text-center font-bold">
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-center font-black">
-                        <span class="${p.aPagarMês === 0 ? 'text-emerald-500' : 'dark:text-white'}">
-                            ${p.aPagarMês === 0 ? 'CRÉDITO' : 'R$ ' + p.aPagarMês.toFixed(2)}
-                        </span>
+                    <td class="px-8 py-5 text-center">
+                        <input type="number" value="${adiantadas}" onblur="editar('${p.id}','adiantadas',parseInt(this.value || 0))" class="editable-input w-12 text-center font-bold text-brand-500 bg-brand-50 dark:bg-brand-900/10">
                     </td>
-                    <td class="px-6 py-4 text-center">
-                        <button onclick="togglePago('${p.id}', ${p.pago})" 
-                            class="px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all
-                            ${p.statusPagoFinal ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
-                            ${p.statusPagoFinal ? 'Confirmado' : 'Pendente'}
+                    <td class="px-8 py-5 text-center">
+                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-4 py-1.5 rounded-full text-[9px] font-extrabold uppercase transition-all transform active:scale-95 ${p.pago ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/20'}">
+                            ${p.pago ? 'Pago' : 'Pendente'}
                         </button>
                     </td>
-                    <td class="px-6 py-4 text-right space-x-1">
-                        <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${p.aPagarMês})" class="p-2 text-slate-400 hover:text-emerald-500 transition">
-                            <i data-lucide="${p.msgEnviada ? 'check-check' : 'send'}" class="w-4 h-4 ${p.msgEnviada ? 'text-blue-500' : ''}"></i>
-                        </button>
-                        <button onclick="abrirConfirmIndividual('${p.id}')" class="p-2 text-slate-300 hover:text-rose-500 transition">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                    <td class="px-8 py-5 text-right">
+                        <div class="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition">
+                            <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${val})" class="p-2.5 ${msgEstilo}" title="Cobrar"><i data-lucide="${msgIcone}" class="w-4 h-4"></i></button>
+                            ${p.comprovante ? `<button onclick="verFoto('${p.comprovante}')" class="p-2.5 text-brand-500"><i data-lucide="image" class="w-4 h-4"></i></button>` : ''}
+                            <button onclick="excluir('${p.id}')" class="p-2.5 text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
                     </td>
                 </tr>`;
         });
 
-        document.getElementById('tGeral').innerText = tGeral.toLocaleString('pt-br',{minimumFractionDigits:2});
-        document.getElementById('tPago').innerText = tPago.toLocaleString('pt-br',{minimumFractionDigits:2});
-        document.getElementById('tPend').innerText = tPend.toLocaleString('pt-br',{minimumFractionDigits:2});
-        atualizarUISelecionados();
-        refreshIcons();
+        document.getElementById('tGeral').innerText = t.toLocaleString('pt-br',{minimumFractionDigits:2});
+        document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
+        document.getElementById('tPend').innerText = pd.toLocaleString('pt-br',{minimumFractionDigits:2});
+        lucide.createIcons();
     }
 
-    function setFiltroStatus(s) {
-        filtroStatus = s;
-        document.querySelectorAll('.filter-btn-side').forEach(b => b.classList.toggle('active', b.id === `side-${s}`));
-        renderizarTabela();
-        toggleDrawer(false);
+    function setFiltroStatus(s) { 
+        filtroStatus = s; 
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.toggle('active', b.id === `btn-${s}`);
+            b.classList.toggle('opacity-40', b.id !== `btn-${s}`);
+        }); 
+        renderizarTabela(); 
     }
 
-    function togglePago(id, status) {
-        db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}/${id}/pago`).set(status ? null : true);
+    function carregarPortalCliente() {
+        db.ref(`cobrancas/${mesAtual}/${idCliente}`).on('value', s => {
+            const p = s.val();
+            const portal = document.getElementById('portalCliente');
+            if(!p) {
+                portal.innerHTML = `<div class="text-center p-10 glass-card rounded-3xl font-bold">Cobrança não encontrada ou expirada.</div>`;
+                return;
+            }
+            const val = parseFloat(p.valor) || 0;
+            portal.innerHTML = `
+                <div class="glass-card p-10 rounded-[3rem] shadow-2xl text-center space-y-8 border-b-8 border-b-brand-500">
+                    <div class="w-20 h-20 bg-brand-500 text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-glow">
+                        <i data-lucide="wallet" class="w-10 h-10"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black dark:text-white italic">Olá, ${p.nome}!</h2>
+                        <p class="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest">Resumo da sua mensalidade</p>
+                    </div>
+                    <div class="py-10 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] shadow-inner border border-slate-100 dark:border-slate-800">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Total</p>
+                        <div class="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</div>
+                        ${p.pago ? `<div class="mt-4 inline-flex items-center gap-2 text-emerald-500 font-extrabold uppercase text-[10px] bg-emerald-100 dark:bg-emerald-900/20 px-4 py-1 rounded-full"><i data-lucide="check-circle" class="w-3 h-3"></i> Pagamento Confirmado</div>` : `<div class="mt-4 inline-flex items-center gap-2 text-amber-500 font-extrabold uppercase text-[10px] bg-amber-100 dark:bg-amber-900/20 px-4 py-1 rounded-full">Aguardando Pagamento</div>`}
+                    </div>
+                    <div class="space-y-4">
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Chave PIX para pagamento</p>
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-dashed border-brand-200 dark:border-brand-900 flex items-center justify-between">
+                            <span class="font-mono font-bold text-sm truncate pr-4 text-brand-600">${configGeral.chavePix}</span>
+                            <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    ${!p.pago ? `<div class="pt-6"><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Já pagou? Envie o comprovante</label><input type="file" id="compFile" class="hidden" onchange="uploadComp(this)"><label for="compFile" class="w-full py-5 bg-brand-600 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95"><i data-lucide="camera" class="w-5 h-5"></i> Enviar Comprovante</label></div>` : ''}
+                </div>`;
+            lucide.createIcons();
+        });
     }
 
-    function enviarZap(id, nome, tel, valor) {
-        if (!tel || tel === "55") return showToast("Telefone inválido.");
-        db.ref(`${AMBIENTE}/pagamentos/${mesAtualKey}/${id}/msgEnviada`).set(true);
-        const msg = encodeURIComponent(`Olá, ${nome}! Passando para lembrar da parcela.\nValor: R$ ${valor.toFixed(2)}`);
-        window.open(`https://wa.me/${tel}?text=${msg}`);
+    function exportarExcel() {
+        if (dadosLocais.length === 0) return;
+        let csv = "ID;Nome;Telefone;Valor;Adiantadas;Status\n";
+        dadosLocais.forEach(p => { 
+            const status = p.pago ? 'Pago' : 'Pendente';
+            csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${status}\n`; 
+        });
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `pool_manager_${mesAtual}.csv`;
+        link.click();
     }
 
     function processarCSV() {
-        const file = document.getElementById('arquivoCSV').files[0];
+        const fileInput = document.getElementById('arquivoCSV');
+        const file = fileInput.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = function(e) {
             const linhas = e.target.result.split('\n');
             const updates = {};
-            linhas.forEach((l, i) => {
-                if (i === 0 || !l.trim()) return;
-                const c = l.split(/[;,]/);
-                const id = c[0]?.trim() || Date.now() + i;
-                updates[id] = { 
-                    nome: c[1]?.trim() || "Sem Nome", 
-                    tel: c[2]?.trim() || "", 
-                    valor: parseFloat(c[3]) || 50, 
-                    mesesAdiantados: parseInt(c[4]) || 0,
-                    dataAdiantamento: (parseInt(c[4]) || 0) > 0 ? mesAtualKey : null
-                };
+            linhas.forEach((linha, i) => {
+                if (i === 0 || !linha.trim()) return;
+                let cols = linha.split(/[;,]/);
+                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : (Date.now() + i); 
+                updates[id] = { nome: cols[1]?.trim() || "Sem Nome", tel: cols[2]?.trim() || "", valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : configGeral.valorPadrao, adiantadas: cols[4] ? parseInt(cols[4]) : 0, pago: cols[5]?.trim() === "Pago", msgEnviada: false };
             });
-            db.ref(`${AMBIENTE}/participantes`).update(updates).then(() => {
-                fecharModal();
-                showToast("Importado com sucesso!");
-            });
+            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => fecharModal());
         };
         reader.readAsText(file, 'UTF-8');
     }
 
-    function abrirConfirmIndividual(id) { idParaApagar = id; document.getElementById('confirmDesc').innerText = "Deseja apagar este registro do ambiente STG?"; document.getElementById('btnConfirmarAcao').onclick = () => executarExclusao(id); document.getElementById('modalConfirm').classList.add('flex'); }
-    function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); idParaApagar = null; }
-    async function executarExclusao(id) { await db.ref(`${AMBIENTE}/participantes/${id}`).remove(); fecharConfirm(); showToast("Removido."); }
-    async function executarExclusaoMassa() { await Promise.all(Array.from(selecionados).map(id => db.ref(`${AMBIENTE}/participantes/${id}`).remove())); selecionados.clear(); fecharConfirm(); showToast("Exclusão concluída."); }
-    function abrirConfirmMassa() { idParaApagar = "MASSA"; document.getElementById('confirmDesc').innerText = `Deseja apagar os ${selecionados.size} registros selecionados?`; document.getElementById('btnConfirmarAcao').onclick = executarExclusaoMassa; document.getElementById('modalConfirm').classList.add('flex'); }
-    function toggleSelecionar(id, check) { if (check) selecionados.add(id); else selecionados.delete(id); atualizarUISelecionados(); }
-    function marcarTodos(check) { if (check) dadosLocais.forEach(p => selecionados.add(p.id)); else selecionados.clear(); renderizarTabela(); }
-    function atualizarUISelecionados() { const btn = document.getElementById('btnApagarMassa'); document.getElementById('countSelecionados').innerText = selecionados.size; btn.classList.toggle('hidden', selecionados.size === 0); }
-    function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
-    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
-    function validarArquivo(i) { document.getElementById('nomeArquivo').innerText = i.files[0]?.name || "Selecionar arquivo"; }
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
-    function mudarMes(v) { mesAtualKey = v; selecionados.clear(); carregarDados(); }
-    function setNovoAdiantamento(id, qtd) { const n = parseInt(qtd) || 0; db.ref(`${AMBIENTE}/participantes/${id}`).update({ mesesAdiantados: n, dataAdiantamento: n > 0 ? mesAtualKey : null }); }
-    function editarParticipante(id, c, v) { db.ref(`${AMBIENTE}/participantes/${id}/${c}`).set(v); }
-    function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`${AMBIENTE}/participantes/${Date.now()}`).set({ nome: n, valor: 50, mesesAdiantados: 0 }); }
-    function gerarOpcoesMes() { const s = document.getElementById('filtroMes'); s.innerHTML = ""; for(let i=-3; i<=6; i++){ const d=new Date(); d.setMonth(d.getMonth()+i); const k=`${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; const o=document.createElement('option'); o.value=k; o.innerText=d.toLocaleDateString('pt-br',{month:'long',year:'numeric'}); o.selected = k === mesAtualKey; s.appendChild(o); } }
-
-    function exportarExcel() {
-        let csv = "ID;Nome;Telefone;Valor;Parcelas\n";
-        dadosLocais.forEach(p => csv += `${p.id};${p.nome};${p.tel||''};${p.valor};${p.mesesAdiantados}\n`);
-        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `pool_stg_${mesAtualKey}.csv`; link.click();
+    function copiarPix(txt) {
+        const temp = document.createElement("input");
+        document.body.appendChild(temp); temp.value = txt; temp.select();
+        document.execCommand("copy"); document.body.removeChild(temp);
+        const msg = document.createElement('div');
+        msg.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 animate-bounce text-sm";
+        msg.innerText = "Chave copiada!"; document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 2000);
     }
 
-    window.onload = iniciar;
+    function uploadComp(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            db.ref(`cobrancas/${mesAtual}/${idCliente}`).update({ comprovante: e.target.result }).then(() => alert("Comprovante enviado!"));
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
+    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
+    function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
+    function editar(id, c, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }); }
+    function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
+    function excluir(id) { if(confirm("Deseja apagar?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
+    function mudarMes(v) { mesAtual = v; carregarDadosAdmin(); }
+    function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
+    function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); }
+    function gerarOpcoesMes() { const s = document.getElementById('filtroMes'); if(!s) return; for(let i = -2; i <= 4; i++) { const d = new Date(); d.setMonth(d.getMonth() + i); const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); } }
+    function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
+    function enviarZap(id, n, t, v) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); const link = window.location.href.split('?')[0] + "?p=" + id; const msg = encodeURIComponent(`Olá, ${n}!\nValor: R$ ${v.toFixed(2)}\nLink: ${link}`); window.open(`https://wa.me/${t}?text=${msg}`); }
+    function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
+
+    iniciar();
 </script>
 </body>
 </html>
