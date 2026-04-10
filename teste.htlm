@@ -123,7 +123,7 @@
     async function verificarResetMensal() {
         const hoje = new Date();
         // MUDADO PARA TESTE: Se hoje for maior ou igual ao dia 1
-        if (hoje.getDate() >= 1) { 
+        if (hoje.getDate() >= 10) { 
             const prox = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
             const keyProx = `${String(prox.getMonth() + 1).padStart(2, '0')}-${prox.getFullYear()}`;
             
