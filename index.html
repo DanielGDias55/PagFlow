@@ -1,93 +1,320 @@
-// --- FUNÇÕES DE FILTRO E ORDENAÇÃO ---
-
-function setFiltroStatus(status) {
-    filtroStatus = status;
+<!DOCTYPE html>
+<html lang="pt-br" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pool Manager SaaS Pro</title>
     
-    // Atualiza a aparência dos botões
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.getElementById(`btn-${status}`).classList.add('active');
-    
-    renderizarTabela();
-}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
-function toggleOrdemAlfabetica() {
-    ordemCrescente = !ordemCrescente;
-    renderizarTabela();
-}
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { 
+                        slate: { 850: '#1e293b', 950: '#020617' },
+                        brand: { 500: '#3b82f6', 600: '#2563eb' }
+                    }
+                }
+            }
+        }
+    </script>
 
-// --- AÇÕES EM MASSA (BULK ACTIONS) ---
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; padding-bottom: 6rem; }
+        html.dark { background-color: #020617 !important; }
+        .admin-only, .client-only { display: none; }
+        body.modo-admin .admin-only { display: block; }
+        .editable-input { background: transparent; border: 1px solid transparent; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
+        .editable-input:hover { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); }
+        .dark .editable-input:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+        .editable-input:focus { background: white; border-color: #3b82f6; outline: none; color: #1e293b; }
+        .dark .editable-input:focus { background: #0f172a; color: white !important; }
+        #modalImport { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.6); backdrop-filter: blur(8px); }
+        #modalImport.flex { display: flex; }
+        .filter-btn.active { background-color: white !important; color: #1e293b !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 1 !important; }
+        .dark .filter-btn.active { background-color: #3b82f6 !important; color: white !important; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .dark .glass-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); }
+        #drawerWrapper { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; }
+        #drawerWrapper.aberto { max-height: 800px; opacity: 1; margin-top: 1.5rem; }
+        .check-custom { accent-color: #3b82f6; width: 1.125rem; height: 1.125rem; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10" onload="iniciar()">
 
-function toggleRowSelection(id) {
-    if (selecionados.has(id)) {
-        selecionados.delete(id);
-    } else {
-        selecionados.add(id);
+<div id="bulkActionsBar" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-4 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+    <div class="flex items-center gap-3">
+        <div class="bg-brand-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black" id="bulkCount">0</div>
+        <span class="text-sm font-extrabold tracking-wide">Selecionados</span>
+    </div>
+    <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1"></div>
+    <button onclick="excluirSelecionados()" class="bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2">
+        <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
+    </button>
+    <button onclick="clearSelection()" class="text-slate-400 dark:text-slate-500 hover:text-white dark:hover:text-slate-900 px-3 py-2.5 rounded-xl text-sm font-bold">
+        Cancelar
+    </button>
+</div>
+
+<div id="modalImport" onclick="fecharModal()">
+    <div class="glass-card w-full max-w-lg p-8 rounded-[2rem] shadow-2xl mx-4" onclick="event.stopPropagation()">
+        <h3 class="text-xl font-extrabold mb-4">Importar CSV</h3>
+        <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center bg-slate-50/50 dark:bg-slate-900/50">
+            <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
+            <label for="arquivoCSV" class="cursor-pointer">
+                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                <p class="text-sm font-bold" id="nomeArquivo">Clique para selecionar o arquivo</p>
+            </label>
+        </div>
+        <div class="flex gap-4 mt-8">
+            <button onclick="fecharModal()" class="flex-1 py-4 font-bold text-slate-500">Voltar</button>
+            <button onclick="processarCSV()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-bold">Importar Agora</button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="admin-only space-y-6">
+        <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center shadow-soft">
+            <div class="flex items-center gap-4">
+                <div class="bg-brand-500 p-3 rounded-2xl"><i data-lucide="layers" class="text-white w-6 h-6"></i></div>
+                <div><h1 class="text-xl font-black uppercase leading-none">Pool Manager</h1></div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btnToggleDrawer" onclick="toggleDrawer()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 font-bold text-xs flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i> Filtros
+                </button>
+                <button onclick="adicionarPessoa()" class="bg-brand-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Novo
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-soft">
+                    <i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="drawerWrapper">
+            <div class="glass-card rounded-[2rem] p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Pesquisar..." class="bg-white dark:bg-slate-950 px-4 py-3 rounded-2xl text-xs font-semibold outline-none">
+                <select id="filtroMes" onchange="mudarMes(this.value)" class="bg-white dark:bg-slate-950 px-4 py-3 rounded-2xl text-xs font-bold outline-none"></select>
+                <div class="lg:col-span-2 flex bg-white dark:bg-slate-950 p-1 rounded-2xl shadow-sm">
+                    <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase">Todos</button>
+                    <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase">Pendentes</button>
+                    <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase">Pagos</button>
+                    <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase">Não Cobrados</button>
+                </div>
+                <button onclick="abrirModal()" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
+                </button>
+                <button onclick="exportarExcel()" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-500/10 text-brand-600 font-bold text-[10px] uppercase">
+                    <i data-lucide="download" class="w-4 h-4"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2rem] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 dark:bg-slate-900/50 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                        <tr>
+                            <th class="px-6 py-5 w-12 text-center"><input type="checkbox" id="selectAll" onclick="toggleAll(this)" class="check-custom"></th>
+                            <th class="px-4 py-5" onclick="toggleOrdemAlfabetica()">Participante</th>
+                            <th class="px-8 py-5 text-center">Valor</th>
+                            <th class="px-8 py-5 text-center">Adiant.</th>
+                            <th class="px-8 py-5 text-center">Status</th>
+                            <th class="px-8 py-5 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURAÇÃO FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBKuldmBQEuNyEWVZ-0sPW0ItGn8QqPxd8",
+        authDomain: "pool-e439a.firebaseapp.com",
+        databaseURL: "https://pool-e439a-default-rtdb.firebaseio.com",
+        projectId: "pool-e439a",
+        storageBucket: "pool-e439a.firebasestorage.app",
+        messagingSenderId: "94463318724",
+        appId: "1:94463318724:web:05208de1c8a9cbfd014791"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let mesAtual = `${String(new Date().getMonth() + 1).padStart(2, '0')}-${new Date().getFullYear()}`;
+    let dadosLocais = [];
+    let filtroStatus = 'todos';
+    let selecionados = new Set();
+    let ordemCrescente = true;
+
+    function iniciar() {
+        if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+        gerarOpcoesMes();
+        carregarDadosAdmin();
+        lucide.createIcons();
     }
-    renderizarTabela();
-}
 
-function toggleAll(source) {
-    if (source.checked) {
-        dadosLocais.forEach(p => selecionados.add(p.id));
-    } else {
-        selecionados.clear();
+    function gerarOpcoesMes() {
+        const select = document.getElementById('filtroMes');
+        if (!select) return;
+        select.innerHTML = '';
+        const dataLoop = new Date(2024, 0, 1);
+        const dataFim = new Date();
+        dataFim.setFullYear(dataFim.getFullYear() + 3);
+
+        while (dataLoop <= dataFim) {
+            const val = `${String(dataLoop.getMonth() + 1).padStart(2, '0')}-${dataLoop.getFullYear()}`;
+            const option = new Option(dataLoop.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' }), val);
+            if (val === mesAtual) option.selected = true;
+            select.add(option);
+            dataLoop.setMonth(dataLoop.getMonth() + 1);
+        }
     }
-    renderizarTabela();
-}
 
-function clearSelection() {
-    selecionados.clear();
-    const selectAllCheck = document.getElementById('selectAll');
-    if (selectAllCheck) selectAllCheck.checked = false;
-    renderizarTabela();
-}
-
-function updateBulkUI() {
-    const bar = document.getElementById('bulkActionsBar');
-    if (!bar) return;
-
-    if (selecionados.size > 0) {
-        document.getElementById('bulkCount').innerText = selecionados.size;
-        // Mostra a barra
-        bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-        bar.classList.add('translate-y-0', 'opacity-100');
-    } else {
-        // Esconde a barra e limpa classes de visibilidade
-        bar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-        bar.classList.remove('translate-y-0', 'opacity-100');
-    }
-}
-
-function excluirSelecionados() {
-    if (confirm(`Tem certeza que deseja excluir ${selecionados.size} registros?`)) {
-        const promises = [];
-        selecionados.forEach(id => {
-            promises.push(db.ref(`cobrancas/${mesAtual}/${id}`).remove());
-        });
-
-        Promise.all(promises).then(() => {
-            selecionados.clear();
-            alert("Registros excluídos com sucesso!");
+    function carregarDadosAdmin() {
+        db.ref(`cobrancas/${mesAtual}`).on('value', s => {
+            const dados = s.val() || {};
+            dadosLocais = Object.keys(dados).map(id => ({ id, ...dados[id] }));
             renderizarTabela();
         });
     }
-}
 
-// --- EXPORTAÇÃO ---
+    function renderizarTabela() {
+        const corpo = document.getElementById('corpoTabela');
+        const termo = document.getElementById('inputPesquisa').value.toLowerCase();
+        if(!corpo) return;
 
-function exportarExcel() {
-    if (dadosLocais.length === 0) return alert("Não há dados para exportar.");
-    
-    let csv = "ID,Nome,Telefone,Valor,Adiantadas,Status\n";
-    dadosLocais.forEach(p => {
-        csv += `${p.id},${p.nome},${p.tel || ''},${p.valor},${p.adiantadas || 0},${p.pago ? 'Pago' : 'Pendente'}\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `pool_manager_${mesAtual}.csv`);
-    link.click();
-}
+        let filtrados = [...dadosLocais];
+        if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.pago);
+        else if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.pago);
+        else if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
+
+        if (termo) filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(termo));
+        filtrados.sort((a,b) => ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
+
+        corpo.innerHTML = "";
+        filtrados.forEach(p => {
+            corpo.innerHTML += `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
+                    <td class="px-6 py-5 text-center">
+                        <input type="checkbox" class="check-custom row-checkbox" value="${p.id}" ${selecionados.has(p.id) ? 'checked' : ''} onchange="toggleRowSelection('${p.id}')">
+                    </td>
+                    <td class="px-4 py-5 font-bold dark:text-white text-sm">${p.nome}</td>
+                    <td class="px-8 py-5 text-center font-bold">R$ ${(p.valor || 0).toFixed(2)}</td>
+                    <td class="px-8 py-5 text-center">${p.adiantadas || 0}</td>
+                    <td class="px-8 py-5 text-center">
+                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-4 py-1.5 rounded-full text-[9px] font-extrabold uppercase ${p.pago ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">
+                            ${p.pago ? 'Pago' : 'Pendente'}
+                        </button>
+                    </td>
+                    <td class="px-8 py-5 text-right">
+                        <button onclick="excluir('${p.id}')" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`;
+        });
+        updateBulkUI();
+        lucide.createIcons();
+    }
+
+    // --- LOGICA DOS FILTROS (AJUSTADA) ---
+    function setFiltroStatus(status) {
+        filtroStatus = status;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        const btnAtivo = document.getElementById(`btn-${status}`);
+        if(btnAtivo) btnAtivo.classList.add('active');
+        renderizarTabela();
+    }
+
+    // --- LOGICA EM MASSA (AJUSTADA) ---
+    function toggleRowSelection(id) {
+        if (selecionados.has(id)) selecionados.delete(id);
+        else selecionados.add(id);
+        renderizarTabela();
+    }
+
+    function toggleAll(source) {
+        if (source.checked) dadosLocais.forEach(p => selecionados.add(p.id));
+        else selecionados.clear();
+        renderizarTabela();
+    }
+
+    function clearSelection() {
+        selecionados.clear();
+        const mainCheck = document.getElementById('selectAll');
+        if(mainCheck) mainCheck.checked = false;
+        renderizarTabela();
+    }
+
+    function updateBulkUI() {
+        const bar = document.getElementById('bulkActionsBar');
+        if (selecionados.size > 0) {
+            document.getElementById('bulkCount').innerText = selecionados.size;
+            bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            bar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        } else {
+            bar.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            bar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+    }
+
+    function excluirSelecionados() {
+        if (confirm(`Excluir ${selecionados.size} registros?`)) {
+            const updates = {};
+            selecionados.forEach(id => { updates[id] = null; });
+            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
+                selecionados.clear();
+                alert("Excluídos com sucesso!");
+            });
+        }
+    }
+
+    // --- IMPORTAÇÃO SEM RESETAR STATUS ---
+    function processarCSV() {
+        const input = document.getElementById('arquivoCSV');
+        if (!input.files[0]) return;
+        const leitor = new FileReader();
+        leitor.onload = function(e) {
+            const linhas = e.target.result.split('\n');
+            const updates = {};
+            for (let i = 1; i < linhas.length; i++) {
+                const colunas = linhas[i].split(',');
+                const id = colunas[0]?.trim();
+                if (!id) continue;
+                const existente = dadosLocais.find(d => d.id === id);
+                updates[id] = {
+                    nome: colunas[1]?.trim() || "Sem Nome",
+                    tel: colunas[2]?.trim() || "",
+                    valor: parseFloat(colunas[3]) || 50,
+                    adiantadas: parseInt(colunas[4]) || 0,
+                    pago: colunas[5]?.trim().toLowerCase() === 'pago',
+                    msgEnviada: existente ? (existente.msgEnviada || false) : false
+                };
+            }
+            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => { fecharModal(); alert("Importado!"); });
+        };
+        leitor.readAsText(input.files[0]);
+    }
+
+    // --- OUTRAS UTILITARIAS ---
+    function toggleDrawer() { document.getElementById('drawerWrapper').classList.toggle('aberto'); }
+    function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
+    function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
+    function mudarMes(v) { mesAtual = v; db.ref(`cobrancas`).off(); carregarDadosAdmin(); }
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark')?'dark':'light'; }
+    function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({pago: !s}); }
+    function excluir(id) { if(confirm("Excluir?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
+</script>
+</body>
+</html>
