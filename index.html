@@ -711,7 +711,7 @@
         const link = window.location.href.split('?')[0] + "?p=" + id; 
         
         // Adicionando parágrafos com \n\n e a chave PIX
-        const msg = encodeURIComponent(`Olá, ${n}!\n\nA sua mensalidade no valor de R$ ${v.toFixed(2)} já está disponível para pagamento.\nChave PIX: ${configGeral.chavePix}\n\nPor favor, clique no link abaixo para ver os detalhes e anexar o seu comprovativo:\n${link}`); 
+        const msg = encodeURIComponent(`Olá, ${n}!\n\nSeegue o valode da pool desse mês R$ ${v.toFixed(2)} \n\nChave PIX: ${configGeral.chavePix}\n\nColoque a foto do seu comprovante aqui no link:\n${link}`); 
         
         window.open(`https://wa.me/${t}?text=${msg}`); 
     }
