@@ -157,6 +157,25 @@
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-8 relative">
 
 <!-- ========================================== -->
+<!-- COMPONENTES DE SISTEMA (TOASTS & CONFIRMS) -->
+<!-- ========================================== -->
+<div id="toastContainer" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+<div id="modalConfirm" class="modal-overlay" onclick="fecharConfirm()">
+    <div class="glass-card w-full max-w-sm p-6 md:p-8 rounded-[2.5rem] shadow-2xl mx-4 transform transition-all text-center" onclick="event.stopPropagation()">
+        <div id="confirmIcon" class="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-glow">
+            <!-- Icon inserido via JS -->
+        </div>
+        <h3 id="confirmTitle" class="text-xl font-black dark:text-white mb-2"></h3>
+        <p id="confirmMessage" class="text-sm text-slate-500 font-medium mb-8"></p>
+        <div class="flex gap-3">
+            <button onclick="fecharConfirm()" class="flex-1 py-3.5 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
+            <button id="btnConfirmAction" onclick="executarConfirm()" class="flex-1 py-3.5 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
 <!-- 1. TELA DE LOGIN (SaaS)                    -->
 <!-- ========================================== -->
 <div id="loginScreen" class="min-h-[80vh] items-center justify-center">
@@ -721,7 +740,9 @@
                         document.body.classList.remove('estado-login', 'estado-logado');
                     }
                 }, error => {
-                    console.error(error); alert("Erro de segurança. Verifique as regras do BD."); fazerLogout();
+                    console.error(error); 
+                    showToast("Erro de segurança. Verifique as regras do BD.", "error"); 
+                    fazerLogout();
                 });
             } else {
                 adminId = null;
@@ -968,7 +989,7 @@
         const t = document.getElementById('novoTel').value.trim();
         const d = document.getElementById('novoDataEntrada').value;
         
-        if(!n) return alert("Por favor, digite o nome.");
+        if(!n) return showToast("Por favor, digite o nome.", "error");
         
         const targetMes = mesAtual === 'todos' ? mesReal : mesAtual;
 
@@ -984,6 +1005,7 @@
             dataEntrada: d
         }).then(() => {
             fecharModalNovaPessoa();
+            showToast("Registo adicionado com sucesso!");
         });
     }
 
@@ -1034,27 +1056,86 @@
     }
     function clearSelection() { selecionados.clear(); renderizarTabela(); }
     
+    // --- FUNÇÕES GLOBAIS DE UI (TOASTS E CONFIRMS) ---
+    function showToast(msg, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const isSuccess = type === 'success';
+        const bgColor = isSuccess ? 'bg-emerald-500' : 'bg-rose-500';
+        const icon = isSuccess ? 'check-circle' : 'alert-circle';
+        
+        toast.className = `${bgColor} text-white px-5 py-4 rounded-[1.25rem] shadow-2xl flex items-center gap-3 text-sm font-bold transform transition-all duration-300 translate-x-full opacity-0`;
+        toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 shrink-0"></i> <span>${msg}</span>`;
+        
+        container.appendChild(toast);
+        lucide.createIcons();
+        
+        requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    let confirmActionCallback = null;
+    function showConfirm(title, message, confirmText, typeClass, iconLucide, iconBg, callback) {
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMessage').innerText = message;
+        
+        const btn = document.getElementById('btnConfirmAction');
+        btn.innerText = confirmText;
+        btn.className = `flex-1 py-3 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95 ${typeClass}`;
+        
+        const iconDiv = document.getElementById('confirmIcon');
+        iconDiv.className = `w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-glow ${iconBg}`;
+        iconDiv.innerHTML = `<i data-lucide="${iconLucide}" class="w-8 h-8 text-white"></i>`;
+        
+        confirmActionCallback = callback;
+        document.getElementById('modalConfirm').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); confirmActionCallback = null; }
+    function executarConfirm() { if (confirmActionCallback) confirmActionCallback(); fecharConfirm(); }
+
+    // --- AÇÕES COM CONFIRMAÇÕES CUSTOMIZADAS ---
     function arquivarSelecionados(arquivarStatus) {
         if(selecionados.size === 0 || !adminId) return;
         const acao = arquivarStatus ? "arquivar" : "desarquivar";
-        if(confirm(`Tem a certeza que deseja ${acao} ${selecionados.size} registo(s) simultaneamente?`)) {
-            const updates = {};
-            selecionados.forEach(id => { 
-                updates[`cobrancas/${getTargetMes(id)}/${id}/arquivado`] = arquivarStatus; 
-            });
-            db.ref(`tenants/${adminId}`).update(updates).then(() => selecionados.clear());
-        }
+        const btnClass = arquivarStatus ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/30" : "bg-brand-500 hover:bg-brand-600 shadow-brand-500/30";
+        const bgIcoClass = arquivarStatus ? "bg-amber-500" : "bg-brand-500";
+        const ico = arquivarStatus ? "archive" : "archive-restore";
+
+        showConfirm(
+            `${acao.charAt(0).toUpperCase() + acao.slice(1)} ${selecionados.size} registo(s)`,
+            `Tem a certeza que deseja ${acao} os clientes selecionados simultaneamente?`,
+            "Confirmar", btnClass, ico, bgIcoClass,
+            () => {
+                const updates = {};
+                selecionados.forEach(id => { updates[`cobrancas/${getTargetMes(id)}/${id}/arquivado`] = arquivarStatus; });
+                db.ref(`tenants/${adminId}`).update(updates).then(() => {
+                    selecionados.clear();
+                    showToast(`Registos ${acao}dos com sucesso!`);
+                });
+            }
+        );
     }
 
     function excluirSelecionados() {
         if(selecionados.size === 0 || !adminId) return;
-        if(confirm(`Deseja excluir ${selecionados.size} registo(s)?`)) {
-            const updates = {};
-            selecionados.forEach(id => { 
-                updates[`cobrancas/${getTargetMes(id)}/${id}`] = null; 
-            });
-            db.ref(`tenants/${adminId}`).update(updates).then(() => selecionados.clear());
-        }
+        showConfirm(
+            "Excluir em Massa",
+            `Deseja realmente excluir ${selecionados.size} registo(s)? Esta ação não pode ser desfeita.`,
+            "Excluir Todos", "bg-rose-500 hover:bg-rose-600 shadow-rose-500/30", "trash-2", "bg-rose-500",
+            () => {
+                const updates = {};
+                selecionados.forEach(id => { updates[`cobrancas/${getTargetMes(id)}/${id}`] = null; });
+                db.ref(`tenants/${adminId}`).update(updates).then(() => {
+                    selecionados.clear();
+                    showToast("Registos excluídos com sucesso!");
+                });
+            }
+        );
     }
 
     function editar(id, c, v) { 
@@ -1083,9 +1164,39 @@
     }
 
     function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ pago: !s }); }
-    function removerComprovante(id) { if(adminId && confirm("Apagar comprovativo?")) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ comprovante: null, pago: false }); }
-    function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).remove(); }
-    function arquivarPessoa(id, arquivarStatus) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ arquivado: arquivarStatus }); }
+    
+    function removerComprovante(id) { 
+        if(!adminId) return;
+        showConfirm(
+            "Remover Comprovativo",
+            "Deseja apagar este comprovativo e marcar a fatura como pendente novamente?",
+            "Remover", "bg-amber-500 hover:bg-amber-600 shadow-amber-500/30", "image-minus", "bg-amber-500",
+            () => {
+                db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ comprovante: null, pago: false });
+                showToast("Comprovativo removido.");
+            }
+        );
+    }
+
+    function excluir(id) { 
+        if(!adminId) return;
+        showConfirm(
+            "Excluir Registo",
+            "Deseja realmente apagar este registo? Todos os dados deste mês serão perdidos.",
+            "Excluir", "bg-rose-500 hover:bg-rose-600 shadow-rose-500/30", "trash-2", "bg-rose-500",
+            () => {
+                db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).remove();
+                showToast("Registo excluído.");
+            }
+        );
+    }
+    
+    function arquivarPessoa(id, arquivarStatus) { 
+        if(adminId) {
+            db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ arquivado: arquivarStatus });
+            showToast(arquivarStatus ? "Registo arquivado." : "Registo restaurado.");
+        }
+    }
     
     // --- PERFIL DO CLIENTE E HISTÓRICO (Segunda Página) ---
     async function abrirDetalhes(id) {
@@ -1161,7 +1272,7 @@
         const t = document.getElementById('detalhesTel').value.trim();
         const d = document.getElementById('detalhesDataEntrada').value;
         
-        if(!n) return alert("Por favor, digite o nome.");
+        if(!n) return showToast("Por favor, digite o nome.", "error");
 
         const btn = document.getElementById('btnSalvarDetalhes');
         const txtOriginal = btn.innerHTML;
@@ -1175,6 +1286,7 @@
             btn.innerHTML = txtOriginal; 
             btn.classList.remove('opacity-50', 'pointer-events-none');
             fecharDetalhes();
+            showToast("Perfil atualizado com sucesso!");
         });
     }
 
@@ -1249,7 +1361,10 @@
                     dataEntrada: ext.dataEntrada || ""
                 };
             });
-            db.ref(`tenants/${adminId}/cobrancas/${targetMes}`).update(updates).then(() => { fecharModal(); alert("Sucesso!"); });
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}`).update(updates).then(() => { 
+                fecharModal(); 
+                showToast("Dados importados com sucesso!"); 
+            });
         };
         reader.readAsText(file, 'UTF-8');
     }
@@ -1263,53 +1378,53 @@
         if (prevM === 0) { prevM = 12; prevY--; }
         let mesAnterior = `${String(prevM).padStart(2, '0')}-${prevY}`;
 
-        if (!confirm(`Deseja copiar os clientes ativos de [${mesAnterior}] para o ciclo atual [${mesAtual}]?\n\n(Apenas clientes que ainda não existem neste ciclo serão copiados, com status "Pendente" e mensalidade zerada.)`)) return;
+        showConfirm(
+            "Copiar Ciclo Anterior",
+            `Deseja copiar os clientes ativos de [${mesAnterior}] para o ciclo atual [${mesAtual}]?\n\n(Apenas clientes que ainda não existem neste ciclo serão copiados, com status "Pendente")`,
+            "Copiar Clientes", "bg-violet-500 hover:bg-violet-600 shadow-violet-500/30", "copy", "bg-violet-500",
+            async () => {
+                const btn = document.getElementById('btnCopiarCiclo');
+                const txtOriginal = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Copiando...';
+                btn.classList.add('opacity-50', 'pointer-events-none');
+                lucide.createIcons();
 
-        const btn = document.getElementById('btnCopiarCiclo');
-        const txtOriginal = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Copiando...';
-        btn.classList.add('opacity-50', 'pointer-events-none');
-        lucide.createIcons();
+                try {
+                    const snapAtual = await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).once('value');
+                    const dadosAtual = snapAtual.val() || {};
 
-        try {
-            const snapAtual = await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).once('value');
-            const dadosAtual = snapAtual.val() || {};
+                    const snapAnterior = await db.ref(`tenants/${adminId}/cobrancas/${mesAnterior}`).once('value');
+                    const dadosAnterior = snapAnterior.val() || {};
 
-            const snapAnterior = await db.ref(`tenants/${adminId}/cobrancas/${mesAnterior}`).once('value');
-            const dadosAnterior = snapAnterior.val() || {};
+                    const updates = {};
+                    let count = 0;
 
-            const updates = {};
-            let count = 0;
+                    for (const id in dadosAnterior) {
+                        const cliente = dadosAnterior[id];
+                        if (!dadosAtual[id] && !cliente.arquivado) {
+                            updates[id] = {
+                                ...cliente, pago: false, msgEnviada: false, comprovante: null, adiantadas: 0
+                            };
+                            count++;
+                        }
+                    }
 
-            for (const id in dadosAnterior) {
-                const cliente = dadosAnterior[id];
-                // Ignora quem já está no mês atual ou quem estava arquivado
-                if (!dadosAtual[id] && !cliente.arquivado) {
-                    updates[id] = {
-                        ...cliente,
-                        pago: false,
-                        msgEnviada: false,
-                        comprovante: null,
-                        adiantadas: 0 // Zera adiantadas pois é um novo mês
-                    };
-                    count++;
+                    if (count > 0) {
+                        await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates);
+                        showToast(`${count} cliente(s) importado(s) do ciclo passado!`);
+                    } else {
+                        showToast(`Nenhum cliente novo para importar.`, "error");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    showToast("Ocorreu um erro ao tentar copiar.", "error");
                 }
-            }
 
-            if (count > 0) {
-                await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates);
-                alert(`${count} cliente(s) importado(s) com sucesso do ciclo passado!`);
-            } else {
-                alert(`Nenhum cliente novo para importar de ${mesAnterior}. Todos já estão atualizados neste ciclo.`);
+                btn.innerHTML = txtOriginal;
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+                lucide.createIcons();
             }
-        } catch (e) {
-            console.error(e);
-            alert("Ocorreu um erro ao tentar copiar.");
-        }
-
-        btn.innerHTML = txtOriginal;
-        btn.classList.remove('opacity-50', 'pointer-events-none');
-        lucide.createIcons();
+        );
     }
 
     function gerarOpcoesMes() { 
@@ -1409,8 +1524,9 @@
                     comprovante: dataUrl, 
                     pago: true 
                 }).then(() => {
+                    showToast("Comprovativo enviado com sucesso!");
                 }).catch(err => {
-                    alert("Erro ao enviar: O ficheiro pode continuar a ser demasiado grande.");
+                    showToast("Erro ao enviar: O ficheiro é grande demais.", "error");
                     if(label) {
                         label.innerHTML = '<i data-lucide="image-plus" class="w-5 h-5"></i> Galeria ou Câmera';
                         label.classList.remove('opacity-70', 'pointer-events-none');
@@ -1421,6 +1537,18 @@
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    // Funcionalidade de cópia (Ajustada para usar os Toasts)
+    function copiarPix(txt) {
+        const temp = document.createElement("input"); 
+        document.body.appendChild(temp); 
+        temp.value = txt; 
+        temp.select(); 
+        document.execCommand("copy"); 
+        document.body.removeChild(temp);
+        
+        showToast("Chave PIX copiada!");
     }
 
     iniciar();
