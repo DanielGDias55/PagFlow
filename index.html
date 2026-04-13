@@ -216,11 +216,37 @@
                 <i data-lucide="lock" class="text-white w-8 h-8"></i>
             </div>
             <h2 class="text-2xl font-black tracking-tighter dark:text-white uppercase mb-2">Acesso Bloqueado</h2>
-            <p class="text-sm text-slate-500 font-medium mb-8">A sua assinatura está inativa ou pendente. Para libertar o seu painel de gestão, ative a assinatura do sistema.</p>
+            <p class="text-sm text-slate-500 font-medium mb-6">A sua assinatura está inativa ou pendente. Para libertar o seu painel de gestão, ative a assinatura do sistema.</p>
+
+            <!-- Card de Detalhes do Pagamento -->
+            <div class="bg-slate-50 dark:bg-slate-900/80 p-5 rounded-2xl w-full mb-8 border border-slate-100 dark:border-slate-800 text-left">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Detalhes da Assinatura</p>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-brand-100 dark:bg-brand-900/30 p-2.5 rounded-xl text-brand-600"><i data-lucide="tag" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Valor Mensal</p>
+                        <p class="text-base font-black dark:text-white">R$ 49,90</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/30 p-2.5 rounded-xl text-emerald-600"><i data-lucide="user" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Falar com</p>
+                        <p class="text-sm font-bold dark:text-white">Daniel Garcia Dias</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-100 dark:bg-emerald-900/30 p-2.5 rounded-xl text-emerald-600"><i data-lucide="phone" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">WhatsApp</p>
+                        <p class="text-sm font-bold dark:text-white">(13) 97412-3358</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="w-full space-y-3">
                 <button onclick="falarComSuporte()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex justify-center items-center gap-2">
-                    <i data-lucide="message-circle" class="w-5 h-5"></i> Falar no WhatsApp
+                    <i data-lucide="message-circle" class="w-5 h-5"></i> Enviar Comprovante
                 </button>
                 <button onclick="fazerLogout()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex justify-center items-center gap-2">
                     <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
@@ -288,7 +314,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
-                    <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest" id="adminEmailDisplay">SaaS Pro v3.0</span>
+                    <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest" id="adminEmailDisplay">SaaS Pro v3.1</span>
                 </div>
             </div>
             
@@ -311,7 +337,8 @@
         <!-- Gaveta de Filtros e Opções -->
         <div id="drawerWrapper">
             <div class="glass-card rounded-[2rem] p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 items-end">
+                    
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
                         <div class="relative group">
@@ -321,7 +348,7 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês de Referência</label>
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês Referência</label>
                         <select id="filtroMes" onchange="mudarMes(this.value)" class="w-full bg-white dark:bg-slate-950 dark:text-white px-4 py-3 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm cursor-pointer transition"></select>
                     </div>
 
@@ -330,6 +357,15 @@
                         <div class="relative group">
                             <i data-lucide="key" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
                             <input type="text" id="inputChavePix" onblur="salvarChavePix(this.value)" placeholder="Sua chave PIX..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
+                        </div>
+                    </div>
+
+                    <!-- NOVO CAMPO: Valor Padrão -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Valor Padrão (R$)</label>
+                        <div class="relative group">
+                            <i data-lucide="dollar-sign" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                            <input type="number" step="0.01" id="inputValorPadrao" onblur="salvarValorPadrao(this.value)" placeholder="50.00" class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
                         </div>
                     </div>
 
@@ -343,7 +379,7 @@
                         </div>
                     </div>
 
-                    <div class="lg:col-span-5 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="lg:col-span-6 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
                         <button onclick="abrirModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
                             <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
                         </button>
@@ -418,12 +454,10 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth(); // Inicializa Auth
+    const auth = firebase.auth();
 
-    // Variaveis Globais de Estado
-    let adminId = null; // Identificador único do Inquilino (Tenant/Admin)
+    let adminId = null;
     
-    // Lógica de Calendário
     let dataReferencia = new Date();
     if (dataReferencia.getDate() >= 20) dataReferencia.setMonth(dataReferencia.getMonth() + 1);
     let mesAtual = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
@@ -432,9 +466,8 @@
     let filtroStatus = 'todos';
     let ordemCrescente = true;
     let selecionados = new Set();
-    let configGeral = { chavePix: "Sua chave não configurada", valorPadrao: 50 };
+    let configGeral = { chavePix: "", valorPadrao: 50 };
 
-    // Captura de URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const idCliente = urlParams.get('p');
     const idAdminUrl = urlParams.get('a');
@@ -446,15 +479,12 @@
         lucide.createIcons();
         gerarOpcoesMes();
 
-        // ROTEAMENTO PRINCIPAL (Admin vs Cliente)
         if (idCliente && idAdminUrl) {
-            // MODO CLIENTE: Bypass de autenticação usando o ID do Admin da URL
             adminId = idAdminUrl;
             document.body.className = "modo-cliente";
             carregarConfiguracoesGerais();
             carregarPortalCliente();
         } else {
-            // MODO ADMIN: Requer Login
             document.body.className = "modo-admin";
             monitorarAutenticacao();
         }
@@ -467,22 +497,18 @@
                 adminId = user.uid;
                 document.getElementById('adminEmailDisplay').innerText = user.email;
                 
-                // VERIFICA ASSINATURA DO INQUILINO
                 db.ref(`tenants/${adminId}/assinatura/status`).on('value', snap => {
                     const status = snap.val();
                     
                     if (status === 'ativo') {
-                        // Libera o sistema
                         document.body.classList.add('estado-logado');
                         document.body.classList.remove('estado-login', 'estado-bloqueado');
                         carregarConfiguracoesGerais();
                         carregarDadosAdmin();
                     } else {
-                        // Se não existe status (conta nova), cria como pendente
                         if (status === null) {
                             db.ref(`tenants/${adminId}/assinatura`).set({ status: 'pendente', criadoEm: Date.now() });
                         }
-                        // Bloqueia a tela
                         document.body.classList.add('estado-bloqueado');
                         document.body.classList.remove('estado-login', 'estado-logado');
                     }
@@ -516,9 +542,7 @@
         auth.createUserWithEmailAndPassword(email, senha).catch(e => mostrarErro("Erro: " + e.message));
     }
 
-    function fazerLogout() {
-        auth.signOut();
-    }
+    function fazerLogout() { auth.signOut(); }
 
     function loginComGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -526,22 +550,23 @@
     }
 
     function falarComSuporte() {
-        // AQUI: Substitua pelos dados do seu WhatsApp real (Código País + DDD + Número)
-        const seuNumero = "5511999999999"; 
-        const msg = encodeURIComponent("Olá! Fiz o meu registo no Pool Manager SaaS e gostaria de ativar a minha assinatura.");
+        const seuNumero = "5513974123358"; 
+        const msg = encodeURIComponent("Olá Daniel Garcia Dias! Fiz o meu registo no Pool Manager SaaS e gostaria de ativar a minha assinatura.");
         window.open(`https://wa.me/${seuNumero}?text=${msg}`);
     }
 
     // --- CARREGAMENTO DE DADOS MULTI-TENANT ---
-    // Agora todos os acessos ao BD dependem do adminId (Ex: tenants/{adminId}/cobrancas/...)
     function carregarConfiguracoesGerais() {
         if(!adminId) return;
         db.ref(`tenants/${adminId}/configuracoes`).on('value', s => { 
             if (s.val()) configGeral = { ...configGeral, ...s.val() }; 
-            const inputPix = document.getElementById('inputChavePix');
-            if (inputPix) inputPix.value = configGeral.chavePix;
             
-            // Se for cliente, re-renderiza o portal para garantir que a chave pix atualizou visualmente
+            const inputPix = document.getElementById('inputChavePix');
+            if (inputPix) inputPix.value = configGeral.chavePix || "";
+
+            const inputValor = document.getElementById('inputValorPadrao');
+            if (inputValor) inputValor.value = configGeral.valorPadrao || 50;
+            
             if(idCliente) carregarPortalCliente();
         });
     }
@@ -549,6 +574,14 @@
     function salvarChavePix(valor) { 
         configGeral.chavePix = valor; 
         db.ref(`tenants/${adminId}/configuracoes`).update({ chavePix: valor }); 
+    }
+
+    function salvarValorPadrao(valor) {
+        const v = parseFloat(valor);
+        if (!isNaN(v) && adminId) {
+            configGeral.valorPadrao = v;
+            db.ref(`tenants/${adminId}/configuracoes`).update({ valorPadrao: v });
+        }
     }
 
     function carregarDadosAdmin() {
@@ -715,10 +748,24 @@
     function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
     function removerComprovante(id) { if(adminId && confirm("Apagar comprovativo?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
     function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).remove(); }
+    
     function adicionarPessoa() { 
         if(!adminId) return;
-        const n = prompt("Nome:"); 
-        if(n) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); 
+        const n = prompt("Nome do participante:"); 
+        if(n) {
+            let t = prompt("Número do WhatsApp (apenas números, com DDD):", "55");
+            if (t === null) t = ""; // Se cancelar, deixa vazio
+            
+            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${Date.now()}`).set({ 
+                nome: n, 
+                tel: t, 
+                valor: configGeral.valorPadrao, 
+                adiantadas: 0, 
+                pago: false, 
+                msgEnviada: false, 
+                comprovante: null 
+            }); 
+        }
     }
     
     function processarCSV() {
@@ -753,7 +800,6 @@
         if(!adminId) return;
         db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
         
-        // O LINK AGORA CARREGA O ID DO ADMIN TAMBÉM (?a=...&p=...)
         const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id; 
         const msg = encodeURIComponent(`Olá, ${n}!\n\nA sua mensalidade no valor de R$ ${v.toFixed(2)} já está disponível para pagamento.\nChave PIX: ${configGeral.chavePix}\n\nPor favor, clique no link abaixo para ver os detalhes e anexar o seu comprovativo:\n${link}`); 
         window.open(`https://wa.me/${t}?text=${msg}`); 
