@@ -7,7 +7,9 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Adicionada a biblioteca de Autenticação do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
@@ -42,9 +44,13 @@
 
         html.dark { background-color: #020617 !important; }
         
-        .admin-only, .client-only { display: none; }
+        .admin-only, .client-only, #loginScreen, #adminApp { display: none; }
+        
+        /* Controles de visibilidade baseados no estado */
         body.modo-admin .admin-only { display: block; }
         body.modo-cliente .client-only { display: block; }
+        body.estado-login #loginScreen { display: flex; }
+        body.estado-logado #adminApp { display: block; }
 
         .editable-input { 
             background: transparent; 
@@ -141,175 +147,235 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10 relative">
 
-<!-- Barra de Exclusão em Massa -->
-<div id="bulkActionsBar" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-4 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
-    <div class="flex items-center gap-3">
-        <div class="bg-brand-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-inner" id="bulkCount">0</div>
-        <span class="text-sm font-extrabold tracking-wide hidden sm:block">Selecionados</span>
+<!-- ========================================== -->
+<!-- TELA DE LOGIN (SaaS)                       -->
+<!-- ========================================== -->
+<div id="loginScreen" class="min-h-[80vh] items-center justify-center admin-only">
+    <div class="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 flex flex-col items-center">
+            <div class="w-16 h-16 bg-brand-500 rounded-3xl shadow-glow flex items-center justify-center mb-6">
+                <i data-lucide="layers" class="text-white w-8 h-8"></i>
+            </div>
+            <h2 class="text-3xl font-black tracking-tighter dark:text-white uppercase mb-1">Pool Manager</h2>
+            <p class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-8">Acesso Restrito</p>
+
+            <div class="w-full space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">E-mail</label>
+                    <input type="email" id="emailAuth" class="w-full bg-white dark:bg-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition" placeholder="seu@email.com">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Palavra-passe</label>
+                    <input type="password" id="senhaAuth" class="w-full bg-white dark:bg-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition" placeholder="••••••••">
+                </div>
+
+                <div class="pt-4 space-y-3">
+                    <button onclick="fazerLogin()" class="w-full bg-brand-600 text-white py-4 rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95 flex justify-center items-center gap-2">
+                        <i data-lucide="log-in" class="w-5 h-5"></i> Entrar no Sistema
+                    </button>
+                    <button onclick="criarConta()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95">
+                        Criar Nova Conta
+                    </button>
+
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                        <span class="flex-shrink-0 mx-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Ou</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                    </div>
+
+                    <button onclick="loginComGoogle()" class="w-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 py-4 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95 flex justify-center items-center gap-3 shadow-sm">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Continuar com o Google
+                    </button>
+                </div>
+                <p id="msgErroAuth" class="text-rose-500 text-xs font-bold text-center mt-4 hidden"></p>
+            </div>
+        </div>
     </div>
-    <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1"></div>
-    <button onclick="excluirSelecionados()" class="bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/30 transition-all active:scale-95 flex items-center gap-2">
-        <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Todos
-    </button>
-    <button onclick="clearSelection()" class="text-slate-400 dark:text-slate-500 hover:text-white dark:hover:text-slate-900 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors">
-        Cancelar
-    </button>
 </div>
 
-<!-- Modal Importação CSV -->
-<div id="modalImport" onclick="fecharModal()">
-    <div class="glass-card w-full max-w-lg p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
-        <div class="flex items-center gap-4 mb-6">
-            <div class="p-4 bg-emerald-500/10 rounded-2xl text-emerald-600">
-                <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h3 class="text-xl font-extrabold dark:text-white">Importar Dados</h3>
-                <p class="text-xs text-slate-500 font-medium">Sincronize a sua grelha de cobranças rapidamente.</p>
-            </div>
+<!-- ========================================== -->
+<!-- APLICAÇÃO ADMIN                            -->
+<!-- ========================================== -->
+<div id="adminApp" class="max-w-6xl mx-auto space-y-6 admin-only">
+    
+    <!-- Barra de Exclusão em Massa -->
+    <div id="bulkActionsBar" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-4 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+        <div class="flex items-center gap-3">
+            <div class="bg-brand-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-inner" id="bulkCount">0</div>
+            <span class="text-sm font-extrabold tracking-wide hidden sm:block">Selecionados</span>
         </div>
+        <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1"></div>
+        <button onclick="excluirSelecionados()" class="bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/30 transition-all active:scale-95 flex items-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Todos
+        </button>
+        <button onclick="clearSelection()" class="text-slate-400 dark:text-slate-500 hover:text-white dark:hover:text-slate-900 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors">
+            Cancelar
+        </button>
+    </div>
 
-        <div class="group relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center bg-slate-50/50 dark:bg-slate-900/50 hover:border-brand-500 transition-all cursor-pointer">
-            <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
-            <label for="arquivoCSV" class="cursor-pointer">
-                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
-                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Arraste ou selecione o ficheiro CSV</p>
-                <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">Colunas: ID, Nome, Tel, Valor, Adiantadas, Status</p>
-            </label>
-        </div>
+    <!-- Modal Importação CSV -->
+    <div id="modalImport" onclick="fecharModal()">
+        <div class="glass-card w-full max-w-lg p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="p-4 bg-emerald-500/10 rounded-2xl text-emerald-600">
+                    <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-extrabold dark:text-white">Importar Dados</h3>
+                    <p class="text-xs text-slate-500 font-medium">Sincronize a sua grelha de cobranças rapidamente.</p>
+                </div>
+            </div>
 
-        <div class="flex gap-4 mt-8">
-            <button onclick="fecharModal()" class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Voltar</button>
-            <button onclick="processarCSV()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Importar Agora</button>
+            <div class="group relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center bg-slate-50/50 dark:bg-slate-900/50 hover:border-brand-500 transition-all cursor-pointer">
+                <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
+                <label for="arquivoCSV" class="cursor-pointer">
+                    <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
+                    <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Arraste ou selecione o ficheiro CSV</p>
+                    <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">Colunas: ID, Nome, Tel, Valor, Adiantadas, Status</p>
+                </label>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button onclick="fecharModal()" class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Voltar</button>
+                <button onclick="processarCSV()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Importar Agora</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="max-w-6xl mx-auto space-y-6">
-    <!-- ADMIN VIEW -->
-    <div class="admin-only space-y-6">
-        <div>
-            <!-- Header Principal -->
-            <header class="glass-card p-6 rounded-[2rem] flex justify-between items-center shadow-soft relative z-10">
-                <div class="flex items-center gap-4">
-                    <div class="bg-brand-500 p-3 rounded-2xl shadow-glow">
-                        <i data-lucide="layers" class="text-white w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
-                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.4</span>
-                    </div>
+    <div>
+        <!-- Header Principal -->
+        <header class="glass-card p-6 rounded-[2rem] flex flex-wrap justify-between items-center gap-4 shadow-soft relative z-10">
+            <div class="flex items-center gap-4">
+                <div class="bg-brand-500 p-3 rounded-2xl shadow-glow">
+                    <i data-lucide="layers" class="text-white w-6 h-6"></i>
                 </div>
-                
-                <div class="flex items-center gap-2">
-                    <button id="btnToggleDrawer" onclick="toggleDrawer()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 shadow-sm border border-transparent">
-                        <i data-lucide="filter" class="w-4 h-4"></i> <span class="hidden sm:inline">Painel de Filtros</span>
-                    </button>
-                    <button onclick="adicionarPessoa()" class="bg-brand-600 text-white p-2.5 sm:px-5 sm:py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 shadow-lg shadow-brand-500/20 transition active:scale-95">
-                        <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">Novo</span>
-                    </button>
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-400 dark:text-yellow-400 border border-slate-100 dark:border-slate-700 shadow-soft transition">
-                        <i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
-                    </button>
+                <div>
+                    <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
+                    <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest" id="adminEmailDisplay">SaaS Pro v3.0</span>
                 </div>
-            </header>
-
-            <!-- Gaveta de Filtros e Opções -->
-            <div id="drawerWrapper">
-                <div class="glass-card rounded-[2rem] p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
-                            <div class="relative group">
-                                <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
-                                <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Nome ou telefone..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês de Referência</label>
-                            <select id="filtroMes" onchange="mudarMes(this.value)" class="w-full bg-white dark:bg-slate-950 dark:text-white px-4 py-3 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm cursor-pointer transition"></select>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">A Sua Chave PIX</label>
-                            <div class="relative group">
-                                <i data-lucide="key" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
-                                <input type="text" id="inputChavePix" onblur="salvarChavePix(this.value)" placeholder="Sua chave PIX..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 lg:col-span-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
-                            <div class="bg-white dark:bg-slate-950 p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
-                                <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
-                                <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
-                                <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
-                                <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
-                            </div>
-                        </div>
-
-                        <div class="lg:col-span-5 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
-                            <button onclick="abrirModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
-                                <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
-                            </button>
-                            <button onclick="exportarExcel()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-500/10 text-brand-600 font-bold text-[10px] uppercase tracking-widest hover:bg-brand-500/20 transition">
-                                <i data-lucide="download" class="w-4 h-4"></i> Descarregar Relatório (CSV)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass-card p-8 rounded-[2rem] shadow-soft relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/5 rounded-full transition-transform group-hover:scale-150"></div>
-                <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-2 italic">Volume Projetado</p>
-                <div class="text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral">0,00</span></div>
             </div>
             
-            <div class="bg-brand-600 p-8 rounded-[2rem] text-white shadow-xl shadow-brand-500/25 relative overflow-hidden group">
-                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full transition-transform group-hover:scale-150"></div>
-                <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-2 italic text-white">Total Recebido</p>
-                <div class="text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago">0,00</span></div>
+            <div class="flex items-center gap-2">
+                <button id="btnToggleDrawer" onclick="toggleDrawer()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all duration-300 shadow-sm border border-transparent">
+                    <i data-lucide="filter" class="w-4 h-4"></i> <span class="hidden md:inline">Painel de Filtros</span>
+                </button>
+                <button onclick="adicionarPessoa()" class="bg-brand-600 text-white p-2.5 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-brand-700 shadow-lg shadow-brand-500/20 transition active:scale-95">
+                    <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden md:inline">Novo</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-400 dark:text-yellow-400 border border-slate-100 dark:border-slate-700 shadow-soft transition" title="Alternar Tema">
+                    <i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                </button>
+                <button onclick="fazerLogout()" class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 border border-rose-100 dark:border-rose-800/30 shadow-soft transition hover:bg-rose-500 hover:text-white" title="Sair do Sistema">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
             </div>
+        </header>
 
-            <div class="glass-card p-8 rounded-[2rem] border-l-8 border-l-rose-500 shadow-soft relative overflow-hidden">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 italic">Aguardando Pagamento</p>
-                <div class="text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend">0,00</span></div>
-            </div>
-        </div>
+        <!-- Gaveta de Filtros e Opções -->
+        <div id="drawerWrapper">
+            <div class="glass-card rounded-[2rem] p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
+                        <div class="relative group">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                            <input type="text" id="inputPesquisa" oninput="renderizarTabela()" placeholder="Nome ou telefone..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
+                        </div>
+                    </div>
 
-        <!-- Tabela -->
-        <div class="glass-card rounded-[2rem] overflow-hidden shadow-soft">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                        <tr>
-                            <!-- Checkbox Principal -->
-                            <th class="px-6 py-5 w-12 text-center">
-                                <input type="checkbox" id="selectAll" onclick="toggleAll(this)" class="check-custom">
-                            </th>
-                            <th class="px-4 py-5 cursor-pointer hover:text-brand-500 transition flex items-center gap-2" onclick="toggleOrdemAlfabetica()">
-                                Participante <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
-                            </th>
-                            <th class="px-8 py-5 text-center">Mensalidade</th>
-                            <th class="px-8 py-5 text-center" title="Meses pagos adiantados">Adiantadas</th>
-                            <th class="px-8 py-5 text-center">Status</th>
-                            <th class="px-8 py-5 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
-                </table>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Mês de Referência</label>
+                        <select id="filtroMes" onchange="mudarMes(this.value)" class="w-full bg-white dark:bg-slate-950 dark:text-white px-4 py-3 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm cursor-pointer transition"></select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">A Sua Chave PIX</label>
+                        <div class="relative group">
+                            <i data-lucide="key" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                            <input type="text" id="inputChavePix" onblur="salvarChavePix(this.value)" placeholder="Sua chave PIX..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 lg:col-span-2">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
+                        <div class="bg-white dark:bg-slate-950 p-1.5 rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
+                            <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
+                            <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
+                            <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
+                            <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-3 py-2 rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 flex flex-wrap gap-3 pt-6 mt-2 border-t border-slate-100 dark:border-slate-800">
+                        <button onclick="abrirModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
+                        </button>
+                        <button onclick="exportarExcel()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-500/10 text-brand-600 font-bold text-[10px] uppercase tracking-widest hover:bg-brand-500/20 transition">
+                            <i data-lucide="download" class="w-4 h-4"></i> Descarregar Relatório (CSV)
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- CLIENT PORTAL -->
-    <div class="client-only max-w-lg mx-auto py-10" id="portalCliente"></div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card p-8 rounded-[2rem] shadow-soft relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-500/5 rounded-full transition-transform group-hover:scale-150"></div>
+            <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-2 italic">Volume Projetado</p>
+            <div class="text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral">0,00</span></div>
+        </div>
+        
+        <div class="bg-brand-600 p-8 rounded-[2rem] text-white shadow-xl shadow-brand-500/25 relative overflow-hidden group">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full transition-transform group-hover:scale-150"></div>
+            <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-2 italic text-white">Total Recebido</p>
+            <div class="text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago">0,00</span></div>
+        </div>
+
+        <div class="glass-card p-8 rounded-[2rem] border-l-8 border-l-rose-500 shadow-soft relative overflow-hidden">
+            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 italic">Aguardando Pagamento</p>
+            <div class="text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend">0,00</span></div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="glass-card rounded-[2rem] overflow-hidden shadow-soft">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                    <tr>
+                        <th class="px-6 py-5 w-12 text-center">
+                            <input type="checkbox" id="selectAll" onclick="toggleAll(this)" class="check-custom">
+                        </th>
+                        <th class="px-4 py-5 cursor-pointer hover:text-brand-500 transition flex items-center gap-2" onclick="toggleOrdemAlfabetica()">
+                            Participante <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
+                        </th>
+                        <th class="px-8 py-5 text-center">Mensalidade</th>
+                        <th class="px-8 py-5 text-center" title="Meses pagos adiantados">Adiantadas</th>
+                        <th class="px-8 py-5 text-center">Status</th>
+                        <th class="px-8 py-5 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela" class="divide-y divide-slate-100 dark:divide-slate-800/50"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+<!-- ========================================== -->
+<!-- CLIENT PORTAL VIEW                         -->
+<!-- ========================================== -->
+<div class="client-only max-w-lg mx-auto py-10" id="portalCliente"></div>
 
 <script>
     const firebaseConfig = {
@@ -324,56 +390,125 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth(); // Inicializa Auth
 
-    // Lógica para avançar o mês automaticamente no dia 20
+    // Variaveis Globais de Estado
+    let adminId = null; // Identificador único do Inquilino (Tenant/Admin)
+    
+    // Lógica de Calendário
     let dataReferencia = new Date();
-    if (dataReferencia.getDate() >= 20) {
-        dataReferencia.setMonth(dataReferencia.getMonth() + 1);
-    }
+    if (dataReferencia.getDate() >= 20) dataReferencia.setMonth(dataReferencia.getMonth() + 1);
     let mesAtual = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
     
     let dadosLocais = [];
     let filtroStatus = 'todos';
     let ordemCrescente = true;
-    let selecionados = new Set(); // Armazena os IDs para exclusão em massa
-    
-    let idCliente = new URLSearchParams(window.location.search).get('p');
-    let configGeral = { chavePix: "financeiro@poolpro.com", valorPadrao: 50 };
+    let selecionados = new Set();
+    let configGeral = { chavePix: "Sua chave não configurada", valorPadrao: 50 };
+
+    // Captura de URL Params
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCliente = urlParams.get('p');
+    const idAdminUrl = urlParams.get('a');
 
     function iniciar() {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
-        db.ref('configuracoes').on('value', s => { 
+        lucide.createIcons();
+        gerarOpcoesMes();
+
+        // ROTEAMENTO PRINCIPAL (Admin vs Cliente)
+        if (idCliente && idAdminUrl) {
+            // MODO CLIENTE: Bypass de autenticação usando o ID do Admin da URL
+            adminId = idAdminUrl;
+            document.body.className = "modo-cliente";
+            carregarConfiguracoesGerais();
+            carregarPortalCliente();
+        } else {
+            // MODO ADMIN: Requer Login
+            document.body.className = "modo-admin";
+            monitorarAutenticacao();
+        }
+    }
+
+    // --- LÓGICA DE AUTENTICAÇÃO (SaaS) ---
+    function monitorarAutenticacao() {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                adminId = user.uid;
+                document.body.classList.add('estado-logado');
+                document.body.classList.remove('estado-login');
+                document.getElementById('adminEmailDisplay').innerText = user.email;
+                carregarConfiguracoesGerais();
+                carregarDadosAdmin();
+            } else {
+                adminId = null;
+                document.body.classList.add('estado-login');
+                document.body.classList.remove('estado-logado');
+            }
+        });
+    }
+
+    function mostrarErro(msg) {
+        const p = document.getElementById('msgErroAuth');
+        p.innerText = msg; p.classList.remove('hidden');
+        setTimeout(() => p.classList.add('hidden'), 5000);
+    }
+
+    function fazerLogin() {
+        const email = document.getElementById('emailAuth').value;
+        const senha = document.getElementById('senhaAuth').value;
+        if(!email || !senha) return mostrarErro("Preencha e-mail e senha.");
+        auth.signInWithEmailAndPassword(email, senha).catch(e => mostrarErro("Erro: " + e.message));
+    }
+
+    function criarConta() {
+        const email = document.getElementById('emailAuth').value;
+        const senha = document.getElementById('senhaAuth').value;
+        if(!email || !senha) return mostrarErro("Preencha e-mail e senha para criar conta.");
+        auth.createUserWithEmailAndPassword(email, senha).catch(e => mostrarErro("Erro: " + e.message));
+    }
+
+    function fazerLogout() {
+        auth.signOut();
+    }
+
+    function loginComGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(e => mostrarErro("Erro Google: " + e.message));
+    }
+
+    // --- CARREGAMENTO DE DADOS MULTI-TENANT ---
+    // Agora todos os acessos ao BD dependem do adminId (Ex: tenants/{adminId}/cobrancas/...)
+    function carregarConfiguracoesGerais() {
+        if(!adminId) return;
+        db.ref(`tenants/${adminId}/configuracoes`).on('value', s => { 
             if (s.val()) configGeral = { ...configGeral, ...s.val() }; 
             const inputPix = document.getElementById('inputChavePix');
             if (inputPix) inputPix.value = configGeral.chavePix;
+            
+            // Se for cliente, re-renderiza o portal para garantir que a chave pix atualizou visualmente
+            if(idCliente) carregarPortalCliente();
         });
-        gerarOpcoesMes();
-        if (idCliente) { carregarPortalCliente(); document.body.className = "modo-cliente"; }
-        else { carregarDadosAdmin(); document.body.className = "modo-admin"; }
-        lucide.createIcons();
     }
 
-    function toggleDrawer() {
-        const wrapper = document.getElementById('drawerWrapper');
-        const btn = document.getElementById('btnToggleDrawer');
-        wrapper.classList.toggle('aberto');
-        btn.classList.toggle('active');
-        const span = btn.querySelector('span');
-        if (span) { span.innerText = wrapper.classList.contains('aberto') ? 'Fechar Filtros' : 'Painel de Filtros'; }
+    function salvarChavePix(valor) { 
+        configGeral.chavePix = valor; 
+        db.ref(`tenants/${adminId}/configuracoes`).update({ chavePix: valor }); 
     }
 
     function carregarDadosAdmin() {
-        db.ref(`cobrancas/${mesAtual}`).on('value', s => {
+        if(!adminId) return;
+        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).on('value', s => {
             const dados = s.val() || {};
             dadosLocais = Object.keys(dados).map(id => ({ id, ...dados[id] }));
-            // Ao carregar os dados, limpa seleções que não existem mais
             selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
             renderizarTabela();
         });
     }
 
+    // --- RENDERIZAÇÃO E LÓGICA DE UI ---
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
@@ -397,7 +532,6 @@
             const val = parseFloat(p.valor) || 0;
             const adiantadas = p.adiantadas || 0;
             
-            // Cálculo do valor com adiantamentos multiplicados
             const totalPessoa = val + (val * adiantadas);
             t += totalPessoa; 
             if(p.pago) pg += totalPessoa; else pd += totalPessoa;
@@ -407,7 +541,6 @@
             
             corpo.innerHTML += `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
-                    <!-- Checkbox da Linha -->
                     <td class="px-6 py-5 text-center">
                         <input type="checkbox" class="check-custom row-checkbox" value="${p.id}" ${selecionados.has(p.id) ? 'checked' : ''} onchange="toggleRowSelection('${p.id}')">
                     </td>
@@ -451,37 +584,30 @@
         document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPend').innerText = pd.toLocaleString('pt-br',{minimumFractionDigits:2});
         
-        updateBulkUI(); // Atualiza a barra de exclusão
+        updateBulkUI();
         lucide.createIcons();
     }
 
+    function toggleDrawer() {
+        const wrapper = document.getElementById('drawerWrapper');
+        const btn = document.getElementById('btnToggleDrawer');
+        wrapper.classList.toggle('aberto');
+        btn.classList.toggle('active');
+        const span = btn.querySelector('span');
+        if (span) { span.innerText = wrapper.classList.contains('aberto') ? 'Fechar Filtros' : 'Painel de Filtros'; }
+    }
+
     // --- LÓGICA DE EXCLUSÃO EM MASSA ---
-    function toggleRowSelection(id) {
-        if (selecionados.has(id)) selecionados.delete(id);
-        else selecionados.add(id);
-        renderizarTabela(); // Para aplicar a cor de fundo na linha
-    }
-
-    function toggleAll(source) {
-        const checkboxes = document.querySelectorAll('.row-checkbox');
-        if(source.checked) {
-            checkboxes.forEach(cb => selecionados.add(cb.value));
-        } else {
-            selecionados.clear();
-        }
-        renderizarTabela();
-    }
-
+    function toggleRowSelection(id) { if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id); renderizarTabela(); }
+    function toggleAll(source) { const checkboxes = document.querySelectorAll('.row-checkbox'); if(source.checked) { checkboxes.forEach(cb => selecionados.add(cb.value)); } else { selecionados.clear(); } renderizarTabela(); }
+    
     function updateBulkUI() {
         const bar = document.getElementById('bulkActionsBar');
         const selectAllInput = document.getElementById('selectAll');
-        
         if(selectAllInput) {
             const allVisibleIds = Array.from(document.querySelectorAll('.row-checkbox')).map(cb => cb.value);
-            const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selecionados.has(id));
-            selectAllInput.checked = allSelected;
+            selectAllInput.checked = allVisibleIds.length > 0 && allVisibleIds.every(id => selecionados.has(id));
         }
-
         if (selecionados.size > 0) {
             document.getElementById('bulkCount').innerText = selecionados.size;
             bar.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
@@ -492,88 +618,98 @@
         }
     }
 
-    function clearSelection() {
-        selecionados.clear();
-        renderizarTabela();
-    }
-
+    function clearSelection() { selecionados.clear(); renderizarTabela(); }
+    
     function excluirSelecionados() {
-        if(selecionados.size === 0) return;
+        if(selecionados.size === 0 || !adminId) return;
         if(confirm(`Tem certeza que deseja excluir ${selecionados.size} participante(s) simultaneamente?`)) {
             const updates = {};
-            selecionados.forEach(id => {
-                updates[id] = null; 
-            });
-            
-            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
-                selecionados.clear();
-            });
+            selecionados.forEach(id => { updates[id] = null; });
+            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => selecionados.clear());
         }
     }
 
-    // --- LÓGICA DE ADIANTAMENTOS E FUTUROS MESES ---
+    // --- LÓGICA DE BD (CRUD) ---
     function editar(id, c, v) { 
-        db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }).then(() => {
-            if (c === 'adiantadas' && parseInt(v) > 0) {
-                propagarAdiantamento(id, parseInt(v));
-            }
+        if(!adminId) return;
+        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ [c]: v }).then(() => {
+            if (c === 'adiantadas' && parseInt(v) > 0) propagarAdiantamento(id, parseInt(v));
         }); 
     }
 
     function propagarAdiantamento(id, qtdMeses) {
+        if(!adminId) return;
         const user = dadosLocais.find(u => u.id === id);
         if (!user) return;
 
         let [mesStr, anoStr] = mesAtual.split('-');
-        let mes = parseInt(mesStr);
-        let ano = parseInt(anoStr);
-
+        let mes = parseInt(mesStr); let ano = parseInt(anoStr);
         const updates = {};
 
         for (let i = 1; i <= qtdMeses; i++) {
-            mes++;
-            if (mes > 12) { mes = 1; ano++; }
+            mes++; if (mes > 12) { mes = 1; ano++; }
             let futuroMes = `${String(mes).padStart(2, '0')}-${ano}`;
-            
-            updates[`cobrancas/${futuroMes}/${id}`] = {
-                nome: user.nome,
-                tel: user.tel || "",
-                valor: 0, 
-                adiantadas: qtdMeses - i,
-                pago: true,
-                msgEnviada: false
-            };
+            updates[`tenants/${adminId}/cobrancas/${futuroMes}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: 0, adiantadas: qtdMeses - i, pago: true, msgEnviada: false };
         }
 
-        // Quando acaba o adiantamento, no próximo mês a mensalidade volta para o valor padrão
-        mes++;
-        if (mes > 12) { mes = 1; ano++; }
+        mes++; if (mes > 12) { mes = 1; ano++; }
         let mesRetorno = `${String(mes).padStart(2, '0')}-${ano}`;
-        
-        updates[`cobrancas/${mesRetorno}/${id}`] = {
-            nome: user.nome,
-            tel: user.tel || "",
-            valor: configGeral.valorPadrao, 
-            adiantadas: 0,
-            pago: false,
-            msgEnviada: false
-        };
+        updates[`tenants/${adminId}/cobrancas/${mesRetorno}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false };
 
         db.ref().update(updates);
     }
 
-    // --- FUNÇÕES DE ROTINA ---
-    function setFiltroStatus(s) { 
-        filtroStatus = s; 
-        document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.toggle('active', b.id === `btn-${s}`);
-            b.classList.toggle('opacity-40', b.id !== `btn-${s}`);
-        }); 
-        renderizarTabela(); 
+    function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
+    function removerComprovante(id) { if(adminId && confirm("Apagar comprovativo?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
+    function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).remove(); }
+    function adicionarPessoa() { 
+        if(!adminId) return;
+        const n = prompt("Nome:"); 
+        if(n) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); 
+    }
+    
+    function processarCSV() {
+        const file = document.getElementById('arquivoCSV').files[0];
+        if (!file || !adminId) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const linhas = e.target.result.split('\n');
+            const updates = {};
+            linhas.forEach((linha, i) => {
+                if (i === 0 || !linha.trim()) return;
+                let cols = linha.split(/[;,]/);
+                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i); 
+                let ext = dadosLocais.find(d => String(d.id) === id) || {};
+                updates[id] = { 
+                    nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
+                    tel: cols[2]?.trim() || ext.tel || "", 
+                    valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
+                    adiantadas: cols[4] ? parseInt(cols[4]) : (ext.adiantadas || 0), 
+                    pago: cols[5] ? cols[5].trim().toLowerCase() === "pago" : (ext.pago || false), 
+                    msgEnviada: ext.msgEnviada || false, 
+                    comprovante: ext.comprovante || null 
+                };
+            });
+            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => { fecharModal(); alert("Sucesso!"); });
+        };
+        reader.readAsText(file, 'UTF-8');
     }
 
+    // --- ENVIOS E ZAP ---
+    function enviarZap(id, n, t, v) { 
+        if(!adminId) return;
+        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
+        
+        // O LINK AGORA CARREGA O ID DO ADMIN TAMBÉM (?a=...&p=...)
+        const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id; 
+        const msg = encodeURIComponent(`Olá, ${n}!\n\nA sua mensalidade no valor de R$ ${v.toFixed(2)} já está disponível para pagamento.\nChave PIX: ${configGeral.chavePix}\n\nPor favor, clique no link abaixo para ver os detalhes e anexar o seu comprovativo:\n${link}`); 
+        window.open(`https://wa.me/${t}?text=${msg}`); 
+    }
+
+    // --- PORTAL DO CLIENTE ---
     function carregarPortalCliente() {
-        db.ref(`cobrancas/${mesAtual}/${idCliente}`).on('value', s => {
+        if(!adminId || !idCliente) return;
+        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).on('value', s => {
             const p = s.val();
             const portal = document.getElementById('portalCliente');
             if(!p) {
@@ -583,13 +719,8 @@
             const val = parseFloat(p.valor) || 0;
             portal.innerHTML = `
                 <div class="glass-card p-10 rounded-[3rem] shadow-2xl text-center space-y-8 border-b-8 border-b-brand-500">
-                    <div class="w-20 h-20 bg-brand-500 text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-glow">
-                        <i data-lucide="wallet" class="w-10 h-10"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-black dark:text-white italic">Olá, ${p.nome}!</h2>
-                        <p class="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest">Resumo da sua mensalidade</p>
-                    </div>
+                    <div class="w-20 h-20 bg-brand-500 text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-glow"><i data-lucide="wallet" class="w-10 h-10"></i></div>
+                    <div><h2 class="text-2xl font-black dark:text-white italic">Olá, ${p.nome}!</h2><p class="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest">Resumo da sua mensalidade</p></div>
                     <div class="py-10 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] shadow-inner border border-slate-100 dark:border-slate-800">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Total</p>
                         <div class="text-5xl font-black text-slate-800 dark:text-white tracking-tighter">R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</div>
@@ -608,117 +739,44 @@
         });
     }
 
-    function exportarExcel() {
-        if (dadosLocais.length === 0) return;
-        let csv = "ID;Nome;Telefone;Valor;Adiantadas;Status\n";
-        dadosLocais.forEach(p => { 
-            const status = p.pago ? 'Pago' : 'Pendente';
-            csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${status}\n`; 
-        });
-        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `pool_manager_${mesAtual}.csv`;
-        link.click();
-    }
-
-    function processarCSV() {
-        const fileInput = document.getElementById('arquivoCSV');
-        const file = fileInput.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const linhas = e.target.result.split('\n');
-            const updates = {};
-            linhas.forEach((linha, i) => {
-                if (i === 0 || !linha.trim()) return;
-                let cols = linha.split(/[;,]/);
-                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i); 
-                
-                let ext = dadosLocais.find(d => String(d.id) === id) || {};
-
-                updates[id] = { 
-                    nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
-                    tel: cols[2]?.trim() || ext.tel || "", 
-                    valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
-                    adiantadas: cols[4] ? parseInt(cols[4]) : (ext.adiantadas || 0), 
-                    pago: cols[5] ? cols[5].trim().toLowerCase() === "pago" : (ext.pago || false), 
-                    msgEnviada: ext.msgEnviada || false, 
-                    comprovante: ext.comprovante || null 
-                };
-            });
-            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
-                fecharModal();
-                alert("Dados atualizados com sucesso!");
-            });
-        };
-        reader.readAsText(file, 'UTF-8');
-    }
-
-    function copiarPix(txt) {
-        const temp = document.createElement("input");
-        document.body.appendChild(temp); temp.value = txt; temp.select();
-        document.execCommand("copy"); document.body.removeChild(temp);
-        const msg = document.createElement('div');
-        msg.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 animate-bounce text-sm";
-        msg.innerText = "Chave copiada!"; document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 2000);
-    }
-
     function uploadComp(input) {
+        if(!adminId || !idCliente) return;
         const file = input.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = e => {
-            db.ref(`cobrancas/${mesAtual}/${idCliente}`).update({ 
-                comprovante: e.target.result,
-                pago: true 
-            }).then(() => alert("Comprovativo enviado com sucesso!"));
+            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).update({ comprovante: e.target.result, pago: true }).then(() => alert("Comprovativo enviado com sucesso!"));
         };
         reader.readAsDataURL(file);
     }
 
+    // --- UTLITÁRIOS ---
+    function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
+    function setFiltroStatus(s) { filtroStatus = s; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.toggle('active', b.id === `btn-${s}`); b.classList.toggle('opacity-40', b.id !== `btn-${s}`); }); renderizarTabela(); }
+    function exportarExcel() {
+        if (dadosLocais.length === 0) return;
+        let csv = "ID;Nome;Telefone;Valor;Adiantadas;Status\n";
+        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'}\n`; });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `pool_manager_${mesAtual}.csv`; link.click();
+    }
+    function copiarPix(txt) {
+        const temp = document.createElement("input"); document.body.appendChild(temp); temp.value = txt; temp.select(); document.execCommand("copy"); document.body.removeChild(temp);
+        const msg = document.createElement('div'); msg.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 animate-bounce text-sm"; msg.innerText = "Chave copiada!"; document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 2000);
+    }
     function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
-    function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
-    function removerComprovante(id) { if(confirm("Deseja apagar este comprovativo e marcar a cobrança como pendente?")) db.ref(`cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
-    function excluir(id) { if(confirm("Deseja apagar?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
-    function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
-    function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
-    function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); }
-    function salvarChavePix(valor) { configGeral.chavePix = valor; db.ref('configuracoes').update({ chavePix: valor }); }
-    
+    function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
+    function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
     function gerarOpcoesMes() { 
-        const s = document.getElementById('filtroMes'); 
-        if(!s) return; 
-        s.innerHTML = '';
-        
-        let baseDate = new Date();
-        if (baseDate.getDate() >= 20) {
-            baseDate.setMonth(baseDate.getMonth() + 1);
-        }
-
+        const s = document.getElementById('filtroMes'); if(!s) return; s.innerHTML = '';
+        let baseDate = new Date(); if (baseDate.getDate() >= 20) baseDate.setMonth(baseDate.getMonth() + 1);
         for(let i = -12; i <= 36; i++) { 
             const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
             const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
-            const o = document.createElement('option'); 
-            o.value = k; 
-            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
-            o.selected = k === mesAtual; 
-            s.appendChild(o); 
+            const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); 
         } 
     }
-    
-    function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
-    
-    function enviarZap(id, n, t, v) { 
-        db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
-        const link = window.location.href.split('?')[0] + "?p=" + id; 
-        const msg = encodeURIComponent(`Olá, ${n}!\n\nA sua mensalidade no valor de R$ ${v.toFixed(2)} já está disponível para pagamento.\nChave PIX: ${configGeral.chavePix}\n\nPor favor, clique no link abaixo para ver os detalhes e anexar o seu comprovativo:\n${link}`); 
-        window.open(`https://wa.me/${t}?text=${msg}`); 
-    }
-    
-    function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
 
     iniciar();
 </script>
