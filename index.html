@@ -44,13 +44,14 @@
 
         html.dark { background-color: #020617 !important; }
         
-        .admin-only, .client-only, #loginScreen, #adminApp { display: none; }
+        .admin-only, .client-only, #loginScreen, #adminApp, #paywallScreen { display: none; }
         
         /* Controles de visibilidade baseados no estado */
         body.modo-admin .admin-only { display: block; }
         body.modo-cliente .client-only { display: block; }
         body.estado-login #loginScreen { display: flex; }
         body.estado-logado #adminApp { display: block; }
+        body.estado-bloqueado #paywallScreen { display: flex; }
 
         .editable-input { 
             background: transparent; 
@@ -197,6 +198,33 @@
                     </button>
                 </div>
                 <p id="msgErroAuth" class="text-rose-500 text-xs font-bold text-center mt-4 hidden"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- TELA DE PAGAMENTO/BLOQUEIO (Paywall)       -->
+<!-- ========================================== -->
+<div id="paywallScreen" class="min-h-[80vh] items-center justify-center admin-only">
+    <div class="glass-card w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden text-center">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-rose-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 flex flex-col items-center">
+            <div class="w-16 h-16 bg-rose-500 rounded-3xl shadow-glow flex items-center justify-center mb-6">
+                <i data-lucide="lock" class="text-white w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-black tracking-tighter dark:text-white uppercase mb-2">Acesso Bloqueado</h2>
+            <p class="text-sm text-slate-500 font-medium mb-8">A sua assinatura está inativa ou pendente. Para libertar o seu painel de gestão, ative a assinatura do sistema.</p>
+
+            <div class="w-full space-y-3">
+                <button onclick="falarComSuporte()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex justify-center items-center gap-2">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i> Falar no WhatsApp
+                </button>
+                <button onclick="fazerLogout()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex justify-center items-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
+                </button>
             </div>
         </div>
     </div>
@@ -437,15 +465,33 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 adminId = user.uid;
-                document.body.classList.add('estado-logado');
-                document.body.classList.remove('estado-login');
                 document.getElementById('adminEmailDisplay').innerText = user.email;
-                carregarConfiguracoesGerais();
-                carregarDadosAdmin();
+                
+                // VERIFICA ASSINATURA DO INQUILINO
+                db.ref(`tenants/${adminId}/assinatura/status`).on('value', snap => {
+                    const status = snap.val();
+                    
+                    if (status === 'ativo') {
+                        // Libera o sistema
+                        document.body.classList.add('estado-logado');
+                        document.body.classList.remove('estado-login', 'estado-bloqueado');
+                        carregarConfiguracoesGerais();
+                        carregarDadosAdmin();
+                    } else {
+                        // Se não existe status (conta nova), cria como pendente
+                        if (status === null) {
+                            db.ref(`tenants/${adminId}/assinatura`).set({ status: 'pendente', criadoEm: Date.now() });
+                        }
+                        // Bloqueia a tela
+                        document.body.classList.add('estado-bloqueado');
+                        document.body.classList.remove('estado-login', 'estado-logado');
+                    }
+                });
+
             } else {
                 adminId = null;
                 document.body.classList.add('estado-login');
-                document.body.classList.remove('estado-logado');
+                document.body.classList.remove('estado-logado', 'estado-bloqueado');
             }
         });
     }
@@ -477,6 +523,13 @@
     function loginComGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(e => mostrarErro("Erro Google: " + e.message));
+    }
+
+    function falarComSuporte() {
+        // AQUI: Substitua pelos dados do seu WhatsApp real (Código País + DDD + Número)
+        const seuNumero = "5511999999999"; 
+        const msg = encodeURIComponent("Olá! Fiz o meu registo no Pool Manager SaaS e gostaria de ativar a minha assinatura.");
+        window.open(`https://wa.me/${seuNumero}?text=${msg}`);
     }
 
     // --- CARREGAMENTO DE DADOS MULTI-TENANT ---
