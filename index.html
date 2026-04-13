@@ -296,11 +296,64 @@
                         <input type="tel" id="novoTel" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white pl-11 pr-4 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition" placeholder="Ex: 5511999999999">
                     </div>
                 </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Data de Entrada (Opcional)</label>
+                    <div class="relative group">
+                        <i data-lucide="calendar" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                        <input type="date" id="novoDataEntrada" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white pl-11 pr-4 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition">
+                    </div>
+                </div>
             </div>
             
             <div class="flex gap-3 mt-8">
                 <button onclick="fecharModalNovaPessoa()" class="flex-1 py-3 md:py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button onclick="salvarNovaPessoa()" class="flex-1 py-3 md:py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes do Cliente (Segunda Página) -->
+<div id="modalDetalhesCliente" class="modal-overlay" onclick="fecharDetalhes()">
+    <div class="glass-card w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 md:p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-brand-100 dark:bg-brand-900/30 rounded-2xl text-brand-600">
+                    <i data-lucide="user" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-extrabold dark:text-white">Perfil do Cliente</h3>
+                    <p class="text-xs text-slate-500 font-medium" id="textoUltimoPago">Analisando pagamentos...</p>
+                </div>
+            </div>
+            <button onclick="fecharDetalhes()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Dados Cadastrais -->
+            <div class="space-y-4">
+                <h4 class="text-sm font-black dark:text-white flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i> Informações Base</h4>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Nome Completo</label>
+                    <input type="text" id="detalhesNome" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">WhatsApp</label>
+                    <input type="text" id="detalhesTel" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Data de Entrada</label>
+                    <input type="date" id="detalhesDataEntrada" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                </div>
+                <button id="btnSalvarDetalhes" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95 mt-2 flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações</button>
+            </div>
+            
+            <!-- Histórico -->
+            <div class="space-y-4">
+                <h4 class="text-sm font-black dark:text-white flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-slate-400"></i> Histórico de Pagamentos</h4>
+                <div id="listaHistorico" class="bg-slate-50 dark:bg-slate-900/50 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 h-[280px] overflow-y-auto shadow-inner">
+                    <!-- Preenchido via JS -->
+                </div>
             </div>
         </div>
     </div>
@@ -765,6 +818,7 @@
                                 <button onclick="verFoto('${p.comprovante}')" class="p-2 md:p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Ver Comprovativo"><i data-lucide="image" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                                 <button onclick="removerComprovante('${p.id}')" class="p-2 md:p-2.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition" title="Apagar Comprovativo"><i data-lucide="image-minus" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                             ` : ''}
+                            <button onclick="abrirDetalhes('${p.id}')" class="p-2 md:p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Perfil e Histórico"><i data-lucide="user" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                             <button onclick="arquivarPessoa('${p.id}', ${!p.arquivado})" class="p-2 md:p-2.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition" title="${tituloArquivo}"><i data-lucide="${icoArquivo}" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                             <button onclick="excluir('${p.id}')" class="p-2 md:p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition" title="Excluir"><i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                         </div>
@@ -815,6 +869,7 @@
     function abrirModalNovaPessoa() {
         document.getElementById('novoNome').value = "";
         document.getElementById('novoTel').value = "";
+        document.getElementById('novoDataEntrada').value = "";
         document.getElementById('modalNovaPessoa').classList.add('flex');
     }
     function fecharModalNovaPessoa() { document.getElementById('modalNovaPessoa').classList.remove('flex'); }
@@ -823,6 +878,7 @@
         if(!adminId) return;
         const n = document.getElementById('novoNome').value.trim();
         const t = document.getElementById('novoTel').value.trim();
+        const d = document.getElementById('novoDataEntrada').value;
         
         if(!n) return alert("Por favor, digite o nome.");
         
@@ -834,7 +890,8 @@
             pago: false, 
             msgEnviada: false, 
             comprovante: null,
-            arquivado: false
+            arquivado: false,
+            dataEntrada: d
         }).then(() => {
             fecharModalNovaPessoa();
         });
@@ -915,11 +972,11 @@
         for (let i = 1; i <= qtdMeses; i++) {
             mes++; if (mes > 12) { mes = 1; ano++; }
             let futuroMes = `${String(mes).padStart(2, '0')}-${ano}`;
-            updates[`tenants/${adminId}/cobrancas/${futuroMes}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: 0, adiantadas: qtdMeses - i, pago: true, msgEnviada: false, arquivado: false };
+            updates[`tenants/${adminId}/cobrancas/${futuroMes}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: 0, adiantadas: qtdMeses - i, pago: true, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "" };
         }
         mes++; if (mes > 12) { mes = 1; ano++; }
         let mesRetorno = `${String(mes).padStart(2, '0')}-${ano}`;
-        updates[`tenants/${adminId}/cobrancas/${mesRetorno}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, arquivado: false };
+        updates[`tenants/${adminId}/cobrancas/${mesRetorno}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "" };
         db.ref().update(updates);
     }
 
@@ -928,6 +985,105 @@
     function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).remove(); }
     function arquivarPessoa(id, arquivarStatus) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ arquivado: arquivarStatus }); }
     
+    // --- PERFIL DO CLIENTE E HISTÓRICO (Segunda Página) ---
+    async function abrirDetalhes(id) {
+        const cliente = dadosLocais.find(c => c.id === id);
+        if (!cliente) return;
+
+        document.getElementById('detalhesNome').value = cliente.nome || "";
+        document.getElementById('detalhesTel').value = cliente.tel || "";
+        document.getElementById('detalhesDataEntrada').value = cliente.dataEntrada || "";
+        
+        document.getElementById('btnSalvarDetalhes').onclick = () => salvarDetalhes(id);
+        document.getElementById('modalDetalhesCliente').classList.add('flex');
+
+        const listaHist = document.getElementById('listaHistorico');
+        listaHist.innerHTML = '<div class="text-center text-brand-500 py-10"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i><p class="text-xs font-bold uppercase tracking-widest">Buscando Faturas...</p></div>';
+        document.getElementById('textoUltimoPago').innerText = "Analisando pagamentos...";
+        lucide.createIcons();
+
+        try {
+            const snap = await db.ref(`tenants/${adminId}/cobrancas`).once('value');
+            const todosMeses = snap.val() || {};
+            let historico = [];
+
+            // Varre todos os meses procurando a ID deste cliente
+            for (const mes in todosMeses) {
+                if (todosMeses[mes][id]) {
+                    historico.push({ mes: mes, dados: todosMeses[mes][id] });
+                }
+            }
+
+            // Ordena do mês mais recente para o mais antigo
+            historico.sort((a, b) => {
+                const [mA, yA] = a.mes.split('-'); const [mB, yB] = b.mes.split('-');
+                return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+            });
+
+            let htmlHist = '';
+            let ultimoPago = null;
+
+            historico.forEach(item => {
+                const p = item.dados;
+                const status = p.pago 
+                    ? `<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pago</span>`
+                    : `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pendente</span>`;
+                
+                htmlHist += `
+                    <div class="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-white dark:hover:bg-slate-800/50 transition">
+                        <span class="text-sm font-bold dark:text-white capitalize">${formatarMesAno(item.mes)}</span>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold text-slate-600 dark:text-slate-300">R$ ${parseFloat(p.valor || 0).toFixed(2)}</span>
+                            ${status}
+                        </div>
+                    </div>`;
+
+                if (p.pago && !ultimoPago) ultimoPago = formatarMesAno(item.mes);
+            });
+
+            if (historico.length === 0) htmlHist = '<div class="text-center text-slate-400 py-10 text-sm font-bold">Nenhum histórico encontrado.</div>';
+            listaHist.innerHTML = htmlHist;
+            
+            const termoMens = configGeral.termoMensalidade || "Mensalidade";
+            document.getElementById('textoUltimoPago').innerText = ultimoPago ? `Última ${termoMens.toLowerCase()} paga em: ${ultimoPago}` : `Ainda não há pagamentos finalizados.`;
+
+        } catch (e) {
+            console.error(e);
+            listaHist.innerHTML = '<div class="text-center text-rose-500 py-10 text-sm font-bold">Erro ao carregar histórico.</div>';
+        }
+    }
+
+    function fecharDetalhes() { document.getElementById('modalDetalhesCliente').classList.remove('flex'); }
+
+    function salvarDetalhes(id) {
+        if(!adminId) return;
+        const n = document.getElementById('detalhesNome').value.trim();
+        const t = document.getElementById('detalhesTel').value.trim();
+        const d = document.getElementById('detalhesDataEntrada').value;
+        
+        if(!n) return alert("Por favor, digite o nome.");
+
+        const btn = document.getElementById('btnSalvarDetalhes');
+        const txtOriginal = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...'; 
+        btn.classList.add('opacity-50', 'pointer-events-none');
+        lucide.createIcons();
+
+        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({
+            nome: n, tel: t, dataEntrada: d
+        }).then(() => {
+            btn.innerHTML = txtOriginal; 
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+            fecharDetalhes();
+        });
+    }
+
+    function formatarMesAno(mesAnoStr) {
+        const [m, y] = mesAnoStr.split('-');
+        const date = new Date(y, m - 1, 1);
+        return date.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
+    }
+
     function enviarZap(id, n, t, v) { 
         if(!adminId) return;
         db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
@@ -952,8 +1108,8 @@
     
     function exportarExcel() {
         if (dadosLocais.length === 0) return;
-        let csv = "ID;Nome;Telefone;Valor;Adiantadas;Status;Arquivado\n";
-        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'}\n`; });
+        let csv = "ID;Nome;Telefone;Data de Entrada;Valor;Adiantadas;Status;Arquivado\n";
+        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.dataEntrada || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'}\n`; });
         const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `cobrify_relatorio_${mesAtual}.csv`; link.click();
     }
     function processarCSV() {
@@ -976,7 +1132,8 @@
                     pago: cols[5] ? cols[5].trim().toLowerCase() === "pago" : (ext.pago || false), 
                     msgEnviada: ext.msgEnviada || false, 
                     comprovante: ext.comprovante || null,
-                    arquivado: ext.arquivado || false
+                    arquivado: ext.arquivado || false,
+                    dataEntrada: ext.dataEntrada || ""
                 };
             });
             db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => { fecharModal(); alert("Sucesso!"); });
