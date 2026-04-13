@@ -37,7 +37,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             transition: background-color var(--transition-speed) ease; 
             min-height: 100vh; 
-            padding-bottom: 6rem; /* Espaço para a barra flutuante */
+            padding-bottom: 6rem;
         }
 
         html.dark { background-color: #020617 !important; }
@@ -130,7 +130,6 @@
             border-color: transparent;
         }
         
-        /* Estilos do Checkbox */
         .check-custom {
             accent-color: #3b82f6;
             width: 1.125rem;
@@ -142,7 +141,7 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-10 relative">
 
-<!-- Barra de Exclusão em Massa Flutuante -->
+<!-- Barra de Exclusão em Massa -->
 <div id="bulkActionsBar" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-4 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
     <div class="flex items-center gap-3">
         <div class="bg-brand-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-inner" id="bulkCount">0</div>
@@ -166,7 +165,7 @@
             </div>
             <div>
                 <h3 class="text-xl font-extrabold dark:text-white">Importar Dados</h3>
-                <p class="text-xs text-slate-500 font-medium">Sincronize sua planilha de cobranças rapidamente.</p>
+                <p class="text-xs text-slate-500 font-medium">Sincronize a sua grelha de cobranças rapidamente.</p>
             </div>
         </div>
 
@@ -174,7 +173,7 @@
             <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
             <label for="arquivoCSV" class="cursor-pointer">
                 <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
-                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Arraste ou selecione o arquivo CSV</p>
+                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Arraste ou selecione o ficheiro CSV</p>
                 <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest">Colunas: ID, Nome, Tel, Valor, Adiantadas, Status</p>
             </label>
         </div>
@@ -197,8 +196,8 @@
                         <i data-lucide="layers" class="text-white w-6 h-6"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Saldanha</h1>
-                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">v2.3</span>
+                        <h1 class="text-xl font-black tracking-tighter dark:text-white uppercase leading-none">Pool Manager</h1>
+                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest">SaaS Pro v2.4</span>
                     </div>
                 </div>
                 
@@ -233,7 +232,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Sua Chave PIX</label>
+                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">A Sua Chave PIX</label>
                             <div class="relative group">
                                 <i data-lucide="key" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
                                 <input type="text" id="inputChavePix" onblur="salvarChavePix(this.value)" placeholder="Sua chave PIX..." class="w-full bg-white dark:bg-slate-950 dark:text-white pl-11 pr-4 py-3 rounded-2xl text-xs font-semibold focus:ring-2 focus:ring-brand-500 outline-none border-none shadow-sm transition">
@@ -255,7 +254,7 @@
                                 <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
                             </button>
                             <button onclick="exportarExcel()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-500/10 text-brand-600 font-bold text-[10px] uppercase tracking-widest hover:bg-brand-500/20 transition">
-                                <i data-lucide="download" class="w-4 h-4"></i> Baixar Relatório (CSV)
+                                <i data-lucide="download" class="w-4 h-4"></i> Descarregar Relatório (CSV)
                             </button>
                         </div>
                     </div>
@@ -398,7 +397,7 @@
             const val = parseFloat(p.valor) || 0;
             const adiantadas = p.adiantadas || 0;
             
-            // NOVO: Cálculo do valor com adiantamentos multiplicados
+            // Cálculo do valor com adiantamentos multiplicados
             const totalPessoa = val + (val * adiantadas);
             t += totalPessoa; 
             if(p.pago) pg += totalPessoa; else pd += totalPessoa;
@@ -439,8 +438,8 @@
                         <div class="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition">
                             <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${val})" class="p-2.5 ${msgEstilo}" title="Cobrar"><i data-lucide="${msgIcone}" class="w-4 h-4"></i></button>
                             ${p.comprovante ? `
-                                <button onclick="verFoto('${p.comprovante}')" class="p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Ver Comprovante"><i data-lucide="image" class="w-4 h-4"></i></button>
-                                <button onclick="removerComprovante('${p.id}')" class="p-2.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition" title="Apagar Comprovante Inválido"><i data-lucide="image-minus" class="w-4 h-4"></i></button>
+                                <button onclick="verFoto('${p.comprovante}')" class="p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Ver Comprovativo"><i data-lucide="image" class="w-4 h-4"></i></button>
+                                <button onclick="removerComprovante('${p.id}')" class="p-2.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition" title="Apagar Comprovativo Inválido"><i data-lucide="image-minus" class="w-4 h-4"></i></button>
                             ` : ''}
                             <button onclick="excluir('${p.id}')" class="p-2.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition" title="Excluir Participante"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
@@ -503,12 +502,11 @@
         if(confirm(`Tem certeza que deseja excluir ${selecionados.size} participante(s) simultaneamente?`)) {
             const updates = {};
             selecionados.forEach(id => {
-                updates[id] = null; // null exclui o registro no Firebase
+                updates[id] = null; 
             });
             
             db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
                 selecionados.clear();
-                // O renderizarTabela() será chamado automaticamente pelo .on('value')
             });
         }
     }
@@ -516,7 +514,6 @@
     // --- LÓGICA DE ADIANTAMENTOS E FUTUROS MESES ---
     function editar(id, c, v) { 
         db.ref(`cobrancas/${mesAtual}/${id}`).update({ [c]: v }).then(() => {
-            // Se o campo editado foi "adiantadas" e é maior que zero, propaga o crédito pros próximos meses
             if (c === 'adiantadas' && parseInt(v) > 0) {
                 propagarAdiantamento(id, parseInt(v));
             }
@@ -538,18 +535,17 @@
             if (mes > 12) { mes = 1; ano++; }
             let futuroMes = `${String(mes).padStart(2, '0')}-${ano}`;
             
-            // Cria o usuário nos próximos meses com valor 0, adiantadas descontadas e status Pago
             updates[`cobrancas/${futuroMes}/${id}`] = {
                 nome: user.nome,
                 tel: user.tel || "",
                 valor: 0, 
                 adiantadas: qtdMeses - i,
                 pago: true,
-                msgEnviada: false // Nao precisa mandar msg pra ele cobrar 0 reais
+                msgEnviada: false
             };
         }
 
-        // NOVO: Quando acaba o adiantamento, no próximo mês a mensalidade volta para 50 (valor padrão)
+        // Quando acaba o adiantamento, no próximo mês a mensalidade volta para o valor padrão
         mes++;
         if (mes > 12) { mes = 1; ano++; }
         let mesRetorno = `${String(mes).padStart(2, '0')}-${ano}`;
@@ -557,13 +553,12 @@
         updates[`cobrancas/${mesRetorno}/${id}`] = {
             nome: user.nome,
             tel: user.tel || "",
-            valor: configGeral.valorPadrao, // Retorna para 50 automaticamente
+            valor: configGeral.valorPadrao, 
             adiantadas: 0,
             pago: false,
             msgEnviada: false
         };
 
-        // Executa atualização em múltiplos caminhos do Firebase (Multi-path update) super rápido
         db.ref().update(updates);
     }
 
@@ -607,7 +602,7 @@
                             <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90"><i data-lucide="copy" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                    ${!p.pago ? `<div class="pt-6"><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Já pagou? Envie o comprovante</label><input type="file" id="compFile" class="hidden" onchange="uploadComp(this)"><label for="compFile" class="w-full py-5 bg-brand-600 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95"><i data-lucide="camera" class="w-5 h-5"></i> Enviar Comprovante</label></div>` : ''}
+                    ${!p.pago ? `<div class="pt-6"><label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Já pagou? Envie o comprovativo</label><input type="file" id="compFile" class="hidden" onchange="uploadComp(this)"><label for="compFile" class="w-full py-5 bg-brand-600 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95"><i data-lucide="camera" class="w-5 h-5"></i> Enviar Comprovativo</label></div>` : ''}
                 </div>`;
             lucide.createIcons();
         });
@@ -638,10 +633,24 @@
             linhas.forEach((linha, i) => {
                 if (i === 0 || !linha.trim()) return;
                 let cols = linha.split(/[;,]/);
-                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : (Date.now() + i); 
-                updates[id] = { nome: cols[1]?.trim() || "Sem Nome", tel: cols[2]?.trim() || "", valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : configGeral.valorPadrao, adiantadas: cols[4] ? parseInt(cols[4]) : 0, pago: cols[5]?.trim() === "Pago", msgEnviada: false };
+                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i); 
+                
+                let ext = dadosLocais.find(d => String(d.id) === id) || {};
+
+                updates[id] = { 
+                    nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
+                    tel: cols[2]?.trim() || ext.tel || "", 
+                    valor: cols[3] ? parseFloat(cols[3].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
+                    adiantadas: cols[4] ? parseInt(cols[4]) : (ext.adiantadas || 0), 
+                    pago: cols[5] ? cols[5].trim().toLowerCase() === "pago" : (ext.pago || false), 
+                    msgEnviada: ext.msgEnviada || false, 
+                    comprovante: ext.comprovante || null 
+                };
             });
-            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => fecharModal());
+            db.ref(`cobrancas/${mesAtual}`).update(updates).then(() => {
+                fecharModal();
+                alert("Dados atualizados com sucesso!");
+            });
         };
         reader.readAsText(file, 'UTF-8');
     }
@@ -663,7 +672,7 @@
             db.ref(`cobrancas/${mesAtual}/${idCliente}`).update({ 
                 comprovante: e.target.result,
                 pago: true 
-            }).then(() => alert("Comprovante enviado com sucesso!"));
+            }).then(() => alert("Comprovativo enviado com sucesso!"));
         };
         reader.readAsDataURL(file);
     }
@@ -672,28 +681,24 @@
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
     function togglePago(id, s) { db.ref(`cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
-    function removerComprovante(id) { if(confirm("Deseja apagar este comprovante e marcar a cobrança como pendente?")) db.ref(`cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
+    function removerComprovante(id) { if(confirm("Deseja apagar este comprovativo e marcar a cobrança como pendente?")) db.ref(`cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
     function excluir(id) { if(confirm("Deseja apagar?")) db.ref(`cobrancas/${mesAtual}/${id}`).remove(); }
     function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function adicionarPessoa() { const n = prompt("Nome:"); if(n) db.ref(`cobrancas/${mesAtual}/${Date.now()}`).set({ nome: n, tel: "55", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, comprovante: null }); }
+    function salvarChavePix(valor) { configGeral.chavePix = valor; db.ref('configuracoes').update({ chavePix: valor }); }
     
-    function salvarChavePix(valor) {
-        configGeral.chavePix = valor;
-        db.ref('configuracoes').update({ chavePix: valor });
-    }
-    
-    // Gera as opções do dropdown também considerando o avanço do dia 20
     function gerarOpcoesMes() { 
         const s = document.getElementById('filtroMes'); 
         if(!s) return; 
+        s.innerHTML = '';
         
         let baseDate = new Date();
         if (baseDate.getDate() >= 20) {
             baseDate.setMonth(baseDate.getMonth() + 1);
         }
 
-        for(let i = -2; i <= 4; i++) { 
+        for(let i = -12; i <= 36; i++) { 
             const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
             const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
             const o = document.createElement('option'); 
@@ -709,10 +714,7 @@
     function enviarZap(id, n, t, v) { 
         db.ref(`cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
         const link = window.location.href.split('?')[0] + "?p=" + id; 
-        
-        // Adicionando parágrafos com \n\n e a chave PIX
-        const msg = encodeURIComponent(`Olá, ${n}! \n\n Segue o valor da pool desse mês R$ ${v.toFixed(2)} \n\n Chave PIX: ${configGeral.chavePix}\n\n Coloque a foto do seu comprovante aqui no link:\n\n ${link}`); 
-        
+        const msg = encodeURIComponent(`Olá, ${n}!\n\nA sua mensalidade no valor de R$ ${v.toFixed(2)} já está disponível para pagamento.\nChave PIX: ${configGeral.chavePix}\n\nPor favor, clique no link abaixo para ver os detalhes e anexar o seu comprovativo:\n${link}`); 
         window.open(`https://wa.me/${t}?text=${msg}`); 
     }
     
