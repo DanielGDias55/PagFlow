@@ -573,6 +573,9 @@
                     </div>
 
                     <div class="sm:col-span-2 lg:col-span-2 flex flex-wrap gap-2 md:gap-3">
+                        <button id="btnCopiarCiclo" onclick="copiarCicloAnterior()" class="flex-1 flex justify-center items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/10 text-violet-600 font-bold text-[10px] uppercase tracking-widest hover:bg-violet-500/20 transition" title="Copiar os clientes ativos do mês passado para o atual">
+                            <i data-lucide="copy" class="w-4 h-4"></i> Copiar Anterior
+                        </button>
                         <button onclick="abrirModal()" class="flex-1 flex justify-center items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-500/20 transition">
                             <i data-lucide="upload" class="w-4 h-4"></i> Importar CSV
                         </button>
@@ -651,21 +654,21 @@
 
     let adminId = null;
     
-    // Inicializa o mês padrão com base na data atual
+    // Variáveis de controlo do Ciclo
     let dataReferencia = new Date();
-    let mesAtual = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
-    let mesAtualAjustado = false; // Flag para garantir que o ajuste de config só roda uma vez
+    let mesReal = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
+    let mesAtual = mesReal;
+    let mesAtualAjustado = false; 
     
     let dadosLocais = [];
     let filtroStatus = 'todos';
     let ordemCrescente = true;
     let selecionados = new Set();
     
-    // Configurações expandidas
     let configGeral = { 
         chavePix: "", 
         valorPadrao: 50,
-        diaVirada: "", // Novo campo de controle de ciclo
+        diaVirada: "", 
         termoParticipante: "Participante",
         termoMensalidade: "Mensalidade",
         ocultarAdiantadas: false,
@@ -676,6 +679,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const idCliente = urlParams.get('p');
     const idAdminUrl = urlParams.get('a');
+    const urlMes = urlParams.get('m');
 
     function iniciar() {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -685,6 +689,7 @@
 
         if (idCliente && idAdminUrl) {
             adminId = idAdminUrl;
+            if (urlMes) { mesAtual = urlMes; mesReal = urlMes; }
             document.body.className = "modo-cliente";
             carregarConfiguracoesGerais();
             carregarPortalCliente();
@@ -706,7 +711,6 @@
                 
                 db.ref(`tenants/${adminId}/assinatura/status`).on('value', snap => {
                     const status = snap.val() ? String(snap.val()).toLowerCase() : null;
-                    
                     if (status === 'ativo' || status === 'pago') {
                         document.body.classList.add('estado-logado');
                         document.body.classList.remove('estado-login', 'estado-bloqueado');
@@ -750,15 +754,11 @@
                 if (d.getDate() >= parseInt(configGeral.diaVirada)) {
                     d.setMonth(d.getMonth() + 1);
                 }
-                let calcMes = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                
-                if (mesAtual !== calcMes) {
-                    mesAtual = calcMes;
-                }
+                mesReal = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                if (mesAtual !== 'todos' && !urlParams.get('m')) mesAtual = mesReal;
                 mesAtualAjustado = true;
             }
 
-            // Uma vez validado o ciclo base, gera opções e busca os dados
             if(!idCliente) {
                 gerarOpcoesMes();
                 carregarDadosAdmin();
@@ -776,18 +776,45 @@
                 container.classList.toggle('esconder-status', configGeral.ocultarStatus);
             }
             
+            const btnCopiar = document.getElementById('btnCopiarCiclo');
+            if (btnCopiar) btnCopiar.style.display = mesAtual === 'todos' ? 'none' : 'flex';
+            
             if(idCliente) carregarPortalCliente();
         });
     }
 
     function carregarDadosAdmin() {
         if(!adminId) return;
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).on('value', s => {
-            const dados = s.val() || {};
-            dadosLocais = Object.keys(dados).map(id => ({ id, ...dados[id] }));
-            selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
-            renderizarTabela();
-        });
+        if (mesAtual === 'todos') {
+            db.ref(`tenants/${adminId}/cobrancas`).on('value', s => {
+                const todosMeses = s.val() || {};
+                const clientesMap = new Map();
+                
+                // Ordena cronologicamente para que os dados mais recentes prevaleçam
+                const mesesOrdenados = Object.keys(todosMeses).sort((a, b) => {
+                    const [mA, yA] = a.split('-'); const [mB, yB] = b.split('-');
+                    return new Date(yA, mA - 1) - new Date(yB, mB - 1);
+                });
+
+                mesesOrdenados.forEach(mes => {
+                    const dadosMes = todosMeses[mes];
+                    for (const id in dadosMes) {
+                        clientesMap.set(id, { id, sourceMes: mes, ...dadosMes[id] });
+                    }
+                });
+                
+                dadosLocais = Array.from(clientesMap.values());
+                selecionados.forEach(id => { if(!clientesMap.has(id)) selecionados.delete(id); });
+                renderizarTabela();
+            });
+        } else {
+            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).on('value', s => {
+                const dados = s.val() || {};
+                dadosLocais = Object.keys(dados).map(id => ({ id, sourceMes: mesAtual, ...dados[id] }));
+                selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
+                renderizarTabela();
+            });
+        }
     }
 
     // --- RENDERIZAÇÃO E LÓGICA DA TABELA ---
@@ -803,15 +830,9 @@
 
         let filtrados = [...dadosLocais];
         
-        // Aplicação do Filtro de Período (Datas)
-        if (dtInicio) {
-            filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada >= dtInicio);
-        }
-        if (dtFim) {
-            filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada <= dtFim);
-        }
+        if (dtInicio) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada >= dtInicio);
+        if (dtFim) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada <= dtFim);
 
-        // Filtro de Arquivados e Status
         if (filtroStatus === 'arquivado') {
             filtrados = filtrados.filter(p => p.arquivado === true);
         } else {
@@ -821,7 +842,6 @@
             if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
         }
 
-        // Filtro de Texto Livre
         if (termoBusca) {
             filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(termoBusca) || (p.tel && p.tel.includes(termoBusca)));
         }
@@ -844,6 +864,9 @@
             const icoArquivo = p.arquivado ? 'archive-restore' : 'archive';
             const tituloArquivo = p.arquivado ? 'Desarquivar' : 'Arquivar Ocultar';
             
+            // Etiqueta visual indicando o mês de origem, útil quando se está a ver "Todos os Ciclos"
+            const badgeMes = mesAtual === 'todos' ? `<span class="bg-slate-100 text-slate-500 text-[8px] px-1.5 py-0.5 rounded font-bold ml-2 border border-slate-200 shadow-sm">${p.sourceMes}</span>` : '';
+
             corpo.innerHTML += `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
                     <td class="px-4 md:px-6 py-4 md:py-5 text-center">
@@ -851,8 +874,9 @@
                     </td>
                     <td class="px-3 md:px-4 py-4 md:py-5">
                         <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 mb-1">
                                 <input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white text-xs md:text-sm">
+                                ${badgeMes}
                                 ${adiantadas > 0 ? `<span class="bg-brand-100 text-brand-600 text-[9px] px-2 py-0.5 rounded-full font-extrabold">+${adiantadas}</span>` : ''}
                             </div>
                             <input type="text" value="${p.tel || ''}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-[9px] md:text-[10px] text-slate-400 font-bold -mt-1">
@@ -926,7 +950,7 @@
 
         db.ref(`tenants/${adminId}/configuracoes`).update(updates).then(() => {
             fecharModalConfig();
-            carregarConfiguracoesGerais(); // Força a atualização do ciclo caso tenha mudado
+            carregarConfiguracoesGerais();
         });
     }
 
@@ -946,7 +970,9 @@
         
         if(!n) return alert("Por favor, digite o nome.");
         
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${Date.now()}`).set({ 
+        const targetMes = mesAtual === 'todos' ? mesReal : mesAtual;
+
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${Date.now()}`).set({ 
             nome: n, 
             tel: t, 
             valor: configGeral.valorPadrao, 
@@ -968,9 +994,15 @@
         btn.classList.toggle('active');
     }
 
-    // --- AÇÕES DE MASSA E CRUD ---
+    // --- AÇÕES DE MASSA E CRUD INTELIGENTE (Procura o Mês correto do Cliente) ---
+    function getTargetMes(id) {
+        const p = dadosLocais.find(x => x.id === id);
+        return p ? (p.sourceMes || mesAtual) : (mesAtual === 'todos' ? mesReal : mesAtual);
+    }
+
     function toggleRowSelection(id) { if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id); renderizarTabela(); }
     function toggleAll(source) { const checkboxes = document.querySelectorAll('.row-checkbox'); if(source.checked) { checkboxes.forEach(cb => selecionados.add(cb.value)); } else { selecionados.clear(); } renderizarTabela(); }
+    
     function updateBulkUI() {
         const bar = document.getElementById('bulkActionsBar');
         const selectAllInput = document.getElementById('selectAll');
@@ -1007,8 +1039,10 @@
         const acao = arquivarStatus ? "arquivar" : "desarquivar";
         if(confirm(`Tem a certeza que deseja ${acao} ${selecionados.size} registo(s) simultaneamente?`)) {
             const updates = {};
-            selecionados.forEach(id => { updates[`${id}/arquivado`] = arquivarStatus; });
-            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => selecionados.clear());
+            selecionados.forEach(id => { 
+                updates[`cobrancas/${getTargetMes(id)}/${id}/arquivado`] = arquivarStatus; 
+            });
+            db.ref(`tenants/${adminId}`).update(updates).then(() => selecionados.clear());
         }
     }
 
@@ -1016,22 +1050,26 @@
         if(selecionados.size === 0 || !adminId) return;
         if(confirm(`Deseja excluir ${selecionados.size} registo(s)?`)) {
             const updates = {};
-            selecionados.forEach(id => { updates[id] = null; });
-            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => selecionados.clear());
+            selecionados.forEach(id => { 
+                updates[`cobrancas/${getTargetMes(id)}/${id}`] = null; 
+            });
+            db.ref(`tenants/${adminId}`).update(updates).then(() => selecionados.clear());
         }
     }
 
     function editar(id, c, v) { 
         if(!adminId) return;
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ [c]: v }).then(() => {
-            if (c === 'adiantadas' && parseInt(v) > 0) propagarAdiantamento(id, parseInt(v));
+        const targetMes = getTargetMes(id);
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ [c]: v }).then(() => {
+            if (c === 'adiantadas' && parseInt(v) > 0) propagarAdiantamento(id, parseInt(v), targetMes);
         }); 
     }
-    function propagarAdiantamento(id, qtdMeses) {
+
+    function propagarAdiantamento(id, qtdMeses, baseMes) {
         if(!adminId) return;
         const user = dadosLocais.find(u => u.id === id);
         if (!user) return;
-        let [mesStr, anoStr] = mesAtual.split('-'); let mes = parseInt(mesStr); let ano = parseInt(anoStr);
+        let [mesStr, anoStr] = baseMes.split('-'); let mes = parseInt(mesStr); let ano = parseInt(anoStr);
         const updates = {};
         for (let i = 1; i <= qtdMeses; i++) {
             mes++; if (mes > 12) { mes = 1; ano++; }
@@ -1044,10 +1082,10 @@
         db.ref().update(updates);
     }
 
-    function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ pago: !s }); }
-    function removerComprovante(id) { if(adminId && confirm("Apagar comprovativo?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ comprovante: null, pago: false }); }
-    function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).remove(); }
-    function arquivarPessoa(id, arquivarStatus) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ arquivado: arquivarStatus }); }
+    function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ pago: !s }); }
+    function removerComprovante(id) { if(adminId && confirm("Apagar comprovativo?")) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ comprovante: null, pago: false }); }
+    function excluir(id) { if(adminId && confirm("Deseja apagar?")) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).remove(); }
+    function arquivarPessoa(id, arquivarStatus) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ arquivado: arquivarStatus }); }
     
     // --- PERFIL DO CLIENTE E HISTÓRICO (Segunda Página) ---
     async function abrirDetalhes(id) {
@@ -1131,7 +1169,7 @@
         btn.classList.add('opacity-50', 'pointer-events-none');
         lucide.createIcons();
 
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({
+        db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({
             nome: n, tel: t, dataEntrada: d
         }).then(() => {
             btn.innerHTML = txtOriginal; 
@@ -1148,9 +1186,10 @@
 
     function enviarZap(id, n, t, v) { 
         if(!adminId) return;
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${id}`).update({ msgEnviada: true }); 
+        const targetMes = getTargetMes(id);
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
         
-        const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id; 
+        const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes; 
         const termoMens = configGeral.termoMensalidade || "Mensalidade";
         const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
         
@@ -1159,7 +1198,16 @@
     }
 
     // --- IMPORT/EXPORT & UTILS ---
-    function mudarMes(v) { mesAtual = v; selecionados.clear(); carregarDadosAdmin(); }
+    function mudarMes(v) { 
+        mesAtual = v; 
+        selecionados.clear(); 
+        
+        const btnCopiar = document.getElementById('btnCopiarCiclo');
+        if(btnCopiar) btnCopiar.style.display = mesAtual === 'todos' ? 'none' : 'flex';
+        
+        carregarDadosAdmin(); 
+    }
+    
     function setFiltroStatus(s) { filtroStatus = s; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.toggle('active', b.id === `btn-${s}`); b.classList.toggle('opacity-40', b.id !== `btn-${s}`); }); renderizarTabela(); }
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
@@ -1170,10 +1218,11 @@
     
     function exportarExcel() {
         if (dadosLocais.length === 0) return;
-        let csv = "ID;Nome;Telefone;Data de Entrada;Valor;Adiantadas;Status;Arquivado\n";
-        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.dataEntrada || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'}\n`; });
+        let csv = "ID;Nome;Telefone;Data de Entrada;Valor;Adiantadas;Status;Arquivado;Ciclo_Origem\n";
+        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.dataEntrada || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'};${p.sourceMes || mesAtual}\n`; });
         const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `cobrify_relatorio_${mesAtual}.csv`; link.click();
     }
+    
     function processarCSV() {
         const file = document.getElementById('arquivoCSV').files[0];
         if (!file || !adminId) return;
@@ -1181,6 +1230,8 @@
         reader.onload = function(e) {
             const linhas = e.target.result.split('\n');
             const updates = {};
+            const targetMes = mesAtual === 'todos' ? mesReal : mesAtual;
+
             linhas.forEach((linha, i) => {
                 if (i === 0 || !linha.trim()) return;
                 let cols = linha.split(/[;,]/);
@@ -1198,16 +1249,79 @@
                     dataEntrada: ext.dataEntrada || ""
                 };
             });
-            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates).then(() => { fecharModal(); alert("Sucesso!"); });
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}`).update(updates).then(() => { fecharModal(); alert("Sucesso!"); });
         };
         reader.readAsText(file, 'UTF-8');
     }
     
+    async function copiarCicloAnterior() {
+        if (!adminId || mesAtual === 'todos') return;
+
+        let [m, y] = mesAtual.split('-');
+        let prevM = parseInt(m) - 1;
+        let prevY = parseInt(y);
+        if (prevM === 0) { prevM = 12; prevY--; }
+        let mesAnterior = `${String(prevM).padStart(2, '0')}-${prevY}`;
+
+        if (!confirm(`Deseja copiar os clientes ativos de [${mesAnterior}] para o ciclo atual [${mesAtual}]?\n\n(Apenas clientes que ainda não existem neste ciclo serão copiados, com status "Pendente" e mensalidade zerada.)`)) return;
+
+        const btn = document.getElementById('btnCopiarCiclo');
+        const txtOriginal = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Copiando...';
+        btn.classList.add('opacity-50', 'pointer-events-none');
+        lucide.createIcons();
+
+        try {
+            const snapAtual = await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).once('value');
+            const dadosAtual = snapAtual.val() || {};
+
+            const snapAnterior = await db.ref(`tenants/${adminId}/cobrancas/${mesAnterior}`).once('value');
+            const dadosAnterior = snapAnterior.val() || {};
+
+            const updates = {};
+            let count = 0;
+
+            for (const id in dadosAnterior) {
+                const cliente = dadosAnterior[id];
+                // Ignora quem já está no mês atual ou quem estava arquivado
+                if (!dadosAtual[id] && !cliente.arquivado) {
+                    updates[id] = {
+                        ...cliente,
+                        pago: false,
+                        msgEnviada: false,
+                        comprovante: null,
+                        adiantadas: 0 // Zera adiantadas pois é um novo mês
+                    };
+                    count++;
+                }
+            }
+
+            if (count > 0) {
+                await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates);
+                alert(`${count} cliente(s) importado(s) com sucesso do ciclo passado!`);
+            } else {
+                alert(`Nenhum cliente novo para importar de ${mesAnterior}. Todos já estão atualizados neste ciclo.`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Ocorreu um erro ao tentar copiar.");
+        }
+
+        btn.innerHTML = txtOriginal;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+        lucide.createIcons();
+    }
+
     function gerarOpcoesMes() { 
         const s = document.getElementById('filtroMes'); if(!s) return; s.innerHTML = '';
         
+        const optTodos = document.createElement('option');
+        optTodos.value = 'todos';
+        optTodos.innerText = 'Todos os Ciclos (Geral)';
+        optTodos.selected = mesAtual === 'todos';
+        s.appendChild(optTodos);
+
         let baseDate = new Date(); 
-        // Desloca o calendário base para a frente caso o dia da virada já tenha passado
         if (configGeral && configGeral.diaVirada && baseDate.getDate() >= parseInt(configGeral.diaVirada)) {
             baseDate.setMonth(baseDate.getMonth() + 1);
         }
@@ -1215,7 +1329,10 @@
         for(let i = -12; i <= 36; i++) { 
             const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
             const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
-            const o = document.createElement('option'); o.value = k; o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); o.selected = k === mesAtual; s.appendChild(o); 
+            const o = document.createElement('option'); o.value = k; 
+            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
+            o.selected = k === mesAtual; 
+            s.appendChild(o); 
         } 
     }
 
