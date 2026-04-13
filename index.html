@@ -157,7 +157,14 @@
             <p class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-8">Gestão Profissional</p>
             <div class="w-full space-y-4">
                 <input type="email" id="emailAuth" onkeydown="if(event.key === 'Enter') fazerLogin()" class="w-full bg-white dark:bg-slate-900 dark:text-white px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 outline-none" placeholder="seu@email.com">
-                <input type="password" id="senhaAuth" onkeydown="if(event.key === 'Enter') fazerLogin()" class="w-full bg-white dark:bg-slate-900 dark:text-white px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 outline-none" placeholder="••••••••">
+                
+                <div class="relative">
+                    <input type="password" id="senhaAuth" onkeydown="if(event.key === 'Enter') fazerLogin()" class="w-full bg-white dark:bg-slate-900 dark:text-white px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 outline-none pr-12" placeholder="••••••••">
+                    <button type="button" onclick="toggleSenhaVisivel()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-500 transition">
+                        <i id="iconeOlho" data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
                 <button onclick="fazerLogin()" class="w-full bg-brand-600 text-white py-4 rounded-2xl font-bold hover:bg-brand-700 shadow-lg active:scale-95 transition">Entrar no Sistema</button>
                 <button onclick="criarConta()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-bold">Criar Nova Conta</button>
                 <button onclick="loginComGoogle()" class="w-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 py-4 rounded-2xl font-bold flex justify-center items-center gap-3">
@@ -195,11 +202,11 @@
             <div><h1 class="text-xl font-black dark:text-white uppercase leading-none">PagFlow</h1><span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest block" id="adminEmailDisplay">Admin</span></div>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="toggleDrawer()" id="btnToggleDrawer" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-500"><i data-lucide="filter" class="w-5 h-5"></i></button>
-            <button onclick="abrirModalNovaPessoa()" class="bg-brand-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase shadow-lg shadow-brand-500/20"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo</button>
-            <button onclick="abrirModalConfig()" class="p-2.5 rounded-xl border dark:border-slate-800 text-slate-400"><i data-lucide="settings" class="w-5 h-5"></i></button>
-            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl border dark:border-slate-800 text-slate-400"><i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i></button>
-            <button onclick="fazerLogout()" class="p-2.5 rounded-xl bg-rose-50 text-rose-500"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+            <button onclick="toggleDrawer()" id="btnToggleDrawer" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-500 hover:text-brand-500 transition"><i data-lucide="filter" class="w-5 h-5"></i></button>
+            <button onclick="abrirModalNovaPessoa()" class="bg-brand-600 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase shadow-lg shadow-brand-500/20 active:scale-95 transition"><i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Novo</button>
+            <button onclick="abrirModalConfig()" class="p-2.5 rounded-xl border dark:border-slate-800 text-slate-400 hover:text-brand-500"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl border dark:border-slate-800 text-slate-400 hover:text-yellow-500"><i data-lucide="moon" class="dark:hidden w-5 h-5"></i><i data-lucide="sun" class="hidden dark:block w-5 h-5"></i></button>
+            <button onclick="fazerLogout()" class="p-2.5 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition"><i data-lucide="log-out" class="w-5 h-5"></i></button>
         </div>
     </header>
 
@@ -224,9 +231,9 @@
 
     <!-- STATS -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="glass-card p-8 rounded-[2rem]"><p class="text-[10px] font-bold text-slate-400 uppercase italic">Projetado</p><div class="text-3xl font-black text-slate-800 dark:text-white">R$ <span id="tGeral">0,00</span></div></div>
-        <div class="bg-brand-600 p-8 rounded-[2rem] text-white shadow-xl shadow-brand-500/20"><p class="text-[10px] font-bold opacity-70 uppercase italic">Recebido</p><div class="text-3xl font-black">R$ <span id="tPago">0,00</span></div></div>
-        <div class="glass-card p-8 rounded-[2rem] border-l-8 border-rose-500"><p class="text-[10px] font-bold text-slate-400 uppercase italic">Em aberto</p><div class="text-3xl font-black text-rose-500">R$ <span id="tPend">0,00</span></div></div>
+        <div class="glass-card p-8 rounded-[2rem] shadow-soft"><p class="text-[10px] font-bold text-slate-400 uppercase italic">Projetado</p><div class="text-3xl font-black text-slate-800 dark:text-white">R$ <span id="tGeral">0,00</span></div></div>
+        <div class="bg-brand-600 p-8 rounded-[2rem] text-white shadow-glow"><p class="text-[10px] font-bold opacity-70 uppercase italic">Recebido</p><div class="text-3xl font-black">R$ <span id="tPago">0,00</span></div></div>
+        <div class="glass-card p-8 rounded-[2rem] border-l-8 border-rose-500 shadow-soft"><p class="text-[10px] font-bold text-slate-400 uppercase italic">Em aberto</p><div class="text-3xl font-black text-rose-500">R$ <span id="tPend">0,00</span></div></div>
     </div>
 
     <!-- TABELA -->
@@ -251,7 +258,7 @@
 <!-- PORTAL DO CLIENTE -->
 <div id="portalCliente" class="max-w-lg mx-auto py-10 px-4"></div>
 
-<!-- MODAL NOVO REGISTRO COM AUTOCOMPLETE -->
+<!-- MODAL NOVO REGISTRO -->
 <div id="modalNovaPessoa" class="modal-overlay" onclick="fecharModalNovaPessoa()">
     <div class="glass-card w-full max-w-2xl p-0 rounded-[2.5rem] shadow-2xl mx-4 transform transition-all flex flex-col md:flex-row overflow-hidden" onclick="event.stopPropagation()">
         <div class="md:w-2/5 bg-brand-600 p-8 flex flex-col items-center justify-center text-center text-white hidden md:flex">
@@ -265,17 +272,17 @@
                     <label class="text-[10px] font-black uppercase text-brand-500 tracking-widest px-1 italic flex items-center gap-1"><i data-lucide="database" class="w-3 h-3"></i> Importar do Banco</label>
                     <div class="relative mt-1">
                         <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-brand-400 z-10"></i>
-                        <input type="text" id="buscaCliente" oninput="filtrarClientesGlobais()" placeholder="Pesquisar por nome..." class="w-full bg-brand-50 dark:bg-brand-900/20 text-slate-900 dark:text-black pl-11 pr-4 py-4 rounded-2xl text-sm font-bold border border-brand-200 dark:border-brand-800">
-                        <div id="listaSugestoes" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto hidden z-50"></div>
+                        <input type="text" id="buscaCliente" oninput="filtrarClientesGlobais()" placeholder="Pesquisar histórico..." class="w-full bg-brand-50 dark:bg-brand-900/20 text-slate-900 dark:text-white pl-11 pr-4 py-4 rounded-2xl text-sm font-bold border border-brand-200 dark:border-brand-800 outline-none">
+                        <div id="listaSugestoes" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-h-48 overflow-y-auto hidden z-50"></div>
                     </div>
                 </div>
                 <div class="flex items-center gap-4 py-1"><div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div><span class="text-[9px] font-black text-slate-400 uppercase italic">Dados Cadastrais</span><div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div></div>
-                <div><label class="text-[10px] font-black text-slate-400 uppercase ml-1 italic">Nome Completo</label><input type="text" id="novoNome" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none"></div>
+                <div><label class="text-[10px] font-black uppercase text-slate-400 ml-1 italic">Nome Completo</label><input type="text" id="novoNome" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-bold border border-slate-200 dark:border-slate-800 outline-none"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[10px] font-black text-slate-400 uppercase ml-1 italic">WhatsApp</label><input type="tel" id="novoTel" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none" placeholder="55..."></div>
-                    <div><label class="text-[10px] font-black text-slate-400 uppercase ml-1 italic">Entrada</label><input type="date" id="novoDataEntrada" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none"></div>
+                    <div><label class="text-[10px] font-black uppercase text-slate-400 ml-1 italic">WhatsApp</label><input type="tel" id="novoTel" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-4 rounded-2xl text-sm font-bold border border-slate-200 dark:border-slate-800 outline-none" placeholder="55..."></div>
+                    <div><label class="text-[10px] font-black uppercase text-slate-400 ml-1 italic">Entrada</label><input type="date" id="novoDataEntrada" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none"></div>
                 </div>
-                <div><label class="text-[10px] font-black text-slate-400 uppercase ml-1 italic">Observações</label><textarea id="novoObs" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none resize-none"></textarea></div>
+                <div><label class="text-[10px] font-black uppercase text-slate-400 ml-1 italic">Observações</label><textarea id="novoObs" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-bold border dark:border-slate-800 outline-none resize-none"></textarea></div>
             </div>
             <div class="flex gap-3 mt-8">
                 <button onclick="fecharModalNovaPessoa()" class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition">Cancelar</button>
@@ -304,10 +311,10 @@
                     <div><label class="text-[10px] font-black text-slate-400 uppercase italic">Data Entrada</label><input type="date" id="detalhesDataEntrada" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 outline-none"></div>
                 </div>
                 <div><label class="text-[10px] font-black text-slate-400 uppercase italic">Observações Gerais</label><textarea id="detalhesObs" rows="5" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 outline-none resize-none"></textarea></div>
-                <button onclick="salvarDetalhesManual()" id="btnSalvarPerfil" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg mt-2">Salvar Alterações</button>
+                <button onclick="salvarDetalhesManual()" id="btnSalvarPerfil" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg mt-2 active:scale-95 transition">Salvar Alterações</button>
             </div>
             <div class="flex flex-col">
-                <h4 class="text-[10px] font-black text-brand-500 uppercase tracking-widest italic mb-4">Linha do Tempo de Pagamentos</h4>
+                <h4 class="text-[10px] font-black text-brand-500 uppercase tracking-widest italic mb-4">Linha do Tempo</h4>
                 <div id="listaHistorico" class="bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl flex-1 overflow-y-auto p-4 border dark:border-slate-800"></div>
             </div>
         </div>
@@ -327,17 +334,41 @@
                 <div><label class="text-[10px] font-black uppercase text-slate-400 italic">Valor Padrão</label><input type="number" step="0.01" id="cfgValorPadrao" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 outline-none mt-1"></div>
                 <div><label class="text-[10px] font-black uppercase text-slate-400 italic">Dia da Virada</label><input type="number" id="cfgDiaVirada" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 outline-none mt-1" placeholder="Ex: 10"></div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><label class="text-[10px] font-black uppercase text-slate-400 italic">Participante</label><input type="text" id="cfgTermoPart" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 mt-1"></div>
-                <div><label class="text-[10px] font-black uppercase text-slate-400 italic">Cobrança</label><input type="text" id="cfgTermoMens" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 mt-1"></div>
-            </div>
             <div><label class="text-[10px] font-black uppercase text-slate-400 italic">Frase WhatsApp</label><textarea id="cfgMsgCustom" rows="3" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-xl border dark:border-slate-800 mt-1 resize-none"></textarea></div>
-            <div class="flex gap-3"><button onclick="fecharModalConfig()" class="flex-1 py-4 font-bold text-slate-500">Voltar</button><button onclick="salvarConfiguracoes()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg">Salvar Configurações</button></div>
+            <div class="flex gap-3 pt-4"><button onclick="fecharModalConfig()" class="flex-1 py-4 font-bold text-slate-500">Voltar</button><button onclick="salvarConfiguracoes()" class="flex-1 py-4 bg-brand-600 text-white rounded-2xl font-black uppercase text-xs shadow-lg">Salvar Configurações</button></div>
         </div>
     </div>
 </div>
 
-<!-- SCRIPTS -->
+<!-- Modal Importação CSV -->
+<div id="modalImport" class="modal-overlay" onclick="fecharModal()">
+    <div class="glass-card w-full max-w-lg p-6 md:p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="p-4 bg-emerald-500/10 rounded-2xl text-emerald-600">
+                <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-extrabold dark:text-white">Importar Dados</h3>
+                <p class="text-xs text-slate-500 font-medium">Sincronize a sua grelha rapidamente.</p>
+            </div>
+        </div>
+
+        <div class="group relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 md:p-10 text-center bg-slate-50/50 dark:bg-slate-900/50 hover:border-brand-500 transition-all cursor-pointer">
+            <input type="file" id="arquivoCSV" accept=".csv" class="hidden" onchange="validarArquivo(this)">
+            <label for="arquivoCSV" class="cursor-pointer">
+                <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
+                <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Selecione o ficheiro CSV</p>
+                <p class="text-[9px] text-slate-400 mt-2 uppercase tracking-widest leading-relaxed">Colunas: ID, Nome, Tel, Data Entrada, Observacoes, Valor, Adiantadas, Status, Arquivado</p>
+            </label>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button onclick="fecharModal()" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Voltar</button>
+            <button onclick="processarCSV()" class="flex-1 py-3 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Importar Agora</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBKuldmBQEuNyEWVZ-0sPW0ItGn8QqPxd8",
@@ -357,6 +388,7 @@
     let dataRef = new Date();
     let mesReal = `${String(dataRef.getMonth() + 1).padStart(2, '0')}-${dataRef.getFullYear()}`;
     let mesAtual = mesReal;
+    let mesAtualAjustado = false;
     let dadosLocais = [];
     let selecionados = new Set();
     let filtroStatus = 'todos';
@@ -368,6 +400,19 @@
     const idCliente = urlParams.get('p');
     const idAdminUrl = urlParams.get('a');
 
+    if (typeof window.lucide === 'undefined') { window.lucide = { createIcons: () => console.warn("Lucide falhou.") }; }
+
+    function mostrarErro(msg) {
+        const p = document.getElementById('msgErroAuth');
+        if (p) {
+            p.innerText = msg;
+            p.classList.remove('hidden');
+            setTimeout(() => p.classList.add('hidden'), 5000);
+        } else {
+            showToast(msg, "error");
+        }
+    }
+
     function iniciar() {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }
         
@@ -376,7 +421,6 @@
             document.body.className = "modo-cliente"; 
             carregarConfiguracoesGerais();
         } else { 
-            document.body.className = "modo-admin estado-login"; 
             monitorarAutenticacao(); 
         }
     }
@@ -401,9 +445,36 @@
         });
     }
 
+    function toggleSenhaVisivel() {
+        const input = document.getElementById('senhaAuth');
+        const icone = document.getElementById('iconeOlho');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icone.setAttribute('data-lucide', 'eye-off');
+        } else {
+            input.type = 'password';
+            icone.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    }
+
     function carregarConfiguracoesGerais() {
         db.ref(`tenants/${adminId}/configuracoes`).on('value', s => {
             if (s.val()) configGeral = { ...configGeral, ...s.val() };
+            
+            if (!mesAtualAjustado && configGeral.diaVirada) {
+                let d = new Date();
+                let diaV = parseInt(configGeral.diaVirada);
+                if (!isNaN(diaV) && diaV > 1) { 
+                    let ultimoDiaMes = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                    let diaRealVirada = diaV > ultimoDiaMes ? ultimoDiaMes : diaV;
+                    if (d.getDate() >= diaRealVirada) d.setMonth(d.getMonth() + 1);
+                }
+                mesReal = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                if (mesAtual !== 'todos' && !urlParams.get('m')) mesAtual = mesReal;
+                mesAtualAjustado = true;
+            }
+
             if (!idCliente) { gerarOpcoesMes(); carregarDadosAdmin(); }
             else { carregarPortalCliente(); }
         });
@@ -493,6 +564,7 @@
                 <p class="text-[10px] text-slate-400 font-bold">${c.tel || 'Sem telefone'}</p>
             </div>`).join('');
         lista.classList.remove('hidden');
+        lucide.createIcons();
     }
 
     function selecionarClienteAutocompletar(id) {
@@ -523,7 +595,7 @@
             valor: configGeral.valorPadrao,
             pago: false,
             arquivado: false
-        }).then(() => { fecharModalNovaPessoa(); showToast("Participante adicionado!"); });
+        }).then(() => { fecharModalNovaPessoa(); showToast("Adicionado!"); });
     }
 
     async function abrirDetalhes(id) {
@@ -602,7 +674,6 @@
         const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `pagflow_relatorio_${mesAtual}.csv`; link.click();
     }
 
-    // UTILS
     function showToast(msg, type = 'success') {
         const c = document.getElementById('toastContainer');
         const t = document.createElement('div');
@@ -612,6 +683,7 @@
         requestAnimationFrame(() => t.classList.remove('translate-x-full', 'opacity-0'));
         setTimeout(() => { t.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
     }
+
     function toggleSel(id) { if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id); renderizarTabela(); }
     function toggleAll(source) { document.querySelectorAll('.row-checkbox').forEach(cb => { if(source.checked) selecionados.add(cb.value); else selecionados.clear(); }); renderizarTabela(); }
     function updateBulkUI() {
@@ -639,6 +711,7 @@
     function criarConta() { auth.createUserWithEmailAndPassword(document.getElementById('emailAuth').value, document.getElementById('senhaAuth').value).catch(e => mostrarErro(e.message)); }
     function loginComGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => mostrarErro(e.message)); }
     function falarComSuporte() { window.open("https://wa.me/5513974123358"); }
+    
     function gerarOpcoesMes() {
         const s = document.getElementById('filtroMes'); s.innerHTML = '<option value="todos">Todos os Ciclos</option>';
         for(let i = -12; i <= 12; i++) {
@@ -647,12 +720,59 @@
             const o = document.createElement('option'); o.value = k; o.innerText = k; o.selected = k === mesAtual; s.appendChild(o);
         }
     }
+    
     function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); }
     function getTargetMes(id) { const p = dadosLocais.find(x => x.id === id); return p ? (p.sourceMes || mesAtual) : mesAtual; }
+    
     function excluir(id) { 
         if(confirm("Deseja apagar este registro?")) {
             db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).remove();
             showToast("Registro excluído.");
+        }
+    }
+
+    async function salvarConfiguracoes() {
+        if(!adminId) return;
+        const vPadrao = parseFloat(document.getElementById('cfgValorPadrao').value) || 50;
+        const updates = {
+            chavePix: document.getElementById('cfgChavePix').value,
+            valorPadrao: vPadrao,
+            diaVirada: document.getElementById('cfgDiaVirada').value,
+            msgZapCustom: document.getElementById('cfgMsgCustom').value
+        };
+        await db.ref(`tenants/${adminId}/configuracoes`).update(updates);
+        fecharModalConfig();
+        showToast("Configurações salvas!");
+    }
+
+    async function copiarCicloAnterior() {
+        if (!adminId || mesAtual === 'todos') return;
+        let [m, y] = mesAtual.split('-');
+        let prevM = parseInt(m) - 1;
+        let prevY = parseInt(y);
+        if (prevM === 0) { prevM = 12; prevY--; }
+        let mesAnterior = `${String(prevM).padStart(2, '0')}-${prevY}`;
+
+        if(!confirm(`Copiar clientes de ${mesAnterior} para ${mesAtual}?`)) return;
+
+        const snapAtual = await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).once('value');
+        const dadosAtual = snapAtual.val() || {};
+        const snapAnterior = await db.ref(`tenants/${adminId}/cobrancas/${mesAnterior}`).once('value');
+        const dadosAnterior = snapAnterior.val() || {};
+
+        const updates = {};
+        let count = 0;
+        for (const id in dadosAnterior) {
+            if (!dadosAtual[id] && !dadosAnterior[id].arquivado) {
+                updates[id] = { ...dadosAnterior[id], pago: false, comprovante: null };
+                count++;
+            }
+        }
+        if (count > 0) {
+            await db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).update(updates);
+            showToast(`${count} clientes copiados!`);
+        } else {
+            showToast("Nada novo para copiar.", "error");
         }
     }
 
