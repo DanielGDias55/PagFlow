@@ -1700,13 +1700,24 @@
                 let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i); 
                 let ext = dadosLocais.find(d => String(d.id) === id) || {};
                 
+                // Validação do Dia de Cobrança (Máx 31, Mín 0) durante a importação
+                let diaLido = cols[4]?.trim() || ext.diaCobranca || "";
+                if (diaLido !== "") {
+                    let dNum = parseInt(diaLido);
+                    if (!isNaN(dNum)) {
+                        if (dNum > 31) diaLido = "31";
+                        else if (dNum < 0) diaLido = "0";
+                        else diaLido = dNum.toString();
+                    }
+                }
+                
                 // Mapeamento correto de acordo com a ordem de Exportação:
                 // 0:ID, 1:Nome, 2:Tel, 3:Data, 4:DiaCobranca, 5:Obs, 6:Valor, 7:Adiantadas, 8:Status, 9:Arquivado
                 updates[id] = { 
                     nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
                     tel: cols[2]?.trim() || ext.tel || "", 
                     dataEntrada: cols[3]?.trim() || ext.dataEntrada || "",
-                    diaCobranca: cols[4]?.trim() || ext.diaCobranca || "",
+                    diaCobranca: diaLido,
                     observacao: cols[5]?.trim() || ext.observacao || "",
                     valor: cols[6] ? parseFloat(cols[6].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
                     adiantadas: cols[7] ? parseInt(cols[7]) : (ext.adiantadas || 0), 
