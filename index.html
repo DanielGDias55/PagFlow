@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagflow - Gestão de Cobranças</title>
+    <title>PagFlow - Gestão de Cobranças</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
@@ -152,6 +152,7 @@
         /* Oculta colunas baseadas nas configs */
         .esconder-adiantadas .col-adiantadas { display: none !important; }
         .esconder-status .col-status { display: none !important; }
+        .esconder-dia-cobranca .col-dia-cobranca { display: none !important; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 p-4 md:p-8 relative">
@@ -184,11 +185,21 @@
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
         
         <div class="relative z-10 flex flex-col items-center">
-            <div class="w-16 h-16 bg-brand-500 rounded-3xl shadow-glow flex items-center justify-center mb-6">
-                <i data-lucide="layers" class="text-white w-8 h-8"></i>
+            <!-- Logo Icon Opção 2 -->
+            <div class="w-20 h-20 flex items-center justify-center mb-3">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-lg">
+                    <!-- Parte externa do P -->
+                    <path d="M25 80V35L45 15H65L85 35V50L65 70H45" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800 dark:text-slate-100"/>
+                    <!-- Dobra cruzando -->
+                    <path d="M25 55L45 75L35 85" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
+                    <!-- Detalhe interno da fita -->
+                    <path d="M45 40L65 60" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
+                </svg>
             </div>
-            <h2 class="text-3xl font-black tracking-tighter dark:text-white uppercase mb-1">Pagflow</h2>
-            <p class="text-xs font-bold text-brand-500 uppercase tracking-widest mb-8">Acesso Restrito</p>
+            <h2 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white mb-1 flex items-center">
+                Pag<span class="text-brand-500 font-bold">Flow</span>
+            </h2>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">Acesso Restrito</p>
 
             <div class="w-full space-y-4">
                 <div>
@@ -337,7 +348,7 @@
                     <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Nome Completo</label>
                     <input type="text" id="novoNome" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-5 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition" placeholder="Ex: João Silva">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">WhatsApp</label>
                         <div class="relative group">
@@ -350,6 +361,13 @@
                         <div class="relative group">
                             <i data-lucide="calendar" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
                             <input type="date" id="novoDataEntrada" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white pl-9 pr-3 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic" title="Dia de Cobrança">Dia Venc.</label>
+                        <div class="relative group">
+                            <i data-lucide="calendar-clock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition"></i>
+                            <input type="number" min="1" max="31" id="novoDiaCobranca" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" placeholder="Ex: 10" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white pl-9 pr-3 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition">
                         </div>
                     </div>
                 </div>
@@ -394,9 +412,15 @@
                     <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Nome Completo</label>
                     <input type="text" id="detalhesNome" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
                 </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">WhatsApp</label>
-                    <input type="text" id="detalhesTel" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">WhatsApp</label>
+                        <input type="text" id="detalhesTel" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Dia de Cobrança</label>
+                        <input type="number" min="1" max="31" id="detalhesDiaCobranca" placeholder="Ex: 10" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
+                    </div>
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Data de Entrada</label>
@@ -493,6 +517,10 @@
                         <input type="checkbox" id="cfgOcultarStatus" class="check-custom">
                         <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ocultar "Status"</span>
                     </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="cfgOcultarDiaCobranca" class="check-custom">
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">Ocultar "Dia Venc."</span>
+                    </label>
                 </div>
             </div>
 
@@ -549,7 +577,7 @@
             <label for="arquivoCSV" class="cursor-pointer">
                 <i data-lucide="upload-cloud" class="w-12 h-12 mx-auto mb-3 text-slate-300 group-hover:text-brand-500 transition-transform group-hover:-translate-y-1"></i>
                 <p class="text-sm font-bold text-slate-600 dark:text-slate-400" id="nomeArquivo">Selecione o ficheiro CSV</p>
-                <p class="text-[9px] text-slate-400 mt-2 uppercase tracking-widest leading-relaxed">Colunas: ID, Nome, Tel, Data Entrada, Observacoes, Valor, Adiantadas, Status, Arquivado</p>
+                <p class="text-[9px] text-slate-400 mt-2 uppercase tracking-widest leading-relaxed">Colunas: ID, Nome, Tel, Data Entrada, Dia Cobrança, Observacoes, Valor, Adiantadas, Status, Arquivado</p>
             </label>
         </div>
 
@@ -586,13 +614,20 @@
     <div>
         <!-- Header Principal Corrigido -->
         <header class="glass-card p-4 md:p-6 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-4 shadow-soft relative z-10">
-            <div class="flex flex-row items-center gap-4 text-left w-full md:w-auto">
-                <div class="w-12 h-12 md:w-14 md:h-14 bg-brand-500 rounded-2xl shadow-glow flex items-center justify-center shrink-0">
-                    <i data-lucide="layers" class="text-white w-6 h-6 md:w-7 md:h-7"></i>
+            <div class="flex flex-row items-center gap-3 text-left w-full md:w-auto">
+                <!-- Logo Icon Opção 2 no Admin -->
+                <div class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">
+                        <path d="M25 80V35L45 15H65L85 35V50L65 70H45" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800 dark:text-slate-100"/>
+                        <path d="M25 55L45 75L35 85" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
+                        <path d="M45 40L65 60" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tighter dark:text-white uppercase leading-none mb-1">Pagflow</h1>
-                    <span class="text-[9px] md:text-[10px] font-bold text-brand-500 uppercase tracking-widest block" id="adminEmailDisplay">Carregando...</span>
+                    <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white leading-none mb-1 flex items-center">
+                        Pag<span class="text-brand-500 font-bold">Flow</span>
+                    </h1>
+                    <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest block" id="adminEmailDisplay">Carregando...</span>
                 </div>
             </div>
             
@@ -664,6 +699,7 @@
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
                         <div class="bg-white dark:bg-slate-950 p-1.5 rounded-xl md:rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
                             <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
+                            <button onclick="setFiltroStatus('hoje')" id="btn-hoje" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">Vence Hoje</button>
                             <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
                             <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
                             <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
@@ -719,6 +755,7 @@
                                 <span id="labelThParticipante">Participante</span> <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
                             </div>
                         </th>
+                        <th class="px-2 md:px-4 py-4 md:py-5 text-center col-dia-cobranca" title="Dia de Cobrança">Dia</th>
                         <th class="px-4 md:px-8 py-4 md:py-5 text-center" id="labelThMensalidade">Mensalidade</th>
                         <th class="px-4 md:px-8 py-4 md:py-5 text-center col-adiantadas" title="Meses pagos adiantados">Adiantadas</th>
                         <th class="px-4 md:px-8 py-4 md:py-5 text-center col-status">Status</th>
@@ -776,6 +813,7 @@
         termoMensalidade: "Mensalidade",
         ocultarAdiantadas: false,
         ocultarStatus: false,
+        ocultarDiaCobranca: false,
         msgZapCustom: "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo."
     };
 
@@ -905,6 +943,7 @@
             if (container) {
                 container.classList.toggle('esconder-adiantadas', configGeral.ocultarAdiantadas);
                 container.classList.toggle('esconder-status', configGeral.ocultarStatus);
+                container.classList.toggle('esconder-dia-cobranca', configGeral.ocultarDiaCobranca);
             }
             
             const btnCopiar = document.getElementById('btnCopiarCiclo');
@@ -968,6 +1007,10 @@
             filtrados = filtrados.filter(p => p.arquivado === true);
         } else {
             filtrados = filtrados.filter(p => !p.arquivado);
+            if (filtroStatus === 'hoje') {
+                const hoje = new Date().getDate();
+                filtrados = filtrados.filter(p => !p.pago && parseInt(p.diaCobranca) === hoje);
+            }
             if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.pago);
             if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.pago);
             if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
@@ -978,6 +1021,14 @@
         }
 
         filtrados.sort((a,b) => ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
+
+        // Badge Notification for "Vence Hoje"
+        const hojeDia = new Date().getDate();
+        const pendentesHoje = dadosLocais.filter(p => !p.arquivado && !p.pago && parseInt(p.diaCobranca) === hojeDia).length;
+        const btnHoje = document.getElementById('btn-hoje');
+        if (btnHoje) {
+            btnHoje.innerHTML = `Vence Hoje ${pendentesHoje > 0 ? `<span class="bg-rose-500 text-white rounded-full px-1.5 py-0.5 ml-1 text-[8px] shadow-sm">${pendentesHoje}</span>` : ''}`;
+        }
 
         corpo.innerHTML = "";
         let t = 0, pg = 0, pd = 0;
@@ -1012,6 +1063,9 @@
                             </div>
                             <input type="text" value="${p.tel || ''}" onblur="editar('${p.id}','tel',this.value)" class="editable-input text-[9px] md:text-[10px] text-slate-400 font-bold -mt-1">
                         </div>
+                    </td>
+                    <td class="px-2 md:px-4 py-4 md:py-5 text-center col-dia-cobranca">
+                        <input type="number" min="1" max="31" value="${p.diaCobranca || ''}" onblur="editar('${p.id}','diaCobranca',this.value)" class="editable-input w-10 md:w-12 text-center font-bold text-slate-500 dark:text-slate-400" placeholder="--">
                     </td>
                     <td class="px-4 md:px-8 py-4 md:py-5 text-center font-bold dark:text-white text-xs md:text-sm">
                         <div class="flex items-center justify-center gap-1">
@@ -1232,6 +1286,7 @@
         document.getElementById('cfgTermoMens').value = configGeral.termoMensalidade || "Mensalidade";
         document.getElementById('cfgOcultarAdiantadas').checked = configGeral.ocultarAdiantadas || false;
         document.getElementById('cfgOcultarStatus').checked = configGeral.ocultarStatus || false;
+        document.getElementById('cfgOcultarDiaCobranca').checked = configGeral.ocultarDiaCobranca || false;
         document.getElementById('cfgMsgCustom').value = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
         document.getElementById('modalConfig').classList.add('flex');
     }
@@ -1249,6 +1304,7 @@
             termoMensalidade: document.getElementById('cfgTermoMens').value || "Mensalidade",
             ocultarAdiantadas: document.getElementById('cfgOcultarAdiantadas').checked,
             ocultarStatus: document.getElementById('cfgOcultarStatus').checked,
+            ocultarDiaCobranca: document.getElementById('cfgOcultarDiaCobranca').checked,
             msgZapCustom: document.getElementById('cfgMsgCustom').value
         };
 
@@ -1266,6 +1322,7 @@
         document.getElementById('novoNome').value = "";
         document.getElementById('novoTel').value = "";
         document.getElementById('novoDataEntrada').value = "";
+        document.getElementById('novoDiaCobranca').value = "";
         document.getElementById('novoObs').value = "";
         document.getElementById('modalNovaPessoa').classList.add('flex');
         lucide.createIcons();
@@ -1332,6 +1389,7 @@
         document.getElementById('novoNome').value = c.nome || "";
         document.getElementById('novoTel').value = c.tel || "";
         document.getElementById('novoDataEntrada').value = c.dataEntrada || "";
+        document.getElementById('novoDiaCobranca').value = c.diaCobranca || "";
         document.getElementById('novoObs').value = c.observacao || "";
         
         showToast("Dados do cliente preenchidos!", "success");
@@ -1344,6 +1402,7 @@
         const n = document.getElementById('novoNome').value.trim();
         const t = document.getElementById('novoTel').value.trim();
         const d = document.getElementById('novoDataEntrada').value;
+        const diaC = document.getElementById('novoDiaCobranca').value;
         const obs = document.getElementById('novoObs').value.trim();
         
         if(!n) return showToast("Por favor, digite o nome.", "error");
@@ -1370,6 +1429,7 @@
                 comprovante: (existeNoCiclo && existeNoCiclo.comprovante !== undefined) ? existeNoCiclo.comprovante : null,
                 arquivado: false,
                 dataEntrada: d,
+                diaCobranca: diaC,
                 observacao: obs
             }).then(() => {
                 fecharModalNovaPessoa();
@@ -1444,11 +1504,11 @@
         for (let i = 1; i <= qtdMeses; i++) {
             mes++; if (mes > 12) { mes = 1; ano++; }
             let futuroMes = `${String(mes).padStart(2, '0')}-${ano}`;
-            updates[`tenants/${adminId}/cobrancas/${futuroMes}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: 0, adiantadas: qtdMeses - i, pago: true, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "", observacao: user.observacao || "" };
+            updates[`tenants/${adminId}/cobrancas/${futuroMes}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: 0, adiantadas: qtdMeses - i, pago: true, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "", diaCobranca: user.diaCobranca || "", observacao: user.observacao || "" };
         }
         mes++; if (mes > 12) { mes = 1; ano++; }
         let mesRetorno = `${String(mes).padStart(2, '0')}-${ano}`;
-        updates[`tenants/${adminId}/cobrancas/${mesRetorno}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "", observacao: user.observacao || "" };
+        updates[`tenants/${adminId}/cobrancas/${mesRetorno}/${id}`] = { nome: user.nome, tel: user.tel || "", valor: configGeral.valorPadrao, adiantadas: 0, pago: false, msgEnviada: false, arquivado: false, dataEntrada: user.dataEntrada || "", diaCobranca: user.diaCobranca || "", observacao: user.observacao || "" };
         db.ref().update(updates);
     }
 
@@ -1462,6 +1522,7 @@
         document.getElementById('detalhesNome').value = cliente.nome || "";
         document.getElementById('detalhesTel').value = cliente.tel || "";
         document.getElementById('detalhesDataEntrada').value = cliente.dataEntrada || "";
+        document.getElementById('detalhesDiaCobranca').value = cliente.diaCobranca || "";
         document.getElementById('detalhesObs').value = cliente.observacao || "";
         
         document.getElementById('btnSalvarDetalhes').onclick = () => salvarDetalhes(id);
@@ -1528,6 +1589,7 @@
         const n = document.getElementById('detalhesNome').value.trim();
         const t = document.getElementById('detalhesTel').value.trim();
         const d = document.getElementById('detalhesDataEntrada').value;
+        const diaC = document.getElementById('detalhesDiaCobranca').value;
         const obs = document.getElementById('detalhesObs').value.trim();
         
         if(!n) return showToast("Por favor, digite o nome.", "error");
@@ -1539,7 +1601,7 @@
         lucide.createIcons();
 
         db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({
-            nome: n, tel: t, dataEntrada: d, observacao: obs
+            nome: n, tel: t, dataEntrada: d, diaCobranca: diaC, observacao: obs
         }).then(() => {
             btn.innerHTML = txtOriginal; 
             btn.classList.remove('opacity-50', 'pointer-events-none');
@@ -1588,8 +1650,8 @@
     
     function exportarExcel() {
         if (dadosLocais.length === 0) return;
-        let csv = "ID;Nome;Telefone;Data de Entrada;Observacoes;Valor;Adiantadas;Status;Arquivado;Ciclo_Origem\n";
-        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.dataEntrada || ''};${p.observacao || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'};${p.sourceMes || mesAtual}\n`; });
+        let csv = "ID;Nome;Telefone;Data de Entrada;Dia Cobranca;Observacoes;Valor;Adiantadas;Status;Arquivado;Ciclo_Origem\n";
+        dadosLocais.forEach(p => { csv += `${p.id};${p.nome};${p.tel || ''};${p.dataEntrada || ''};${p.diaCobranca || ''};${p.observacao || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'};${p.sourceMes || mesAtual}\n`; });
         const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `pagflow_relatorio_${mesAtual}.csv`; link.click();
     }
     
@@ -1610,16 +1672,17 @@
                 let ext = dadosLocais.find(d => String(d.id) === id) || {};
                 
                 // Mapeamento correto de acordo com a ordem de Exportação:
-                // 0:ID, 1:Nome, 2:Tel, 3:Data, 4:Obs, 5:Valor, 6:Adiantadas, 7:Status, 8:Arquivado
+                // 0:ID, 1:Nome, 2:Tel, 3:Data, 4:DiaCobranca, 5:Obs, 6:Valor, 7:Adiantadas, 8:Status, 9:Arquivado
                 updates[id] = { 
                     nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
                     tel: cols[2]?.trim() || ext.tel || "", 
                     dataEntrada: cols[3]?.trim() || ext.dataEntrada || "",
-                    observacao: cols[4]?.trim() || ext.observacao || "",
-                    valor: cols[5] ? parseFloat(cols[5].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
-                    adiantadas: cols[6] ? parseInt(cols[6]) : (ext.adiantadas || 0), 
-                    pago: cols[7] ? cols[7].trim().toLowerCase() === "pago" : (ext.pago || false), 
-                    arquivado: cols[8] ? cols[8].trim().toLowerCase() === "sim" : (ext.arquivado || false),
+                    diaCobranca: cols[4]?.trim() || ext.diaCobranca || "",
+                    observacao: cols[5]?.trim() || ext.observacao || "",
+                    valor: cols[6] ? parseFloat(cols[6].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
+                    adiantadas: cols[7] ? parseInt(cols[7]) : (ext.adiantadas || 0), 
+                    pago: cols[8] ? cols[8].trim().toLowerCase() === "pago" : (ext.pago || false), 
+                    arquivado: cols[9] ? cols[9].trim().toLowerCase() === "sim" : (ext.arquivado || false),
                     msgEnviada: ext.msgEnviada || false, 
                     comprovante: ext.comprovante || null
                 };
