@@ -715,11 +715,11 @@
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
                         <div class="bg-white dark:bg-slate-950 p-1.5 rounded-xl md:rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
                             <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
-                            <button onclick="setFiltroStatus('hoje')" id="btn-hoje" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">Vence Hoje</button>
-                            <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
-                            <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
-                            <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
-                            <button onclick="setFiltroStatus('arquivado')" id="btn-arquivado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-100 hover:opacity-100 transition-all text-slate-400 dark:text-slate-500">Arquivados</button>
+                            <button onclick="setFiltroStatus('hoje')" id="btn-hoje" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">Vence Hoje</button>
+                            <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
+                            <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
+                            <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
+                            <button onclick="setFiltroStatus('arquivado')" id="btn-arquivado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-400 dark:text-slate-500">Arquivados</button>
                         </div>
                     </div>
 
@@ -813,7 +813,7 @@
     let mesAtualAjustado = false; 
     
     let dadosLocais = [];
-    let filtroStatus = 'todos';
+    let filtrosStatus = new Set(['todos']);
     let ordemCrescente = true;
     let selecionados = new Set();
     
@@ -1019,17 +1019,20 @@
         if (dtInicio) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada >= dtInicio);
         if (dtFim) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada <= dtFim);
 
-        if (filtroStatus === 'arquivado') {
+        if (filtrosStatus.has('arquivado')) {
             filtrados = filtrados.filter(p => p.arquivado === true);
         } else {
             filtrados = filtrados.filter(p => !p.arquivado);
-            if (filtroStatus === 'hoje') {
+        }
+
+        if (!filtrosStatus.has('todos')) {
+            if (filtrosStatus.has('hoje')) {
                 const hoje = new Date().getDate();
                 filtrados = filtrados.filter(p => !p.pago && parseInt(p.diaCobranca) === hoje);
             }
-            if (filtroStatus === 'pago') filtrados = filtrados.filter(p => p.pago);
-            if (filtroStatus === 'pendente') filtrados = filtrados.filter(p => !p.pago);
-            if (filtroStatus === 'nao_enviado') filtrados = filtrados.filter(p => !p.msgEnviada);
+            if (filtrosStatus.has('pago')) filtrados = filtrados.filter(p => p.pago);
+            if (filtrosStatus.has('pendente')) filtrados = filtrados.filter(p => !p.pago);
+            if (filtrosStatus.has('nao_enviado')) filtrados = filtrados.filter(p => !p.msgEnviada);
         }
 
         if (termoBusca) {
@@ -1482,7 +1485,7 @@
 
         const btnArchive = document.getElementById('btnBulkArchive');
         if (btnArchive) {
-            if (filtroStatus === 'arquivado') {
+            if (filtrosStatus.has('arquivado')) {
                 btnArchive.setAttribute('onclick', 'arquivarSelecionados(false)');
                 btnArchive.innerHTML = `<i data-lucide="archive-restore" class="w-4 h-4"></i> <span class="hidden sm:inline">Desarquivar</span>`;
             } else {
@@ -1656,7 +1659,35 @@
         carregarDadosAdmin(); 
     }
     
-    function setFiltroStatus(s) { filtroStatus = s; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.toggle('active', b.id === `btn-${s}`); b.classList.toggle('opacity-40', b.id !== `btn-${s}`); }); renderizarTabela(); }
+    function setFiltroStatus(s) { 
+        if (s === 'todos') {
+            filtrosStatus.clear();
+            filtrosStatus.add('todos');
+        } else {
+            filtrosStatus.delete('todos');
+            if (filtrosStatus.has(s)) {
+                filtrosStatus.delete(s);
+            } else {
+                filtrosStatus.add(s);
+            }
+            if (filtrosStatus.size === 0) {
+                filtrosStatus.add('todos');
+            }
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(b => { 
+            const btnId = b.id.replace('btn-', '');
+            if (filtrosStatus.has(btnId)) {
+                b.classList.add('active', 'opacity-100');
+                b.classList.remove('opacity-40');
+            } else {
+                b.classList.remove('active', 'opacity-100');
+                b.classList.add('opacity-40');
+            }
+        }); 
+        
+        renderizarTabela(); 
+    }
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
