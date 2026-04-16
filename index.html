@@ -919,7 +919,12 @@
                     // Atualiza a Badge de Teste no Topo
                     const badgeTeste = document.getElementById('badgeTesteStatus');
                     if (temAcesso && status === 'teste') {
-                        const diasRestantes = Math.ceil((testeExpiraEm - agora) / (1000 * 60 * 60 * 24));
+                        const hojeDate = new Date();
+                        hojeDate.setHours(0, 0, 0, 0);
+                        const expiraDate = new Date(testeExpiraEm);
+                        expiraDate.setHours(0, 0, 0, 0);
+                        const diasRestantes = Math.max(0, Math.round((expiraDate - hojeDate) / (1000 * 60 * 60 * 24)));
+                        
                         if (badgeTeste) badgeTeste.innerHTML = `<span class="bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ml-2 border border-indigo-200 dark:border-indigo-800">Teste: ${diasRestantes} dia(s)</span>`;
                     } else {
                         if (badgeTeste) badgeTeste.innerHTML = '';
@@ -1900,7 +1905,7 @@
                         <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4">Já pagou? Envie o comprovativo</label>
                         <input type="file" accept="image/*" id="compFile" class="hidden" onchange="uploadComp(this)">
                         <label for="compFile" id="lblCompFile" class="w-full py-4 md:py-5 bg-brand-600 text-white rounded-[1.5rem] text-sm md:text-base font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95">
-                            <i data-lucide="image-plus" class="w-5 h-5"></i> Comprovante aqui
+                            <i data-lucide="image-plus" class="w-5 h-5"></i> Galeria ou Câmera
                         </label>
                         <div class="mt-4 text-center">
                             <a href="COLOQUE_SEU_LINK_AQUI" target="_blank" class="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-slate-400 hover:text-brand-500 transition-colors">
