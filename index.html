@@ -7,6 +7,9 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <!-- Biblioteca Chart.js para os Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -321,6 +324,35 @@
 <!-- 3. MODAIS DA APLICAÇÃO ADMIN               -->
 <!-- ========================================== -->
 
+<!-- Modal Fila de Envio (NOVO) -->
+<div id="modalFilaEnvio" class="modal-overlay" onclick="event.stopPropagation()">
+    <div class="glass-card w-full max-w-sm p-6 md:p-8 rounded-[2.5rem] shadow-2xl mx-4 text-center relative">
+        <div class="w-16 h-16 bg-blue-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow">
+            <i data-lucide="send" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-black dark:text-white mb-1">Fila de Cobrança</h3>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Enviando <span id="filaAtualNum" class="text-blue-500 font-black text-sm">1</span> de <span id="filaTotalNum" class="font-black text-sm">X</span></p>
+        
+        <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl mb-6 text-left border border-slate-100 dark:border-slate-800">
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Próximo Cliente:</p>
+            <p id="filaClienteNome" class="font-bold dark:text-white text-lg truncate">Carregando...</p>
+            <p id="filaClienteTel" class="text-xs text-slate-500 font-medium">...</p>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="proximoFilaWhatsApp()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i data-lucide="external-link" class="w-5 h-5"></i> Abrir WhatsApp e Avançar
+            </button>
+            <button onclick="pularFilaWhatsApp()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold transition-all active:scale-95">
+                Pular este cliente
+            </button>
+            <button onclick="cancelarFilaWhatsApp()" class="w-full py-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl font-bold transition-all">
+                Cancelar Fila
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Nova Pessoa -->
 <div id="modalNovaPessoa" class="modal-overlay" onclick="fecharModalNovaPessoa()">
     <div class="glass-card w-full max-w-2xl p-0 rounded-[2rem] shadow-2xl mx-4 transform transition-all flex flex-col md:flex-row overflow-hidden" onclick="event.stopPropagation()">
@@ -625,6 +657,9 @@
             <span class="text-xs md:text-sm font-extrabold tracking-wide">Selecionados</span>
         </div>
         <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1 shrink-0"></div>
+        <button id="btnBulkWhatsApp" onclick="iniciarFilaWhatsApp()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center gap-2 shrink-0">
+            <i data-lucide="send" class="w-4 h-4"></i> <span class="hidden sm:inline">Cobrar Todos</span>
+        </button>
         <button id="btnBulkArchive" onclick="arquivarSelecionados(true)" class="bg-amber-500 hover:bg-amber-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2 shrink-0">
             <i data-lucide="archive" class="w-4 h-4"></i> <span class="hidden sm:inline">Arquivar</span>
         </button>
@@ -721,19 +756,21 @@
                         </div>
                     </div>
 
-                    <div class="space-y-1 md:space-y-2 sm:col-span-2 lg:col-span-3">
-                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status</label>
+                    <div class="space-y-1 md:space-y-2 sm:col-span-2 lg:col-span-5">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Filtrar por Status (Múltiplos)</label>
                         <div class="bg-white dark:bg-slate-950 p-1.5 rounded-xl md:rounded-2xl flex flex-wrap gap-1 shadow-sm border border-slate-100 dark:border-slate-900 transition">
-                            <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
-                            <button onclick="setFiltroStatus('hoje')" id="btn-hoje" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">Vence Hoje</button>
-                            <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pendentes</button>
-                            <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-600 dark:text-slate-100">Pagos</button>
-                            <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-rose-500 dark:text-rose-100">Não Cobrados</button>
-                            <button onclick="setFiltroStatus('arquivado')" id="btn-arquivado" class="filter-btn flex-1 px-2 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-400 dark:text-slate-500">Arquivados</button>
+                            <button onclick="setFiltroStatus('todos')" id="btn-todos" class="filter-btn active flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase transition-all opacity-100 text-slate-600 dark:text-slate-100">Todos</button>
+                            <button onclick="setFiltroStatus('hoje')" id="btn-hoje" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-blue-500 dark:text-blue-400">Vence Hoje</button>
+                            <button onclick="setFiltroStatus('atrasado')" id="btn-atrasado" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-rose-500 dark:text-rose-400">Atrasados</button>
+                            <button onclick="setFiltroStatus('em_analise')" id="btn-em_analise" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">Em Análise</button>
+                            <button onclick="setFiltroStatus('pendente')" id="btn-pendente" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-amber-600 dark:text-amber-500">Pendentes</button>
+                            <button onclick="setFiltroStatus('pago')" id="btn-pago" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-emerald-600 dark:text-emerald-500">Pagos</button>
+                            <button onclick="setFiltroStatus('nao_enviado')" id="btn-nao_enviado" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-400 dark:text-slate-300">Não Cobrados</button>
+                            <button onclick="setFiltroStatus('arquivado')" id="btn-arquivado" class="filter-btn flex-1 px-3 py-2 rounded-lg md:rounded-xl text-[9px] font-extrabold uppercase opacity-40 hover:opacity-100 transition-all text-slate-400 dark:text-slate-500">Arquivados</button>
                         </div>
                     </div>
 
-                    <div class="sm:col-span-2 lg:col-span-2 flex flex-wrap gap-2 md:gap-3">
+                    <div class="sm:col-span-2 lg:col-span-5 flex flex-wrap gap-2 md:gap-3">
                         <button id="btnCopiarCiclo" onclick="copiarCicloAnterior()" class="flex-1 flex justify-center items-center gap-2 px-4 py-3 rounded-xl bg-violet-500/10 text-violet-600 font-bold text-[10px] uppercase tracking-widest hover:bg-violet-500/20 transition" title="Copiar os clientes ativos do mês passado para o atual">
                             <i data-lucide="copy" class="w-4 h-4"></i> Copiar Anterior
                         </button>
@@ -750,7 +787,7 @@
     </div>
 
     <!-- Stats Cards Limpos -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
         <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-soft">
             <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1 italic">Volume Projetado</p>
             <div class="text-3xl md:text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral">0,00</span></div>
@@ -764,6 +801,14 @@
         <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-l-4 md:border-l-8 border-l-rose-500 shadow-soft">
             <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 italic">Aguardando Pagamento</p>
             <div class="text-3xl md:text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend">0,00</span></div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Receita -->
+    <div class="glass-card rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-soft h-[250px] md:h-[300px] mb-4 md:mb-6">
+        <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-4 italic">Receita Confirmada (Últimos 6 Meses)</p>
+        <div class="relative h-full w-full pb-6">
+            <canvas id="chartReceita"></canvas>
         </div>
     </div>
 
@@ -827,9 +872,13 @@
     let ordemCrescente = true;
     let selecionados = new Set();
     
-    // Variáveis Globais de Autocomplete
+    // Variáveis Globais de Autocomplete e Funcionalidades
     let clientesGlobaisCache = [];
     let idClienteSelecionadoParaNovo = null;
+    let filaEnvio = [];
+    let filaTotal = 0;
+    let chartInstance = null;
+    let dadosGraficoCache = null;
     
     let configGeral = { 
         chavePix: "", 
@@ -871,7 +920,6 @@
         }
     }
 
-    // Função adicionada para exibir/ocultar a senha
     function toggleSenha() {
         const input = document.getElementById('senhaAuth');
         const icon = document.getElementById('iconToggleSenha');
@@ -1000,7 +1048,6 @@
         db.ref(`tenants/${adminId}/configuracoes`).on('value', s => { 
             if (s.val()) configGeral = { ...configGeral, ...s.val() }; 
             
-            // Lógica do Ciclo Configurável Inteligente
             if (!mesAtualAjustado && configGeral.diaVirada) {
                 let d = new Date();
                 let diaV = parseInt(configGeral.diaVirada);
@@ -1021,6 +1068,7 @@
             if(!idCliente) {
                 gerarOpcoesMes();
                 carregarDadosAdmin();
+                carregarDadosGrafico(); // Carrega os dados para o gráfico do Dashboard
             }
 
             // Aplica as configs na UI (Tabela)
@@ -1050,7 +1098,6 @@
                 const todosMeses = s.val() || {};
                 const clientesMap = new Map();
                 
-                // Ordena cronologicamente para que os dados mais recentes prevaleçam
                 const mesesOrdenados = Object.keys(todosMeses).sort((a, b) => {
                     const [mA, yA] = a.split('-'); const [mB, yB] = b.split('-');
                     return new Date(yA, mA - 1) - new Date(yB, mB - 1);
@@ -1077,12 +1124,117 @@
         }
     }
 
+    // --- GRÁFICOS DO DASHBOARD ---
+    function carregarDadosGrafico() {
+        if(!adminId) return;
+        db.ref(`tenants/${adminId}/cobrancas`).on('value', snap => {
+            const todosMeses = snap.val() || {};
+            const labels = [];
+            const dadosValores = [];
+
+            let d = new Date();
+            // Itera de 5 meses atrás até o mês atual
+            for(let i = 5; i >= 0; i--) {
+                let tempDate = new Date(d.getFullYear(), d.getMonth() - i, 1);
+                let mesStr = `${String(tempDate.getMonth() + 1).padStart(2, '0')}-${tempDate.getFullYear()}`;
+                
+                // Formata o nome do mês (ex: "Out/25")
+                let labelStr = tempDate.toLocaleDateString('pt-br', {month: 'short', year: '2-digit'}).replace('. de ', '/').replace('.', '');
+                labelStr = labelStr.charAt(0).toUpperCase() + labelStr.slice(1);
+
+                let totalPagoMes = 0;
+                if(todosMeses[mesStr]) {
+                    Object.values(todosMeses[mesStr]).forEach(p => {
+                        if(p.pago) {
+                            let val = parseFloat(p.valor) || 0;
+                            let adiantadas = parseInt(p.adiantadas) || 0;
+                            totalPagoMes += val + (val * adiantadas);
+                        }
+                    });
+                }
+                labels.push(labelStr);
+                dadosValores.push(totalPagoMes);
+            }
+            dadosGraficoCache = { labels, dados: dadosValores };
+            atualizarGrafico(labels, dadosValores);
+        });
+    }
+
+    function atualizarGrafico(labels, dados) {
+        const ctx = document.getElementById('chartReceita');
+        if(!ctx) return;
+
+        if(chartInstance) chartInstance.destroy();
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b'; // slate-400 : slate-500
+        const gridColor = isDark ? '#1e293b' : '#f1f5f9'; // slate-800 : slate-100
+
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Receita Confirmada (R$)',
+                    data: dados,
+                    backgroundColor: '#3b82f6', // brand-500
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ' R$ ' + context.parsed.y.toLocaleString('pt-br', {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: textColor }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    }
+                }
+            }
+        });
+    }
+
+    function verificarAtraso(p, mesDaCobranca) {
+        if (p.pago) return false;
+        if (!p.diaCobranca || p.diaCobranca === "") return false;
+
+        const hoje = new Date();
+        const diaAtual = hoje.getDate();
+        const mesAtualNum = hoje.getMonth() + 1;
+        const anoAtual = hoje.getFullYear();
+
+        let [mCob, yCob] = mesDaCobranca.split('-');
+        mCob = parseInt(mCob);
+        yCob = parseInt(yCob);
+
+        if (yCob < anoAtual) return true;
+        if (yCob > anoAtual) return false;
+        if (mCob < mesAtualNum) return true;
+        if (mCob > mesAtualNum) return false;
+
+        return parseInt(p.diaCobranca) < diaAtual;
+    }
+
     // --- RENDERIZAÇÃO E LÓGICA DA TABELA ---
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
         
-        // Filtros de Período (Data Entrada)
         const dtInicio = document.getElementById('filtroDataInicio')?.value;
         const dtFim = document.getElementById('filtroDataFim')?.value;
 
@@ -1104,8 +1256,14 @@
                 const hoje = new Date().getDate();
                 filtrados = filtrados.filter(p => !p.pago && parseInt(p.diaCobranca) === hoje);
             }
+            if (filtrosStatus.has('atrasado')) {
+                filtrados = filtrados.filter(p => verificarAtraso(p, p.sourceMes || mesAtual));
+            }
+            if (filtrosStatus.has('em_analise')) {
+                filtrados = filtrados.filter(p => !p.pago && p.comprovante);
+            }
             if (filtrosStatus.has('pago')) filtrados = filtrados.filter(p => p.pago);
-            if (filtrosStatus.has('pendente')) filtrados = filtrados.filter(p => !p.pago);
+            if (filtrosStatus.has('pendente')) filtrados = filtrados.filter(p => !p.pago); 
             if (filtrosStatus.has('nao_enviado')) filtrados = filtrados.filter(p => !p.msgEnviada);
         }
 
@@ -1115,12 +1273,11 @@
 
         filtrados.sort((a,b) => ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
 
-        // Badge Notification for "Vence Hoje"
         const hojeDia = new Date().getDate();
         const pendentesHoje = dadosLocais.filter(p => !p.arquivado && !p.pago && parseInt(p.diaCobranca) === hojeDia).length;
         const btnHoje = document.getElementById('btn-hoje');
         if (btnHoje) {
-            btnHoje.innerHTML = `Vence Hoje ${pendentesHoje > 0 ? `<span class="bg-rose-500 text-white rounded-full px-1.5 py-0.5 ml-1 text-[8px] shadow-sm">${pendentesHoje}</span>` : ''}`;
+            btnHoje.innerHTML = `Vence Hoje ${pendentesHoje > 0 ? `<span class="bg-blue-500 text-white rounded-full px-1.5 py-0.5 ml-1 text-[8px] shadow-sm">${pendentesHoje}</span>` : ''}`;
         }
 
         corpo.innerHTML = "";
@@ -1139,8 +1296,37 @@
             const icoArquivo = p.arquivado ? 'archive-restore' : 'archive';
             const tituloArquivo = p.arquivado ? 'Desarquivar' : 'Arquivar Ocultar';
             
-            // Etiqueta visual indicando o mês de origem adaptada (Sem esmagar)
             const badgeMes = mesAtual === 'todos' ? `<span class="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] px-2 py-1 rounded-md font-extrabold ml-2 border border-indigo-200/50 dark:border-indigo-500/20 shadow-sm whitespace-nowrap shrink-0 flex items-center gap-1" title="Mês de origem"><i data-lucide="calendar-days" class="w-3 h-3"></i> ${p.sourceMes}</span>` : '';
+
+            const obsIcon = (p.observacao && p.observacao.trim() !== '') 
+                ? `<div class="group/obs relative flex items-center justify-center shrink-0">
+                     <i data-lucide="message-square-warning" class="w-4 h-4 text-amber-500 cursor-help"></i>
+                     <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-[10px] p-2.5 rounded-xl shadow-xl opacity-0 invisible group-hover/obs:opacity-100 group-hover/obs:visible transition-all z-50 pointer-events-none whitespace-normal text-center leading-tight">
+                        ${p.observacao}
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                     </div>
+                   </div>` 
+                : '';
+
+            const estaEmAnalise = !p.pago && p.comprovante;
+            const estaAtrasado = verificarAtraso(p, p.sourceMes || mesAtual);
+
+            let btnStatusClass = '';
+            let btnStatusText = '';
+
+            if (p.pago) {
+                btnStatusClass = 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20';
+                btnStatusText = 'Pago';
+            } else if (estaEmAnalise) {
+                btnStatusClass = 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 ring-1 ring-violet-400';
+                btnStatusText = 'Em Análise';
+            } else if (estaAtrasado) {
+                btnStatusClass = 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 ring-1 ring-rose-500 font-black';
+                btnStatusText = 'Atrasado';
+            } else {
+                btnStatusClass = 'bg-amber-100 text-amber-600 dark:bg-amber-900/20';
+                btnStatusText = 'Pendente';
+            }
 
             corpo.innerHTML += `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
@@ -1149,8 +1335,9 @@
                     </td>
                     <td class="px-3 md:px-4 py-4 md:py-5">
                         <div class="flex flex-col">
-                            <div class="flex items-center gap-2 mb-1 w-full overflow-hidden">
+                            <div class="flex items-center gap-2 mb-1 w-full overflow-visible">
                                 <input type="text" value="${p.nome}" onblur="editar('${p.id}','nome',this.value)" class="editable-input font-bold dark:text-white text-xs md:text-sm truncate min-w-[100px]">
+                                ${obsIcon}
                                 ${badgeMes}
                                 ${adiantadas > 0 ? `<span class="bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400 text-[9px] px-2 py-0.5 rounded-full font-extrabold shrink-0">+${adiantadas}</span>` : ''}
                             </div>
@@ -1170,15 +1357,15 @@
                         <input type="number" value="${adiantadas}" onblur="editar('${p.id}','adiantadas',parseInt(this.value || 0))" class="editable-input w-full max-w-[80px] mx-auto block text-center font-bold text-brand-500 bg-brand-50 dark:bg-brand-900/10">
                     </td>
                     <td class="px-4 md:px-8 py-4 md:py-5 text-center col-status">
-                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-extrabold uppercase transition-all transform active:scale-95 ${p.pago ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/20'}">
-                            ${p.pago ? 'Pago' : 'Pendente'}
+                        <button onclick="togglePago('${p.id}',${p.pago})" class="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-extrabold uppercase transition-all transform active:scale-95 ${btnStatusClass}">
+                            ${btnStatusText}
                         </button>
                     </td>
                     <td class="px-4 md:px-8 py-4 md:py-5 text-right">
                         <div class="flex justify-end gap-1 opacity-60 md:opacity-40 group-hover:opacity-100 transition">
                             <button onclick="enviarZap('${p.id}','${p.nome}','${p.tel}',${val})" class="p-2 md:p-2.5 ${msgEstilo}" title="Cobrar"><i data-lucide="${msgIcone}" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                             ${p.comprovante ? `
-                                <button onclick="verFoto('${p.comprovante}')" class="p-2 md:p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Ver Comprovativo"><i data-lucide="image" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
+                                <button onclick="verFoto('${p.comprovante}')" class="p-2 md:p-2.5 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition animate-pulse" title="Ver Comprovativo"><i data-lucide="image" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                                 <button onclick="removerComprovante('${p.id}')" class="p-2 md:p-2.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition" title="Apagar Comprovativo"><i data-lucide="image-minus" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
                             ` : ''}
                             <button onclick="abrirDetalhes('${p.id}')" class="p-2 md:p-2.5 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition" title="Perfil e Histórico"><i data-lucide="user" class="w-3.5 h-3.5 md:w-4 md:h-4"></i></button>
@@ -1238,6 +1425,69 @@
 
     function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); confirmActionCallback = null; }
     function executarConfirm() { if (confirmActionCallback) confirmActionCallback(); fecharConfirm(); }
+
+    // --- LÓGICA DE FILA DE ENVIO (WHATSAPP EM MASSA) ---
+    function iniciarFilaWhatsApp() {
+        if(selecionados.size === 0) return;
+        
+        // Pega todos os clientes selecionados e os coloca na fila
+        filaEnvio = Array.from(selecionados)
+            .map(id => dadosLocais.find(c => c.id === id))
+            .filter(c => c && c.tel); // Garante que o cliente existe e tem telefone
+        
+        if (filaEnvio.length === 0) {
+            showToast("Nenhum dos selecionados possui telefone cadastrado.", "error");
+            return;
+        }
+
+        filaTotal = filaEnvio.length;
+        atualizarUIFila();
+        document.getElementById('modalFilaEnvio').classList.add('flex');
+    }
+
+    function atualizarUIFila() {
+        if (filaEnvio.length === 0) {
+            fecharFilaWhatsApp();
+            showToast("Fila de envios concluída!", "success");
+            clearSelection();
+            return;
+        }
+
+        const atual = filaTotal - filaEnvio.length + 1;
+        document.getElementById('filaAtualNum').innerText = atual;
+        document.getElementById('filaTotalNum').innerText = filaTotal;
+        
+        const cliente = filaEnvio[0];
+        document.getElementById('filaClienteNome').innerText = cliente.nome;
+        document.getElementById('filaClienteTel').innerText = cliente.tel || 'Sem telefone';
+    }
+
+    function proximoFilaWhatsApp() {
+        if (filaEnvio.length === 0) return;
+        const cliente = filaEnvio.shift(); // Remove o primeiro da fila
+        
+        // Envia o zap (reusa a função enviarZap)
+        const val = parseFloat(cliente.valor) || 0;
+        enviarZap(cliente.id, cliente.nome, cliente.tel, val);
+        
+        // Avança a fila na tela
+        atualizarUIFila();
+    }
+
+    function pularFilaWhatsApp() {
+        if (filaEnvio.length === 0) return;
+        filaEnvio.shift(); // Remove o primeiro sem enviar
+        atualizarUIFila();
+    }
+
+    function cancelarFilaWhatsApp() {
+        filaEnvio = [];
+        fecharFilaWhatsApp();
+    }
+
+    function fecharFilaWhatsApp() {
+        document.getElementById('modalFilaEnvio').classList.remove('flex');
+    }
 
     // --- AÇÕES COM CONFIRMAÇÕES CUSTOMIZADAS ---
     function arquivarSelecionados(arquivarStatus) {
@@ -1767,7 +2017,13 @@
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
     function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
     function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; }
+    function toggleDarkMode() { 
+        document.documentElement.classList.toggle('dark'); 
+        localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
+        
+        // Se o gráfico existir, atualiza as cores dele
+        if(dadosGraficoCache) atualizarGrafico(dadosGraficoCache.labels, dadosGraficoCache.dados);
+    }
     
     function baixarModeloCSV() {
         const cabecalho = "ID;Nome;Telefone;Data de Entrada;Dia Cobranca;Observacoes;Valor;Adiantadas;Status;Arquivado\n";
@@ -1885,6 +2141,18 @@
             const val = parseFloat(p.valor) || 0;
             const termoMens = configGeral.termoMensalidade || "Mensalidade";
 
+            let statusTag = '';
+            let exibirUpload = false;
+
+            if (p.pago) {
+                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-emerald-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-emerald-100 dark:bg-emerald-900/20 px-4 py-1 rounded-full"><i data-lucide="check-circle" class="w-3 h-3"></i> Pagamento Confirmado</div>`;
+            } else if (p.comprovante) {
+                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-violet-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-violet-100 dark:bg-violet-900/20 px-4 py-1 rounded-full"><i data-lucide="clock" class="w-3 h-3"></i> Comprovativo em Análise</div>`;
+            } else {
+                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-rose-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-rose-100 dark:bg-rose-900/20 px-4 py-1 rounded-full">Aguardando Pagamento</div>`;
+                exibirUpload = true;
+            }
+
             portal.innerHTML = `
                 <div class="glass-card p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl text-center space-y-6 md:space-y-8 border-b-8 border-b-brand-500">
                     <div class="w-16 h-16 md:w-20 md:h-20 bg-brand-500 text-white rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto shadow-glow"><i data-lucide="wallet" class="w-8 h-8 md:w-10 md:h-10"></i></div>
@@ -1892,7 +2160,7 @@
                     <div class="py-8 md:py-10 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] md:rounded-[2.5rem] shadow-inner border border-slate-100 dark:border-slate-800">
                         <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Total</p>
                         <div class="text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</div>
-                        ${p.pago ? `<div class="mt-4 inline-flex items-center gap-2 text-emerald-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-emerald-100 dark:bg-emerald-900/20 px-4 py-1 rounded-full"><i data-lucide="check-circle" class="w-3 h-3"></i> Pagamento Confirmado</div>` : `<div class="mt-4 inline-flex items-center gap-2 text-amber-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-amber-100 dark:bg-amber-900/20 px-4 py-1 rounded-full">Aguardando Pagamento</div>`}
+                        ${statusTag}
                     </div>
                     <div class="space-y-3 md:space-y-4">
                         <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Chave PIX para pagamento</p>
@@ -1901,7 +2169,7 @@
                             <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90"><i data-lucide="copy" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                    ${!p.pago ? `<div class="pt-4 md:pt-6">
+                    ${exibirUpload ? `<div class="pt-4 md:pt-6">
                         <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4">Já pagou? Envie o comprovativo</label>
                         <input type="file" accept="image/*" id="compFile" class="hidden" onchange="uploadComp(this)">
                         <label for="compFile" id="lblCompFile" class="w-full py-4 md:py-5 bg-brand-600 text-white rounded-[1.5rem] text-sm md:text-base font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95">
@@ -1953,10 +2221,10 @@
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
 
                 db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).update({ 
-                    comprovante: dataUrl, 
-                    pago: true 
+                    comprovante: dataUrl 
+                    // Removido "pago: true" para que fique no status "Em Análise"
                 }).then(() => {
-                    showToast("Comprovativo enviado com sucesso!");
+                    showToast("Comprovativo enviado para análise!");
                 }).catch(err => {
                     showToast("Erro ao enviar: O ficheiro é grande demais.", "error");
                     if(label) {
