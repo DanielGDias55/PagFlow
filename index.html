@@ -138,18 +138,33 @@
             margin-top: 1.5rem; 
         }
 
-        #btnToggleDrawer.active {
+        #btnToggleDrawer.active, #btnToggleDashboard.active {
             background-color: #3b82f6;
             color: white;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             border-color: transparent;
         }
-        .dark #btnToggleDrawer.active {
+        .dark #btnToggleDrawer.active, .dark #btnToggleDashboard.active {
             background-color: #3b82f6;
             color: white;
             border-color: transparent;
         }
         
+        #dashboardWrapper {
+            max-height: 1200px;
+            opacity: 1;
+            overflow: hidden;
+            transform: translateY(0) scale(1);
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s ease;
+        }
+        #dashboardWrapper.oculto {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            margin-bottom: 0 !important;
+            transform: translateY(-10px) scale(0.98) !important;
+            pointer-events: none;
+        }
+
         .check-custom { accent-color: #3b82f6; width: 1.125rem; height: 1.125rem; cursor: pointer; border-radius: 4px; }
         
         /* Oculta colunas baseadas nas configs */
@@ -198,14 +213,10 @@
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
         
         <div class="relative z-10 flex flex-col items-center">
-            <!-- Logo Icon Opção 2 -->
             <div class="w-20 h-20 flex items-center justify-center mb-3">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-lg">
-                    <!-- Parte externa do P -->
                     <path d="M25 80V35L45 15H65L85 35V50L65 70H45" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800 dark:text-slate-100"/>
-                    <!-- Dobra cruzando -->
                     <path d="M25 55L45 75L35 85" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
-                    <!-- Detalhe interno da fita -->
                     <path d="M45 40L65 60" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"/>
                 </svg>
             </div>
@@ -342,7 +353,6 @@
 
         <div class="space-y-4">
             
-            <!-- Pergunta 1 -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
                 <button onclick="toggleAjuda('ajuda1')" class="w-full flex justify-between items-center p-4 md:p-5 text-left focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-3">
@@ -359,7 +369,6 @@
                 </div>
             </div>
 
-            <!-- Pergunta 2 -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
                 <button onclick="toggleAjuda('ajuda2')" class="w-full flex justify-between items-center p-4 md:p-5 text-left focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-3">
@@ -379,7 +388,6 @@
                 </div>
             </div>
 
-            <!-- Pergunta 3 -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
                 <button onclick="toggleAjuda('ajuda3')" class="w-full flex justify-between items-center p-4 md:p-5 text-left focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-3">
@@ -398,7 +406,6 @@
                 </div>
             </div>
 
-            <!-- Pergunta 4 -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
                 <button onclick="toggleAjuda('ajuda4')" class="w-full flex justify-between items-center p-4 md:p-5 text-left focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-3">
@@ -416,7 +423,6 @@
                 </div>
             </div>
 
-            <!-- Pergunta 5 -->
             <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
                 <button onclick="toggleAjuda('ajuda5')" class="w-full flex justify-between items-center p-4 md:p-5 text-left focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                     <div class="flex items-center gap-3">
@@ -436,7 +442,7 @@
     </div>
 </div>
 
-<!-- Modal Caixa de Ideias (NOVO) -->
+<!-- Modal Caixa de Ideias -->
 <div id="modalIdeia" class="modal-overlay" onclick="fecharModalIdeia()">
     <div class="glass-card w-full max-w-md p-6 md:p-8 rounded-[2.5rem] shadow-2xl mx-4 relative" onclick="event.stopPropagation()">
         <div class="flex items-center gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -479,7 +485,6 @@
         <p id="modalTagsTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 truncate"></p>
         
         <div id="modalTagsList" class="flex flex-wrap justify-center gap-2 mb-6 max-h-48 overflow-y-auto p-1">
-            <!-- Preenchido via JS -->
         </div>
 
         <button onclick="fecharModalTags()" class="w-full py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold transition-all active:scale-95">
@@ -498,7 +503,6 @@
         <p id="modalObsTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 truncate"></p>
         
         <div id="modalObsContent" class="text-sm text-slate-600 dark:text-slate-300 mb-6 max-h-48 overflow-y-auto p-1 text-left whitespace-pre-wrap leading-relaxed break-words">
-            <!-- Preenchido via JS -->
         </div>
 
         <button onclick="fecharModalObs()" class="w-full py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold transition-all active:scale-95">
@@ -539,7 +543,6 @@
 <!-- Modal Nova Pessoa -->
 <div id="modalNovaPessoa" class="modal-overlay" onclick="fecharModalNovaPessoa()">
     <div class="glass-card w-full max-w-2xl p-0 rounded-[2rem] shadow-2xl mx-4 transform transition-all flex flex-col md:flex-row overflow-hidden" onclick="event.stopPropagation()">
-        <!-- Lado Ilustrativo (Some no mobile) -->
         <div class="md:w-2/5 bg-gradient-to-br from-brand-500 to-brand-700 p-8 flex-col justify-center items-center text-center text-white relative overflow-hidden hidden md:flex">
             <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvc3ZnPg==')] opacity-30"></div>
             <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-glow border border-white/30 z-10">
@@ -549,9 +552,7 @@
             <p class="text-xs font-medium opacity-80 z-10">Adicione novos clientes ou importe do seu banco de dados.</p>
         </div>
         
-        <!-- Formulário -->
         <div class="w-full md:w-3/5 p-6 md:p-10 relative">
-            <!-- Título visível só no mobile -->
             <div class="flex justify-between items-center mb-6 md:hidden">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-brand-100 dark:bg-brand-900/30 rounded-xl flex items-center justify-center text-brand-600"><i data-lucide="user-plus" class="w-5 h-5"></i></div>
@@ -561,14 +562,12 @@
             </div>
 
             <div class="space-y-4">
-                <!-- BUSCA GLOBAL NO BANCO DE DADOS -->
                 <div class="relative z-20">
                     <label class="text-[10px] font-black uppercase text-brand-500 tracking-widest px-1 italic flex items-center gap-1"><i data-lucide="database" class="w-3 h-3"></i> Importar Cliente Existente</label>
                     <div class="relative group mt-1">
                         <i data-lucide="search" class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-brand-400 transition z-10"></i>
                         <input type="text" id="buscaCliente" oninput="filtrarClientesGlobais()" placeholder="Digite para buscar..." class="w-full bg-brand-50 dark:bg-brand-900/20 text-slate-900 dark:text-black pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-brand-200 dark:border-brand-800 shadow-sm transition">
                     </div>
-                    <!-- Lista suspensa de sugestões -->
                     <div id="listaSugestoes" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-50"></div>
                 </div>
 
@@ -590,12 +589,10 @@
                             <input type="tel" id="novoTel" onkeydown="if(event.key === 'Enter') salvarNovaPessoa()" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white pl-11 pr-4 py-4 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition" placeholder="Ex: 55119...">
                         </div>
                     </div>
-                    <!-- SISTEMA DE MULTIPLAS ETIQUETAS -->
                     <div>
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic" title="Categorias ou Planos">Etiquetas</label>
                         <div id="tagsContainer_novo" class="w-full bg-slate-50 dark:bg-slate-900 flex flex-wrap items-center gap-1.5 px-3 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition focus-within:ring-2 focus-within:ring-brand-500 cursor-text" onclick="document.getElementById('novoTag').focus()">
                             <i data-lucide="tags" class="w-4 h-4 text-slate-400 shrink-0 ml-1"></i>
-                            <!-- Etiquetas visuais aparecem aqui via JS -->
                             <div id="tagInputWrapper_novo" class="flex-1 flex items-center min-w-[120px]">
                                 <input type="text" id="novoTag" onkeydown="handleTagInput(event, 'novo')" class="bg-transparent outline-none w-full text-sm font-semibold dark:text-white ml-1" placeholder="Ex: VIP (Enter ou +)">
                                 <button type="button" onclick="adicionarTagManual('novo')" class="p-1.5 bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 rounded-lg hover:bg-brand-500 hover:text-white transition-all shrink-0 ml-1">
@@ -605,7 +602,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- FIM SISTEMA ETIQUETAS -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic" title="Data Entrada">Entrada</label>
@@ -639,7 +635,7 @@
     </div>
 </div>
 
-<!-- Modal Detalhes do Cliente (Segunda Página) -->
+<!-- Modal Detalhes do Cliente -->
 <div id="modalDetalhesCliente" class="modal-overlay" onclick="fecharDetalhes()">
     <div class="glass-card w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 md:p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -656,7 +652,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Dados Cadastrais -->
             <div class="space-y-4">
                 <h4 class="text-sm font-black dark:text-white flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i> Informações Base</h4>
                 <div>
@@ -668,12 +663,10 @@
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">WhatsApp</label>
                         <input type="text" id="detalhesTel" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500 outline-none transition">
                     </div>
-                    <!-- SISTEMA DE MULTIPLAS ETIQUETAS NO DETALHE -->
                     <div>
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Etiquetas</label>
                         <div id="tagsContainer_detalhe" class="w-full bg-slate-50 dark:bg-slate-900 flex flex-wrap items-center gap-1.5 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition focus-within:ring-2 focus-within:ring-brand-500 cursor-text" onclick="document.getElementById('detalhesTag').focus()">
                             <i data-lucide="tags" class="w-4 h-4 text-slate-400 shrink-0 ml-1"></i>
-                            <!-- Etiquetas visuais aparecem aqui via JS -->
                             <div id="tagInputWrapper_detalhe" class="flex-1 flex items-center min-w-[100px]">
                                 <input type="text" id="detalhesTag" onkeydown="handleTagInput(event, 'detalhe')" class="bg-transparent outline-none w-full text-sm font-semibold dark:text-white ml-1" placeholder="Adicionar...">
                                 <button type="button" onclick="adicionarTagManual('detalhe')" class="p-1 bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 rounded-lg hover:bg-brand-500 hover:text-white transition-all shrink-0 ml-1">
@@ -700,11 +693,9 @@
                 <button id="btnSalvarDetalhes" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95 mt-2 flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações</button>
             </div>
             
-            <!-- Histórico -->
             <div class="space-y-4">
                 <h4 class="text-sm font-black dark:text-white flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-slate-400"></i> Histórico de Pagamentos</h4>
                 <div id="listaHistorico" class="bg-slate-50 dark:bg-slate-900/50 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 h-[280px] md:h-full overflow-y-auto shadow-inner">
-                    <!-- Preenchido via JS -->
                 </div>
             </div>
         </div>
@@ -727,7 +718,6 @@
         </div>
 
         <div class="space-y-6">
-            <!-- Financeiro -->
             <div class="space-y-3">
                 <h4 class="text-sm font-black dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">1. Dados Financeiros</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -740,11 +730,9 @@
                         <input type="number" step="0.01" id="cfgValorPadrao" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 transition mt-1">
                     </div>
                     <div>
-                        <!-- Help Card: Virada do Ciclo -->
                         <div class="flex items-center gap-1 relative group w-max">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Virada do Ciclo (Dia)</label>
                             <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400 cursor-help hover:text-brand-500 transition"></i>
-                            
                             <div class="absolute bottom-full left-0 md:left-1/2 md:-translate-x-1/2 mb-2 w-64 bg-slate-800 dark:bg-slate-700 border border-slate-700 dark:border-slate-600 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] p-3 pointer-events-none text-left">
                                 <p class="text-[10px] font-bold text-white uppercase tracking-widest border-b border-slate-600 pb-1 mb-2">Como funciona?</p>
                                 <ul class="text-[11px] text-slate-300 space-y-1.5 leading-tight">
@@ -760,7 +748,6 @@
                 </div>
             </div>
 
-            <!-- Nomenclaturas -->
             <div class="space-y-3">
                 <h4 class="text-sm font-black dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">2. Personalização da Tabela</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -795,14 +782,11 @@
                 </div>
             </div>
 
-            <!-- Comunicação -->
             <div class="space-y-3">
-                <!-- Help Card: Mensagem do WhatsApp -->
                 <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
                     <h4 class="text-sm font-black dark:text-white">3. Mensagem do WhatsApp</h4>
                     <div class="relative group">
                         <i data-lucide="help-circle" class="w-4 h-4 text-slate-400 cursor-help hover:text-brand-500 transition"></i>
-                        
                         <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-800 dark:bg-slate-700 border border-slate-700 dark:border-slate-600 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] p-4 pointer-events-none text-left">
                             <p class="text-[10px] font-bold text-white uppercase tracking-widest border-b border-slate-600 pb-1 mb-2">Envio Automático</p>
                             <p class="text-[10px] text-slate-300 mb-2 leading-tight">Escreva abaixo <strong>apenas</strong> o "recheio" da mensagem. O sistema cuidará do resto:</p>
@@ -871,7 +855,6 @@
 <!-- ========================================== -->
 <div id="adminApp" class="max-w-6xl mx-auto space-y-4 md:space-y-6">
     
-    <!-- Barra de Ações em Massa (Fixa no rodapé) -->
     <div id="bulkActionsBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 md:px-6 py-3 md:py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none w-[90%] md:w-auto overflow-x-auto whitespace-nowrap">
         <div class="flex items-center gap-2 md:gap-3">
             <div class="bg-brand-500 text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-[10px] md:text-xs font-black shadow-inner" id="bulkCount">0</div>
@@ -893,10 +876,8 @@
     </div>
 
     <div>
-        <!-- Header Principal Corrigido -->
         <header class="glass-card p-4 md:p-6 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-4 shadow-soft relative z-10">
             <div class="flex flex-row items-center gap-3 text-left w-full md:w-auto">
-                <!-- Logo Icon Opção 2 no Admin -->
                 <div class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">
                         <path d="M25 80V35L45 15H65L85 35V50L65 70H45" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800 dark:text-slate-100"/>
@@ -914,22 +895,22 @@
             </div>
             
             <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto">
-                <!-- Botão Caixa de Ideias -->
                 <button onclick="abrirModalIdeia()" class="p-2 md:py-2.5 md:px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 shadow-soft transition hover:bg-amber-500 hover:text-white" title="Enviar Ideia ou Sugestão">
                     <i data-lucide="lightbulb" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
-                <!-- Botão Central de Ajuda -->
                 <button onclick="abrirModalAjuda()" class="p-2 md:py-2.5 md:px-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/30 shadow-soft transition hover:bg-blue-500 hover:text-white" title="Central de Ajuda">
                     <i data-lucide="help-circle" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
                 <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                <button id="btnToggleDashboard" onclick="toggleDashboard()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shadow-sm active">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </button>
                 <button id="btnToggleDrawer" onclick="toggleDrawer()" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 md:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shadow-sm">
                     <i data-lucide="filter" class="w-4 h-4"></i> Filtros
                 </button>
                 <button onclick="abrirModalNovaPessoa()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-brand-600 text-white px-3 py-2 md:py-2.5 rounded-xl text-xs font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/20 transition active:scale-95">
                     <i data-lucide="plus" class="w-4 h-4"></i> Novo
                 </button>
-                <!-- Botão Ocultar Valores -->
                 <button onclick="toggleValoresGlobais()" class="p-2 md:py-2.5 md:px-3 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-brand-500 border border-slate-100 dark:border-slate-700 shadow-soft transition" title="Ocultar/Mostrar Valores">
                     <i data-lucide="eye" id="iconToggleValores" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
@@ -945,7 +926,6 @@
             </div>
         </header>
 
-        <!-- Gaveta de Filtros Avançados -->
         <div id="drawerWrapper">
             <div class="glass-card rounded-[2rem] p-5 md:p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 items-end">
@@ -969,11 +949,9 @@
                     </div>
 
                     <div class="space-y-1 md:space-y-2">
-                        <!-- Help Card: Ciclo Atual -->
                         <div class="flex items-center gap-1 relative group w-max">
                             <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Ciclo Atual</label>
                             <i data-lucide="help-circle" class="w-3 h-3 text-slate-400 cursor-help hover:text-brand-500 transition"></i>
-                            
                             <div class="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 dark:bg-slate-700 border border-slate-700 dark:border-slate-600 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] p-3 pointer-events-none text-left">
                                 <p class="text-[10px] font-bold text-white uppercase tracking-widest border-b border-slate-600 pb-1 mb-2">Visão Geral</p>
                                 <p class="text-[11px] text-slate-300 leading-tight mb-2">Navegue pelas suas cobranças mensais.</p>
@@ -1030,29 +1008,32 @@
         </div>
     </div>
 
-    <!-- Stats Cards Limpos -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-        <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-soft">
-            <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1 italic">Volume Projetado</p>
-            <div class="text-3xl md:text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral" class="transition-all duration-300">0,00</span></div>
-        </div>
-        
-        <div class="bg-brand-600 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] text-white shadow-xl shadow-brand-500/25">
-            <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-1 italic text-white">Total Recebido</p>
-            <div class="text-3xl md:text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago" class="transition-all duration-300">0,00</span></div>
+    <!-- Wrapper do Dashboard (Stats + Gráfico) -->
+    <div id="dashboardWrapper" class="flex flex-col gap-4 md:gap-6 mb-4 md:mb-6">
+        <!-- Stats Cards Limpos -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-soft">
+                <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1 italic">Volume Projetado</p>
+                <div class="text-3xl md:text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral" class="transition-all duration-300">0,00</span></div>
+            </div>
+            
+            <div class="bg-brand-600 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] text-white shadow-xl shadow-brand-500/25">
+                <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-1 italic text-white">Total Recebido</p>
+                <div class="text-3xl md:text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago" class="transition-all duration-300">0,00</span></div>
+            </div>
+
+            <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-l-4 md:border-l-8 border-l-rose-500 shadow-soft">
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 italic">Aguardando Pagamento</p>
+                <div class="text-3xl md:text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend" class="transition-all duration-300">0,00</span></div>
+            </div>
         </div>
 
-        <div class="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-l-4 md:border-l-8 border-l-rose-500 shadow-soft">
-            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1 italic">Aguardando Pagamento</p>
-            <div class="text-3xl md:text-4xl font-extrabold text-rose-500 italic tracking-tighter">R$ <span id="tPend" class="transition-all duration-300">0,00</span></div>
-        </div>
-    </div>
-
-    <!-- Gráfico de Receita -->
-    <div class="glass-card rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-soft h-[250px] md:h-[300px] mb-4 md:mb-6">
-        <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-4 italic">Receita Confirmada (Últimos 6 Meses)</p>
-        <div class="relative h-full w-full pb-6">
-            <canvas id="chartReceita"></canvas>
+        <!-- Gráfico de Receita -->
+        <div class="glass-card rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-soft h-[250px] md:h-[300px]">
+            <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-4 italic">Receita Confirmada (Últimos 6 Meses)</p>
+            <div class="relative h-full w-full pb-6">
+                <canvas id="chartReceita"></canvas>
+            </div>
         </div>
     </div>
 
@@ -1105,7 +1086,6 @@
 
     let adminId = null;
     
-    // Variáveis de controlo do Ciclo
     let dataReferencia = new Date();
     let mesReal = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
     let mesAtual = mesReal;
@@ -1116,16 +1096,15 @@
     let ordemCrescente = true;
     let selecionados = new Set();
     
-    // Variáveis Globais de Autocomplete e Funcionalidades
     let clientesGlobaisCache = [];
     let idClienteSelecionadoParaNovo = null;
     let filaEnvio = [];
     let filaTotal = 0;
     let chartInstance = null;
     let dadosGraficoCache = null;
-    let valoresOcultos = localStorage.getItem('valoresOcultos') === 'true'; // Nova Feature
+    let valoresOcultos = localStorage.getItem('valoresOcultos') === 'true';
+    let dashboardOculto = localStorage.getItem('dashboardOculto') === 'true';
     
-    // Arrays para o sistema Multi-Tags
     let tagsNovo = [];
     let tagsDetalhe = [];
 
@@ -1147,7 +1126,6 @@
     const idAdminUrl = urlParams.get('a');
     const urlMes = urlParams.get('m');
 
-    // Previne o erro "lucide is not defined" caso a biblioteca falhe no carregamento
     if (typeof window.lucide === 'undefined') {
         window.lucide = { createIcons: () => console.warn("Ícones não carregados.") };
     }
@@ -1157,7 +1135,8 @@
             document.documentElement.classList.add('dark');
         }
         lucide.createIcons();
-        aplicarFiltroValores(); // Inicializa Feature 1
+        aplicarFiltroValores();
+        aplicarEstadoDashboard();
 
         if (idCliente && idAdminUrl) {
             adminId = idAdminUrl;
@@ -1184,11 +1163,37 @@
         lucide.createIcons();
     }
 
-    // --- LÓGICA OCULTAR VALORES GLOBAIS (Feature 1) ---
+    function toggleDrawer() {
+        const wrapper = document.getElementById('drawerWrapper');
+        const btn = document.getElementById('btnToggleDrawer');
+        wrapper.classList.toggle('aberto');
+        btn.classList.toggle('active');
+    }
+
     function toggleValoresGlobais() {
         valoresOcultos = !valoresOcultos;
         localStorage.setItem('valoresOcultos', valoresOcultos);
         aplicarFiltroValores();
+    }
+
+    function aplicarEstadoDashboard() {
+        const wrapper = document.getElementById('dashboardWrapper');
+        const btn = document.getElementById('btnToggleDashboard');
+        if (!wrapper || !btn) return;
+
+        if (dashboardOculto) {
+            wrapper.classList.add('oculto');
+            btn.classList.remove('active');
+        } else {
+            wrapper.classList.remove('oculto');
+            btn.classList.add('active');
+        }
+    }
+
+    function toggleDashboard() {
+        dashboardOculto = !dashboardOculto;
+        localStorage.setItem('dashboardOculto', dashboardOculto);
+        aplicarEstadoDashboard();
     }
 
     function aplicarFiltroValores() {
@@ -1209,9 +1214,13 @@
                 }
             }
         });
+
+        // Atualiza o gráfico caso ele já esteja carregado na tela
+        if (dadosGraficoCache) {
+            atualizarGrafico(dadosGraficoCache.labels, dadosGraficoCache.dados);
+        }
     }
 
-    // --- LÓGICA DE AUTENTICAÇÃO E PAYWALL ---
     function monitorarAutenticacao() {
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -1229,20 +1238,17 @@
 
                     let temAcesso = false;
 
-                    // Verifica se o acesso está liberado
                     if (status === 'ativo' || status === 'pago') {
                         temAcesso = true;
                     } else if (status === 'teste') {
                         if (agora < testeExpiraEm) {
                             temAcesso = true;
                         } else {
-                            // Teste expirou, volta para pendente e bloqueia
                             db.ref(`tenants/${adminId}/assinatura/status`).set('pendente');
                             temAcesso = false;
                         }
                     }
 
-                    // Atualiza a Badge de Teste no Topo
                     const badgeTeste = document.getElementById('badgeTesteStatus');
                     if (temAcesso && status === 'teste') {
                         const hojeDate = new Date();
@@ -1265,7 +1271,6 @@
                             db.ref(`tenants/${adminId}/assinatura`).set({ status: 'pendente', criadoEm: agora, testeUsado: false });
                         }
                         
-                        // Controla a visibilidade do botão de Iniciar Teste (só aparece se nunca usou)
                         const areaTeste = document.getElementById('areaTesteGratis');
                         if (areaTeste) {
                             if (assinatura.testeUsado) areaTeste.classList.add('hidden');
@@ -1295,7 +1300,7 @@
             "O sistema será desbloqueado por 7 dias corridos. Após esse período, ele será bloqueado novamente até a ativação da licença.\n\n⚠️ Você só pode usar este teste 1 vez.",
             "Iniciar Teste", "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30", "unlock", "bg-indigo-600",
             () => {
-                const expiraEm = Date.now() + (7 * 24 * 60 * 60 * 1000); // Hoje + 7 dias em ms
+                const expiraEm = Date.now() + (7 * 24 * 60 * 60 * 1000);
                 db.ref(`tenants/${adminId}/assinatura`).update({
                     status: 'teste',
                     testeUsado: true,
@@ -1320,7 +1325,6 @@
     function loginComGoogle() { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch(e => mostrarErro("Erro Google: " + e.message)); }
     function falarComSuporte() { const n = "5513974123358", msg = encodeURIComponent("Olá Daniel Garcia Dias! Fiz o meu registo no Pagflow e gostaria de ativar a minha licença vitalícia."); window.open(`https://wa.me/${n}?text=${msg}`); }
 
-    // --- CARREGAMENTO DE DADOS E CONFIGURAÇÕES ---
     function carregarConfiguracoesGerais() {
         if(!adminId) return;
         db.ref(`tenants/${adminId}/configuracoes`).on('value', s => { 
@@ -1346,10 +1350,9 @@
             if(!idCliente) {
                 gerarOpcoesMes();
                 carregarDadosAdmin();
-                carregarDadosGrafico(); // Carrega os dados para o gráfico do Dashboard
+                carregarDadosGrafico();
             }
 
-            // Aplica as configs na UI (Tabela)
             const thPart = document.getElementById('labelThParticipante');
             if (thPart) thPart.innerText = configGeral.termoParticipante || "Participante";
             const thMens = document.getElementById('labelThMensalidade');
@@ -1432,7 +1435,6 @@
         }
     }
 
-    // --- GRÁFICOS DO DASHBOARD ---
     function carregarDadosGrafico() {
         if(!adminId) return;
         db.ref(`tenants/${adminId}/cobrancas`).on('value', snap => {
@@ -1495,6 +1497,7 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
+                                if (valoresOcultos) return ' R$ ****';
                                 return ' R$ ' + context.parsed.y.toLocaleString('pt-br', {minimumFractionDigits: 2});
                             }
                         }
@@ -1504,7 +1507,13 @@
                     y: {
                         beginAtZero: true,
                         grid: { color: gridColor },
-                        ticks: { color: textColor }
+                        ticks: { 
+                            color: textColor,
+                            callback: function(value) {
+                                if (valoresOcultos) return '****';
+                                return value;
+                            }
+                        }
                     },
                     x: {
                         grid: { display: false },
@@ -1536,7 +1545,6 @@
         return parseInt(p.diaCobranca) < diaAtual;
     }
 
-    // --- LÓGICA DE ETIQUETAS (TAGS) ---
     function handleTagInput(e, arrayType) {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
@@ -1589,13 +1597,12 @@
         lucide.createIcons();
     }
 
-    // --- LÓGICA DE FILA DE ENVIO (WHATSAPP EM MASSA) ---
     function iniciarFilaWhatsApp() {
         if(selecionados.size === 0) return;
         
         filaEnvio = Array.from(selecionados)
             .map(id => dadosLocais.find(c => c.id === id))
-            .filter(c => c && c.tel && !c.pago); // Remove quem não tem telefone ou JÁ PAGOU
+            .filter(c => c && c.tel && !c.pago); 
         
         if (filaEnvio.length === 0) {
             showToast("Nenhum cliente válido na seleção. (Clientes pagos ou sem telefone foram ignorados)", "error");
@@ -1649,7 +1656,6 @@
         document.getElementById('modalFilaEnvio').classList.remove('flex');
     }
 
-    // --- AÇÕES COM CONFIRMAÇÕES CUSTOMIZADAS ---
     function arquivarSelecionados(arquivarStatus) {
         if(selecionados.size === 0 || !adminId) return;
         const acao = arquivarStatus ? "arquivar" : "desarquivar";
@@ -1780,7 +1786,6 @@
         );
     }
 
-    // --- RENDERIZAÇÃO E LÓGICA DA TABELA ---
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
@@ -1865,7 +1870,6 @@
                    </button>` 
                 : '';
 
-            // Construção da Tag Múltipla Inteligente
             let tagsArray = p.tags || [];
             if (typeof p.tag === 'string' && p.tag.trim() !== '') {
                 tagsArray = [p.tag.trim().toUpperCase()];
@@ -1969,7 +1973,6 @@
         lucide.createIcons();
     }
 
-    // --- FUNÇÕES GLOBAIS DE UI (TOASTS E CONFIRMS) ---
     function showToast(msg, type = 'success') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -2011,7 +2014,300 @@
     function fecharConfirm() { document.getElementById('modalConfirm').classList.remove('flex'); confirmActionCallback = null; }
     function executarConfirm() { if (confirmActionCallback) confirmActionCallback(); fecharConfirm(); }
 
-    // --- MÉTODOS NATIVOS E COMUNICAÇÃO ---
+    function abrirModalTags(encodedName, encodedTags) {
+        const nome = decodeURIComponent(encodedName);
+        const tags = JSON.parse(decodeURIComponent(encodedTags));
+        
+        document.getElementById('modalTagsTitle').innerText = nome;
+        const container = document.getElementById('modalTagsList');
+        
+        container.innerHTML = tags.map(t => `
+            <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest shadow-sm">
+                ${t}
+            </span>
+        `).join('');
+        
+        document.getElementById('modalVisualizarTags').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharModalTags() {
+        document.getElementById('modalVisualizarTags').classList.remove('flex');
+    }
+
+    function abrirModalObs(encodedName, encodedObs) {
+        const nome = decodeURIComponent(encodedName);
+        const obs = decodeURIComponent(encodedObs);
+        
+        document.getElementById('modalObsTitle').innerText = nome;
+        document.getElementById('modalObsContent').innerText = obs;
+        
+        document.getElementById('modalVisualizarObs').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharModalObs() {
+        document.getElementById('modalVisualizarObs').classList.remove('flex');
+    }
+
+    function abrirModalIdeia() {
+        document.getElementById('textoIdeia').value = '';
+        document.getElementById('modalIdeia').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharModalIdeia() {
+        document.getElementById('modalIdeia').classList.remove('flex');
+    }
+
+    function enviarIdeia() {
+        const texto = document.getElementById('textoIdeia').value.trim();
+        if (!texto) {
+            showToast("Por favor, escreva a sua ideia antes de enviar.", "error");
+            return;
+        }
+
+        if (!adminId) return;
+
+        const btn = document.getElementById('btnEnviarIdeia');
+        const txtOriginal = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Enviando...';
+        btn.classList.add('opacity-50', 'pointer-events-none');
+        lucide.createIcons();
+
+        const ideiaData = {
+            adminId: adminId,
+            email: auth.currentUser ? auth.currentUser.email : 'Desconhecido',
+            texto: texto,
+            data: Date.now(),
+            status: 'nova'
+        };
+
+        db.ref('ideias_sistema').push(ideiaData).then(() => {
+            finalizarEnvioIdeia(btn, txtOriginal);
+        }).catch(err => {
+            db.ref(`tenants/${adminId}/ideias_enviadas`).push(ideiaData).then(() => {
+                finalizarEnvioIdeia(btn, txtOriginal);
+            }).catch(errFallback => {
+                btn.innerHTML = txtOriginal;
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+                showToast("Erro ao enviar ideia. Verifique a sua ligação.", "error");
+            });
+        });
+    }
+
+    function finalizarEnvioIdeia(btn, txtOriginal) {
+        btn.innerHTML = txtOriginal;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+        fecharModalIdeia();
+        showToast("Ideia enviada! Muito obrigado pelo seu feedback.", "success");
+    }
+
+    function abrirModalAjuda() {
+        document.getElementById('modalAjuda').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharModalAjuda() {
+        document.getElementById('modalAjuda').classList.remove('flex');
+    }
+
+    function toggleAjuda(id) {
+        const conteudo = document.getElementById(id);
+        const icone = document.getElementById('icon-' + id);
+        
+        if (conteudo.classList.contains('hidden')) {
+            conteudo.classList.remove('hidden');
+            icone.classList.add('rotate-180');
+        } else {
+            conteudo.classList.add('hidden');
+            icone.classList.remove('rotate-180');
+        }
+    }
+
+    function abrirModalConfig() {
+        document.getElementById('cfgChavePix').value = configGeral.chavePix || "";
+        document.getElementById('cfgValorPadrao').value = configGeral.valorPadrao || 50;
+        document.getElementById('cfgDiaVirada').value = configGeral.diaVirada || "";
+        document.getElementById('cfgTermoPart').value = configGeral.termoParticipante || "Participante";
+        document.getElementById('cfgTermoMens').value = configGeral.termoMensalidade || "Mensalidade";
+        document.getElementById('cfgOcultarAdiantadas').checked = configGeral.ocultarAdiantadas || false;
+        document.getElementById('cfgOcultarStatus').checked = configGeral.ocultarStatus || false;
+        document.getElementById('cfgOcultarDiaCobranca').checked = configGeral.ocultarDiaCobranca || false;
+        document.getElementById('cfgDesativarEmAnalise').checked = configGeral.desativarEmAnalise || false;
+        document.getElementById('cfgMsgCustom').value = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
+        document.getElementById('modalConfig').classList.add('flex');
+        lucide.createIcons();
+    }
+
+    function fecharModalConfig() { 
+        document.getElementById('modalConfig').classList.remove('flex'); 
+    }
+
+    function salvarConfiguracoes() {
+        if(!adminId) return;
+        const vPadrao = parseFloat(document.getElementById('cfgValorPadrao').value) || 50;
+        
+        const updates = {
+            chavePix: document.getElementById('cfgChavePix').value,
+            valorPadrao: vPadrao,
+            diaVirada: document.getElementById('cfgDiaVirada').value,
+            termoParticipante: document.getElementById('cfgTermoPart').value || "Participante",
+            termoMensalidade: document.getElementById('cfgTermoMens').value || "Mensalidade",
+            ocultarAdiantadas: document.getElementById('cfgOcultarAdiantadas').checked,
+            ocultarStatus: document.getElementById('cfgOcultarStatus').checked,
+            ocultarDiaCobranca: document.getElementById('cfgOcultarDiaCobranca').checked,
+            desativarEmAnalise: document.getElementById('cfgDesativarEmAnalise').checked,
+            msgZapCustom: document.getElementById('cfgMsgCustom').value
+        };
+
+        db.ref(`tenants/${adminId}/configuracoes`).update(updates).then(() => {
+            fecharModalConfig();
+            carregarConfiguracoesGerais();
+            showToast("Configurações salvas com sucesso!");
+        });
+    }
+
+    async function abrirModalNovaPessoa() {
+        document.getElementById('buscaCliente').value = "";
+        document.getElementById('listaSugestoes').classList.add('hidden');
+        idClienteSelecionadoParaNovo = null;
+
+        document.getElementById('novoNome').value = "";
+        document.getElementById('novoTel').value = "";
+        document.getElementById('novoTag').value = "";
+        document.getElementById('novoDataEntrada').value = "";
+        document.getElementById('novoDiaCobranca').value = "";
+        document.getElementById('novoObs').value = "";
+        
+        tagsNovo = [];
+        renderTagsUI('novo');
+        
+        document.getElementById('modalNovaPessoa').classList.add('flex');
+        lucide.createIcons();
+
+        if (adminId) {
+            try {
+                const snap = await db.ref(`tenants/${adminId}/cobrancas`).once('value');
+                const todosMeses = snap.val() || {};
+                const mapClientes = new Map();
+
+                for (const mes in todosMeses) {
+                    for (const id in todosMeses[mes]) {
+                        mapClientes.set(id, { id: id, ...todosMeses[mes][id] });
+                    }
+                }
+                clientesGlobaisCache = Array.from(mapClientes.values());
+            } catch(e) {
+                console.error("Erro ao carregar cache de clientes", e);
+            }
+        }
+    }
+
+    function fecharModalNovaPessoa() { 
+        document.getElementById('modalNovaPessoa').classList.remove('flex'); 
+    }
+
+    function filtrarClientesGlobais() {
+        const termo = document.getElementById('buscaCliente').value.toLowerCase();
+        const lista = document.getElementById('listaSugestoes');
+
+        if (termo.length < 2) {
+            lista.classList.add('hidden');
+            idClienteSelecionadoParaNovo = null; 
+            return;
+        }
+
+        const filtrados = clientesGlobaisCache.filter(c => c.nome.toLowerCase().includes(termo) || (c.tel && c.tel.includes(termo)));
+
+        if (filtrados.length === 0) {
+            lista.innerHTML = '<div class="p-4 text-xs text-slate-500 text-center font-bold">Nenhum cliente encontrado no histórico.</div>';
+            lista.classList.remove('hidden');
+            return;
+        }
+
+        lista.innerHTML = filtrados.map(c => `
+            <div onclick="selecionarClienteAutocompletar('${c.id}')" class="p-3 border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer transition">
+                <p class="text-sm font-bold dark:text-white">${c.nome}</p>
+                <div class="flex gap-3 text-[10px] text-slate-400 font-bold mt-0.5">
+                    <span><i data-lucide="phone" class="w-3 h-3 inline"></i> ${c.tel || 'Sem tel'}</span>
+                    ${c.dataEntrada ? `<span><i data-lucide="calendar" class="w-3 h-3 inline"></i> ${c.dataEntrada}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+
+        lucide.createIcons();
+        lista.classList.remove('hidden');
+    }
+
+    function selecionarClienteAutocompletar(id) {
+        const c = clientesGlobaisCache.find(x => x.id === id);
+        if (!c) return;
+
+        idClienteSelecionadoParaNovo = id;
+        document.getElementById('buscaCliente').value = c.nome;
+        document.getElementById('listaSugestoes').classList.add('hidden');
+
+        document.getElementById('novoNome').value = c.nome || "";
+        document.getElementById('novoTel').value = c.tel || "";
+        document.getElementById('novoTag').value = c.tag || "";
+        document.getElementById('novoDataEntrada').value = c.dataEntrada || "";
+        document.getElementById('novoDiaCobranca').value = c.diaCobranca || "";
+        document.getElementById('novoObs').value = c.observacao || "";
+        
+        tagsNovo = c.tags || [];
+        if (typeof c.tag === 'string' && c.tag.trim() !== '') tagsNovo = [c.tag.trim().toUpperCase()];
+        renderTagsUI('novo');
+        
+        showToast("Dados do cliente preenchidos!", "success");
+    }
+
+    function salvarNovaPessoa() {
+        if(!adminId) return;
+        const n = document.getElementById('novoNome').value.trim();
+        const t = document.getElementById('novoTel').value.trim();
+        const d = document.getElementById('novoDataEntrada').value;
+        const diaC = document.getElementById('novoDiaCobranca').value;
+        const obs = document.getElementById('novoObs').value.trim();
+        
+        const inputTag = document.getElementById('novoTag').value.trim().replace(',', '').toUpperCase();
+        if (inputTag && !tagsNovo.includes(inputTag)) tagsNovo.push(inputTag);
+        
+        if(!n) return showToast("Por favor, digite o nome.", "error");
+        
+        const targetMes = mesAtual === 'todos' ? mesReal : mesAtual;
+        const idFinal = idClienteSelecionadoParaNovo ? idClienteSelecionadoParaNovo : String(Date.now());
+
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${idFinal}`).once('value').then(snap => {
+            const existeNoCiclo = snap.val();
+            
+            if (existeNoCiclo && idClienteSelecionadoParaNovo && !existeNoCiclo.arquivado) {
+                showToast("Este cliente já está na lista deste ciclo!", "error");
+                return;
+            }
+
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${idFinal}`).update({ 
+                nome: n, 
+                tel: t, 
+                tags: tagsNovo,
+                tag: null,
+                valor: (existeNoCiclo && existeNoCiclo.valor !== undefined) ? existeNoCiclo.valor : configGeral.valorPadrao, 
+                adiantadas: (existeNoCiclo && existeNoCiclo.adiantadas !== undefined) ? existeNoCiclo.adiantadas : 0, 
+                pago: (existeNoCiclo && existeNoCiclo.pago !== undefined) ? existeNoCiclo.pago : false, 
+                msgEnviada: (existeNoCiclo && existeNoCiclo.msgEnviada !== undefined) ? existeNoCiclo.msgEnviada : false, 
+                comprovante: (existeNoCiclo && existeNoCiclo.comprovante !== undefined) ? existeNoCiclo.comprovante : null,
+                arquivado: false,
+                dataEntrada: d,
+                diaCobranca: diaC,
+                observacao: obs
+            }).then(() => {
+                fecharModalNovaPessoa();
+                showToast("Cliente adicionado ao ciclo com sucesso!");
+            }).catch((err) => {
+                showToast("Erro ao cadastrar: " + err.message, "error");
+            });
+        });
+    }
 
     function getTargetMes(id) {
         const p = dadosLocais.find(x => x.id === id);
@@ -2083,135 +2379,6 @@
 
     function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ pago: !s }); }
     
-    // --- PERFIL DO CLIENTE E HISTÓRICO (Segunda Página) ---
-    async function abrirDetalhes(id) {
-        const cliente = dadosLocais.find(c => c.id === id);
-        if (!cliente) return;
-
-        document.getElementById('detalhesNome').value = cliente.nome || "";
-        document.getElementById('detalhesTel').value = cliente.tel || "";
-        document.getElementById('detalhesDataEntrada').value = cliente.dataEntrada || "";
-        document.getElementById('detalhesDiaCobranca').value = cliente.diaCobranca || "";
-        document.getElementById('detalhesObs').value = cliente.observacao || "";
-        
-        tagsDetalhe = cliente.tags || [];
-        if (typeof cliente.tag === 'string' && cliente.tag.trim() !== '') {
-            tagsDetalhe = [cliente.tag.trim().toUpperCase()];
-        }
-        renderTagsUI('detalhe');
-
-        document.getElementById('btnSalvarDetalhes').onclick = () => salvarDetalhes(id);
-        document.getElementById('modalDetalhesCliente').classList.add('flex');
-
-        const listaHist = document.getElementById('listaHistorico');
-        listaHist.innerHTML = '<div class="text-center text-brand-500 py-10"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i><p class="text-xs font-bold uppercase tracking-widest">Buscando Faturas...</p></div>';
-        document.getElementById('textoUltimoPago').innerText = "Analisando pagamentos...";
-        lucide.createIcons();
-
-        try {
-            const snap = await db.ref(`tenants/${adminId}/cobrancas`).once('value');
-            const todosMeses = snap.val() || {};
-            let historico = [];
-
-            for (const mes in todosMeses) {
-                if (todosMeses[mes][id]) {
-                    historico.push({ mes: mes, dados: todosMeses[mes][id] });
-                }
-            }
-
-            historico.sort((a, b) => {
-                const [mA, yA] = a.mes.split('-'); const [mB, yB] = b.mes.split('-');
-                return new Date(yB, mB - 1) - new Date(yA, mA - 1);
-            });
-
-            let htmlHist = '';
-            let ultimoPago = null;
-
-            historico.forEach(item => {
-                const p = item.dados;
-                const status = p.pago 
-                    ? `<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pago</span>`
-                    : `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pendente</span>`;
-                
-                htmlHist += `
-                    <div class="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-white dark:hover:bg-slate-800/50 transition">
-                        <span class="text-sm font-bold dark:text-white capitalize">${formatarMesAno(item.mes)}</span>
-                        <div class="flex items-center gap-4">
-                            <span class="text-sm font-bold text-slate-600 dark:text-slate-300">R$ ${parseFloat(p.valor || 0).toFixed(2)}</span>
-                            ${status}
-                        </div>
-                    </div>`;
-
-                if (p.pago && !ultimoPago) ultimoPago = formatarMesAno(item.mes);
-            });
-
-            if (historico.length === 0) htmlHist = '<div class="text-center text-slate-400 py-10 text-sm font-bold">Nenhum histórico encontrado.</div>';
-            listaHist.innerHTML = htmlHist;
-            
-            const termoMens = configGeral.termoMensalidade || "Mensalidade";
-            document.getElementById('textoUltimoPago').innerText = ultimoPago ? `Última ${termoMens.toLowerCase()} paga em: ${ultimoPago}` : `Ainda não há pagamentos finalizados.`;
-
-        } catch (e) {
-            console.error(e);
-            listaHist.innerHTML = '<div class="text-center text-rose-500 py-10 text-sm font-bold">Erro ao carregar histórico.</div>';
-        }
-    }
-
-    function fecharDetalhes() { document.getElementById('modalDetalhesCliente').classList.remove('flex'); }
-
-    function salvarDetalhes(id) {
-        if(!adminId) return;
-        const n = document.getElementById('detalhesNome').value.trim();
-        const t = document.getElementById('detalhesTel').value.trim();
-        const d = document.getElementById('detalhesDataEntrada').value;
-        const diaC = document.getElementById('detalhesDiaCobranca').value;
-        const obs = document.getElementById('detalhesObs').value.trim();
-        
-        const inputTag = document.getElementById('detalhesTag').value.trim().replace(',', '').toUpperCase();
-        if (inputTag && !tagsDetalhe.includes(inputTag)) tagsDetalhe.push(inputTag);
-
-        if(!n) return showToast("Por favor, digite o nome.", "error");
-
-        const btn = document.getElementById('btnSalvarDetalhes');
-        const txtOriginal = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...'; 
-        btn.classList.add('opacity-50', 'pointer-events-none');
-        lucide.createIcons();
-
-        db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({
-            nome: n, tel: t, tags: tagsDetalhe, tag: null, dataEntrada: d, diaCobranca: diaC, observacao: obs
-        }).then(() => {
-            btn.innerHTML = txtOriginal; 
-            btn.classList.remove('opacity-50', 'pointer-events-none');
-            fecharDetalhes();
-            showToast("Perfil atualizado com sucesso!");
-        });
-    }
-
-    function formatarMesAno(mesAnoStr) {
-        const [m, y] = mesAnoStr.split('-');
-        const date = new Date(y, m - 1, 1);
-        return date.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
-    }
-
-    function enviarZap(id, n, t, v) { 
-        if(!adminId) return;
-        const targetMes = getTargetMes(id);
-        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
-        
-        const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes; 
-        const termoMens = configGeral.termoMensalidade || "Mensalidade";
-        const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
-        
-        // Formata o mês com a primeira letra maiúscula (Feature 2)
-        const mesFormatado = formatarMesAno(targetMes);
-        const mesCapitalizado = mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1);
-        
-        const msg = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCapitalizado}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`); 
-        window.open(`https://wa.me/${t}?text=${msg}`); 
-    }
-
-    // --- IMPORT/EXPORT & UTILS ---
     function mudarMes(v) { 
         mesAtual = v; 
         selecionados.clear(); 
@@ -2251,6 +2418,7 @@
         
         renderizarTabela(); 
     }
+
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
     function fecharModal() { document.getElementById('modalImport').classList.remove('flex'); }
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
@@ -2317,12 +2485,11 @@
                 let tagsStr = cols[3]?.trim() || "";
                 let tagsImport = tagsStr ? tagsStr.split(',').map(t=>t.trim().toUpperCase()).filter(Boolean) : (ext.tags || (ext.tag ? [ext.tag] : []));
 
-                // 0:ID, 1:Nome, 2:Tel, 3:Etiquetas, 4:Data, 5:DiaCobranca, 6:Obs, 7:Valor, 8:Adiantadas, 9:Status, 10:Arquivado
                 updates[id] = { 
                     nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
                     tel: cols[2]?.trim() || ext.tel || "", 
                     tags: tagsImport,
-                    tag: null, // Limpa legado
+                    tag: null, 
                     dataEntrada: cols[4]?.trim() || ext.dataEntrada || "",
                     diaCobranca: diaLido,
                     observacao: (cols[6]?.trim() || ext.observacao || "").substring(0, 300),
@@ -2374,129 +2541,6 @@
         } 
     }
 
-    // --- PORTAL DO CLIENTE ---
-    function carregarPortalCliente() {
-        if(!adminId || !idCliente) return;
-        db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).on('value', s => {
-            const p = s.val();
-            const portal = document.getElementById('portalCliente');
-            if(!p) {
-                portal.innerHTML = `<div class="text-center p-10 glass-card rounded-3xl font-bold">Cobrança não encontrada ou expirada.</div>`;
-                return;
-            }
-            const val = parseFloat(p.valor) || 0;
-            const termoMens = configGeral.termoMensalidade || "Mensalidade";
-
-            // Formata o mês com a primeira letra maiúscula (Feature 2)
-            const mesFormatado = formatarMesAno(mesAtual);
-            const mesCapitalizado = mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1);
-
-            let statusTag = '';
-            let exibirUpload = false;
-
-            if (p.pago) {
-                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-emerald-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-emerald-100 dark:bg-emerald-900/20 px-4 py-1 rounded-full"><i data-lucide="check-circle" class="w-3 h-3"></i> Pagamento Confirmado</div>`;
-            } else if (!configGeral.desativarEmAnalise && p.comprovante) {
-                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-violet-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-violet-100 dark:bg-violet-900/20 px-4 py-1 rounded-full"><i data-lucide="clock" class="w-3 h-3"></i> Comprovativo em Análise</div>`;
-            } else {
-                statusTag = `<div class="mt-4 inline-flex items-center gap-2 text-rose-500 font-extrabold uppercase text-[9px] md:text-[10px] bg-rose-100 dark:bg-rose-900/20 px-4 py-1 rounded-full">Aguardando Pagamento</div>`;
-                exibirUpload = true;
-            }
-
-            portal.innerHTML = `
-                <div class="glass-card p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl text-center space-y-6 md:space-y-8 border-b-8 border-b-brand-500">
-                    <div class="w-16 h-16 md:w-20 md:h-20 bg-brand-500 text-white rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto shadow-glow"><i data-lucide="wallet" class="w-8 h-8 md:w-10 md:h-10"></i></div>
-                    <div><h2 class="text-xl md:text-2xl font-black dark:text-white italic">Olá, ${p.nome}!</h2><p class="text-slate-400 text-xs md:text-sm font-medium mt-1 uppercase tracking-widest">Detalhes da sua ${termoMens} - ${mesCapitalizado}</p></div>
-                    <div class="py-8 md:py-10 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] md:rounded-[2.5rem] shadow-inner border border-slate-100 dark:border-slate-800">
-                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Total</p>
-                        <div class="text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</div>
-                        ${statusTag}
-                    </div>
-                    <div class="space-y-3 md:space-y-4">
-                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Chave PIX para pagamento</p>
-                        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border-2 border-dashed border-brand-200 dark:border-brand-900 flex items-center justify-between">
-                            <span class="font-mono font-bold text-xs md:text-sm truncate pr-2 md:pr-4 text-brand-600">${configGeral.chavePix || "Não configurada"}</span>
-                            <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                    ${exibirUpload ? `<div class="pt-4 md:pt-6">
-                        <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4">Já pagou? Envie o comprovativo</label>
-                        <input type="file" accept="image/*" id="compFile" class="hidden" onchange="uploadComp(this)">
-                        <label for="compFile" id="lblCompFile" class="w-full py-4 md:py-5 bg-brand-600 text-white rounded-[1.5rem] text-sm md:text-base font-bold flex items-center justify-center gap-3 hover:bg-brand-700 cursor-pointer shadow-xl shadow-brand-500/30 transition-all active:scale-95">
-                            <i data-lucide="image-plus" class="w-5 h-5"></i> Comprovante aqui
-                        </label>
-                        <div class="mt-4 text-center">
-                            <a href="COLOQUE_SEU_LINK_AQUI" target="_blank" class="inline-flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold text-slate-400 hover:text-brand-500 transition-colors">
-                                <i data-lucide="play-circle" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Em caso de dúvida, veja como enviar
-                            </a>
-                        </div>
-                    </div>` : ''}
-                </div>`;
-            lucide.createIcons();
-        });
-    }
-
-    function uploadComp(input) {
-        if(!adminId || !idCliente) return;
-        const file = input.files[0]; if (!file) return;
-        
-        const label = document.getElementById('lblCompFile');
-        if(label) {
-            label.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...';
-            label.classList.add('opacity-70', 'pointer-events-none');
-            lucide.createIcons();
-        }
-
-        const reader = new FileReader();
-        reader.onload = e => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800; 
-                const MAX_HEIGHT = 800;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-
-                const dbUpdates = { comprovante: dataUrl };
-                // Se a análise estiver desativada, já marca como pago automaticamente
-                if (configGeral.desativarEmAnalise) {
-                    dbUpdates.pago = true;
-                }
-
-                db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).update(dbUpdates).then(() => {
-                    if (configGeral.desativarEmAnalise) {
-                        showToast("Comprovativo enviado e pagamento confirmado!");
-                    } else {
-                        showToast("Comprovativo enviado para análise!");
-                    }
-                }).catch(err => {
-                    showToast("Erro ao enviar: O ficheiro é grande demais.", "error");
-                    if(label) {
-                        label.innerHTML = '<i data-lucide="image-plus" class="w-5 h-5"></i> Galeria ou Câmera';
-                        label.classList.remove('opacity-70', 'pointer-events-none');
-                        lucide.createIcons();
-                    }
-                });
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Funcionalidade de cópia (Ajustada para usar os Toasts)
     function copiarPix(txt) {
         const temp = document.createElement("input"); 
         document.body.appendChild(temp); 
@@ -2508,7 +2552,6 @@
         showToast("Chave PIX copiada!");
     }
 
-    // Garante que o código só corre depois de todos os scripts (como os ícones) estarem carregados
     window.onload = function() {
         iniciar();
     };
