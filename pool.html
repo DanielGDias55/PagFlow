@@ -1667,7 +1667,37 @@
             "Confirmar", btnClass, ico, bgIcoClass,
             () => {
                 const updates = {};
-                selecionados.forEach(id => { updates[`cobrancas/${getTargetMes(id)}/${id}/arquivado`] = arquivarStatus; });
+                const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
+
+                selecionados.forEach(id => {
+                    const mesOrigem = getTargetMes(id);
+                    if (arquivarStatus) {
+                        updates[`cobrancas/${mesOrigem}/${id}/arquivado`] = true;
+                    } else {
+                        if (mesOrigem === mesDestino) {
+                            updates[`cobrancas/${mesDestino}/${id}/arquivado`] = false;
+                        } else {
+                            const cliente = dadosLocais.find(c => c.id === id);
+                            if (cliente) {
+                                updates[`cobrancas/${mesDestino}/${id}`] = {
+                                    nome: cliente.nome || "",
+                                    tel: cliente.tel || "",
+                                    tags: cliente.tags || [],
+                                    dataEntrada: cliente.dataEntrada || "",
+                                    diaCobranca: cliente.diaCobranca || "",
+                                    observacao: cliente.observacao || "",
+                                    valor: cliente.valor !== undefined ? cliente.valor : configGeral.valorPadrao,
+                                    arquivado: false,
+                                    pago: false,
+                                    adiantadas: 0,
+                                    msgEnviada: false,
+                                    comprovante: null
+                                };
+                            }
+                        }
+                    }
+                });
+
                 db.ref(`tenants/${adminId}`).update(updates).then(() => {
                     selecionados.clear();
                     showToast(`Registos ${acao}dos com sucesso!`);
@@ -1721,8 +1751,40 @@
     
     function arquivarPessoa(id, arquivarStatus) { 
         if(adminId) {
-            db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ arquivado: arquivarStatus });
-            showToast(arquivarStatus ? "Registo arquivado." : "Registo restaurado.");
+            const mesOrigem = getTargetMes(id);
+            
+            if (arquivarStatus) {
+                db.ref(`tenants/${adminId}/cobrancas/${mesOrigem}/${id}`).update({ arquivado: true });
+                showToast("Registo arquivado.");
+            } else {
+                const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
+                
+                if (mesOrigem === mesDestino) {
+                    db.ref(`tenants/${adminId}/cobrancas/${mesDestino}/${id}`).update({ arquivado: false });
+                    showToast("Registo restaurado.");
+                } else {
+                    const cliente = dadosLocais.find(c => c.id === id);
+                    if (cliente) {
+                        const novoCliente = {
+                            nome: cliente.nome || "",
+                            tel: cliente.tel || "",
+                            tags: cliente.tags || [],
+                            dataEntrada: cliente.dataEntrada || "",
+                            diaCobranca: cliente.diaCobranca || "",
+                            observacao: cliente.observacao || "",
+                            valor: cliente.valor !== undefined ? cliente.valor : configGeral.valorPadrao,
+                            arquivado: false,
+                            pago: false,
+                            adiantadas: 0,
+                            msgEnviada: false,
+                            comprovante: null
+                        };
+                        db.ref(`tenants/${adminId}/cobrancas/${mesDestino}/${id}`).update(novoCliente).then(() => {
+                            showToast(`Restaurado para o ciclo ${formatarMesAno(mesDestino)}`);
+                        });
+                    }
+                }
+            }
         }
     }
 
@@ -1817,7 +1879,7 @@
             let historico = [];
 
             for (const mes in todosMeses) {
-                if (todosMeses[mes][id]) {
+                if (todosMeses[mes][id] && !todosMeses[mes][id].arquivado) {
                     historico.push({ mes: mes, dados: todosMeses[mes][id] });
                 }
             }
@@ -2530,6 +2592,8 @@
     }
     
     function setFiltroStatus(s) { 
+        const tinhaArquivado = filtrosStatus.has('arquivado');
+
         if (s === 'todos') {
             filtrosStatus.clear();
             filtrosStatus.add('todos');
@@ -2545,6 +2609,8 @@
             }
         }
 
+        const temArquivado = filtrosStatus.has('arquivado');
+
         document.querySelectorAll('.filter-btn').forEach(b => { 
             const btnId = b.id.replace('btn-', '');
             if (filtrosStatus.has(btnId)) {
@@ -2555,6 +2621,23 @@
                 b.classList.add('opacity-40');
             }
         }); 
+        
+        // Regra para automatizar o ciclo quando entra/sai dos Arquivados
+        if (temArquivado && !tinhaArquivado) {
+            if (mesAtual !== 'todos') {
+                const selectMes = document.getElementById('filtroMes');
+                if(selectMes) selectMes.value = 'todos';
+                mudarMes('todos');
+                return;
+            }
+        } else if (!temArquivado && tinhaArquivado) {
+            if (mesAtual === 'todos') {
+                const selectMes = document.getElementById('filtroMes');
+                if(selectMes) selectMes.value = mesReal;
+                mudarMes(mesReal);
+                return;
+            }
+        }
         
         renderizarTabela(); 
     }
@@ -2673,6 +2756,10 @@
 
         for(let i = -12; i <= 36; i++) { 
             const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
+            
+            // Regra para excluir o ano de 2025 da lista
+            if (d.getFullYear() === 2025) continue; 
+            
             const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
             const o = document.createElement('option'); o.value = k; 
             o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
