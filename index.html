@@ -2004,7 +2004,14 @@ async function enviarZap(id, n, t, v) {
         window.open(`https://wa.me/${t}?text=${msgAntiga}`); 
     }
 }
-    function renderizarTabela() {
+    let debounceTimer;
+function renderizarTabela() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        executarRenderizacaoTabela();
+    }, 150); // Aguarda 150ms para ver se há mais mudanças antes de redesenhar
+}
+    function executarRenderizacaoTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
 
