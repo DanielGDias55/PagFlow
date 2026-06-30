@@ -2069,8 +2069,8 @@ function renderizarTabela() {
             btnHoje.innerHTML = `Vence Hoje ${pendentesHoje > 0 ? `<span class="bg-blue-500 text-white rounded-full px-1.5 py-0.5 ml-1 text-[8px] shadow-sm">${pendentesHoje}</span>` : ''}`;
         }
 
-        corpo.innerHTML = "";
-        let t = 0, pg = 0, pd = 0;
+       let t = 0, pg = 0, pd = 0;
+let htmlLinhas = ""; // O nosso "balde" que vai guardar o texto todo
 
         filtrados.forEach(p => {
             const val = parseFloat(p.valor) || 0;
@@ -2139,7 +2139,7 @@ function renderizarTabela() {
                 btnStatusText = 'Pendente';
             }
 
-            corpo.innerHTML += `
+            htmlLinhas += `
                 <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group ${selecionados.has(p.id) ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}">
                     <td class="px-4 md:px-6 py-4 md:py-5 text-center">
                         <input type="checkbox" class="check-custom row-checkbox" value="${p.id}" ${selecionados.has(p.id) ? 'checked' : ''} onchange="toggleRowSelection('${p.id}')">
@@ -2189,6 +2189,8 @@ function renderizarTabela() {
                     </td>
                 </tr>`;
         });
+
+        corpo.innerHTML = htmlLinhas; // <--- COLOQUE ESTA LINHA AQUI!
 
         document.getElementById('tGeral').innerText = t.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
