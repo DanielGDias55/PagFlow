@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PagFlow - Gestão de Cobranças</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
     <!-- Biblioteca Chart.js para os Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -19,7 +19,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { 
+                    colors: {
                         slate: { 850: '#1e293b', 950: '#020617' },
                         brand: { 500: '#3b82f6', 600: '#2563eb' }
                     },
@@ -34,23 +34,23 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
+
         :root { --transition-speed: 0.3s; }
 
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            transition: background-color var(--transition-speed) ease; 
-            min-height: 100vh; 
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color var(--transition-speed) ease;
+            min-height: 100vh;
             padding-bottom: 6rem;
         }
 
         html.dark { background-color: #020617 !important; }
-        
+
         /* ================================================== */
         /* BLINDAGEM DE TELAS (Evita vazamento de informações)*/
         /* ================================================== */
         #loginScreen, #adminApp, #paywallScreen, #portalCliente { display: none !important; }
-        
+
         body.modo-cliente #portalCliente { display: block !important; }
         body.modo-admin.estado-login #loginScreen { display: flex !important; }
         body.modo-admin.estado-logado #adminApp { display: block !important; }
@@ -64,48 +64,48 @@
         }
 
         /* Estilos de Inputs Editáveis da Tabela */
-        .editable-input { 
-            background: transparent; 
-            border: 1px solid transparent; 
-            padding: 4px 8px; 
-            border-radius: 8px; 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        .editable-input {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
         }
         .editable-input:hover { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); }
         .dark .editable-input:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
-        .editable-input:focus { 
-            background: white; 
-            border-color: #3b82f6; 
-            outline: none; 
+        .editable-input:focus {
+            background: white;
+            border-color: #3b82f6;
+            outline: none;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            color: #1e293b; 
+            color: #1e293b;
         }
         .dark .editable-input:focus { background: #0f172a; color: white !important; }
 
         /* Modais */
-        .modal-overlay { 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            position: fixed; 
-            inset: 0; 
-            z-index: 100; 
-            background: rgba(2, 6, 23, 0.6); 
-            backdrop-filter: blur(8px); 
+        .modal-overlay {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(2, 6, 23, 0.6);
+            backdrop-filter: blur(8px);
         }
         .modal-overlay.flex { display: flex !important; }
 
         /* Botões de Filtro Ativos */
-        .filter-btn.active { 
-            background-color: white !important; 
-            color: #1e293b !important; 
+        .filter-btn.active {
+            background-color: white !important;
+            color: #1e293b !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             opacity: 1 !important;
         }
-        .dark .filter-btn.active { 
-            background-color: #3b82f6 !important; 
-            color: white !important; 
+        .dark .filter-btn.active {
+            background-color: #3b82f6 !important;
+            color: white !important;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
         }
 
@@ -135,7 +135,7 @@
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: auto;
-            margin-top: 1.5rem; 
+            margin-top: 1.5rem;
         }
 
         #btnToggleDrawer.active, #btnToggleDashboard.active {
@@ -149,7 +149,7 @@
             color: white;
             border-color: transparent;
         }
-        
+
         #dashboardWrapper {
             max-height: 1200px;
             opacity: 1;
@@ -166,17 +166,17 @@
         }
 
         .check-custom { accent-color: #3b82f6; width: 1.125rem; height: 1.125rem; cursor: pointer; border-radius: 4px; }
-        
+
         /* Oculta colunas baseadas nas configs */
         .esconder-adiantadas .col-adiantadas { display: none !important; }
         .esconder-status .col-status { display: none !important; }
         .esconder-dia-cobranca .col-dia-cobranca { display: none !important; }
 
         /* Oculta os botões de incremento de campos numéricos (evita cortes no texto) */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         input[type=number] {
             -moz-appearance: textfield;
@@ -210,7 +210,7 @@
     <div class="glass-card w-full max-w-md p-8 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl"></div>
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        
+
         <div class="relative z-10 flex flex-col items-center">
             <div class="w-20 h-20 flex items-center justify-center mb-3">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-lg">
@@ -276,7 +276,7 @@
     <div class="glass-card w-full max-w-md p-8 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden text-center">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-rose-500/10 rounded-full blur-3xl"></div>
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
-        
+
         <div class="relative z-10 flex flex-col items-center">
             <div class="w-16 h-16 bg-rose-500 rounded-3xl shadow-glow flex items-center justify-center mb-6">
                 <i data-lucide="lock" class="text-white w-8 h-8"></i>
@@ -325,7 +325,7 @@
                     <i data-lucide="unlock" class="w-5 h-5"></i> Iniciar Teste de 7 Dias
                 </button>
             </div>
-            
+
         </div>
     </div>
 </div>
@@ -360,7 +360,7 @@
                     <i data-lucide="chevron-down" id="icon-ajuda1" class="w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0"></i>
                 </button>
                 <div id="ajuda1" class="hidden px-5 pb-5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-4">
-                    As etiquetas (Tags) servem para organizar os seus clientes por categorias (ex: Plano VIP, Mensal, Manutenção). 
+                    As etiquetas (Tags) servem para organizar os seus clientes por categorias (ex: Plano VIP, Mensal, Manutenção).
                     <br><br>
                     Para adicionar uma etiqueta durante o registo ou na edição do cliente, basta <strong>escrever o nome da etiqueta e clicar na tecla "Enter", inserir uma vírgula, ou clicar no botão azul (+)</strong> ao lado do campo.
                     Pode adicionar quantas etiquetas quiser! Elas aparecerão na tabela debaixo do número de telefone e podem ser usadas na gaveta de Filtros para encontrar grupos específicos rapidamente.
@@ -463,7 +463,7 @@
                 <textarea id="textoIdeia" rows="4" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white px-4 py-3 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none border border-slate-200 dark:border-slate-800 shadow-sm transition resize-none mt-1" placeholder="Descreva a sua ideia com detalhes..."></textarea>
             </div>
         </div>
-        
+
         <div class="flex gap-3 mt-6">
             <button onclick="fecharModalIdeia()" class="flex-1 py-3.5 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
             <button onclick="enviarIdeia()" id="btnEnviarIdeia" class="flex-1 py-3.5 bg-amber-500 text-white rounded-2xl font-bold hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex justify-center items-center gap-2">
@@ -481,7 +481,7 @@
         </div>
         <h3 class="text-lg font-black dark:text-white mb-1">Etiquetas</h3>
         <p id="modalTagsTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 truncate"></p>
-        
+
         <div id="modalTagsList" class="flex flex-wrap justify-center gap-2 mb-6 max-h-48 overflow-y-auto p-1">
         </div>
 
@@ -499,7 +499,7 @@
         </div>
         <h3 class="text-lg font-black dark:text-white mb-1">Observações</h3>
         <p id="modalObsTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 truncate"></p>
-        
+
         <div id="modalObsContent" class="text-sm text-slate-600 dark:text-slate-300 mb-6 max-h-48 overflow-y-auto p-1 text-left whitespace-pre-wrap leading-relaxed break-words">
         </div>
 
@@ -517,7 +517,7 @@
         </div>
         <h3 class="text-xl font-black dark:text-white mb-1">Fila de Cobrança</h3>
         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Enviando <span id="filaAtualNum" class="text-blue-500 font-black text-sm">1</span> de <span id="filaTotalNum" class="font-black text-sm">X</span></p>
-        
+
         <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl mb-6 text-left border border-slate-100 dark:border-slate-800">
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Próximo Cliente:</p>
             <p id="filaClienteNome" class="font-bold dark:text-white text-lg truncate">Carregando...</p>
@@ -549,7 +549,7 @@
             <h3 class="text-xl font-black mb-2 z-10">Novo Registo</h3>
             <p class="text-xs font-medium opacity-80 z-10">Adicione novos clientes ou importe do seu banco de dados.</p>
         </div>
-        
+
         <div class="w-full md:w-3/5 p-6 md:p-10 relative">
             <div class="flex justify-between items-center mb-6 md:hidden">
                 <div class="flex items-center gap-3">
@@ -624,7 +624,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex gap-3 mt-6">
                 <button onclick="fecharModalNovaPessoa()" class="flex-1 py-3 md:py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button onclick="salvarNovaPessoa()" class="flex-1 py-3 md:py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95">Adicionar</button>
@@ -690,7 +690,7 @@
                 </div>
                 <button id="btnSalvarDetalhes" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all active:scale-95 mt-2 flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações</button>
             </div>
-            
+
             <div class="space-y-4">
                 <h4 class="text-sm font-black dark:text-white flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-slate-400"></i> Histórico de Pagamentos</h4>
                 <div id="listaHistorico" class="bg-slate-50 dark:bg-slate-900/50 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 h-[280px] md:h-full overflow-y-auto shadow-inner">
@@ -852,7 +852,7 @@
 <!-- 4. APLICAÇÃO ADMIN                         -->
 <!-- ========================================== -->
 <div id="adminApp" class="max-w-6xl mx-auto space-y-4 md:space-y-6">
-    
+
     <div id="bulkActionsBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 md:px-6 py-3 md:py-4 rounded-[1.5rem] shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none w-[90%] md:w-auto overflow-x-auto whitespace-nowrap">
         <div class="flex items-center gap-2 md:gap-3">
             <div class="bg-brand-500 text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-[10px] md:text-xs font-black shadow-inner" id="bulkCount">0</div>
@@ -891,7 +891,7 @@
                     <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest block" id="adminEmailDisplay">Carregando...</span>
                 </div>
             </div>
-            
+
             <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto">
                 <button onclick="abrirModalIdeia()" class="p-2 md:py-2.5 md:px-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 shadow-soft transition hover:bg-amber-500 hover:text-white" title="Enviar Ideia ou Sugestão">
                     <i data-lucide="lightbulb" class="w-4 h-4 md:w-5 md:h-5"></i>
@@ -927,7 +927,7 @@
         <div id="drawerWrapper">
             <div class="glass-card rounded-[2rem] p-5 md:p-6 shadow-inner border border-slate-200/50 dark:border-slate-800/50 relative z-0">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 items-end">
-                    
+
                     <div class="space-y-1 md:space-y-2 lg:col-span-2">
                         <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Pesquisar</label>
                         <div class="relative group">
@@ -1014,7 +1014,7 @@
                 <p class="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1 italic">Volume Projetado</p>
                 <div class="text-3xl md:text-4xl font-extrabold dark:text-white text-slate-800 tracking-tighter">R$ <span id="tGeral" class="transition-all duration-300">0,00</span></div>
             </div>
-            
+
             <div class="bg-brand-600 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] text-white shadow-xl shadow-brand-500/25">
                 <p class="opacity-70 text-[10px] font-bold uppercase tracking-widest mb-1 italic text-white">Total Recebido</p>
                 <div class="text-3xl md:text-4xl font-extrabold italic tracking-tighter">R$ <span id="tPago" class="transition-all duration-300">0,00</span></div>
@@ -1083,17 +1083,18 @@
     const auth = firebase.auth();
 
     let adminId = null;
-    
+    const USUARIO_VIP_PIX = "JDSrNRSo8AQidw3XbH6FoolWDMI2";
+
     let dataReferencia = new Date();
     let mesReal = `${String(dataReferencia.getMonth() + 1).padStart(2, '0')}-${dataReferencia.getFullYear()}`;
     let mesAtual = mesReal;
-    let mesAtualAjustado = false; 
-    
+    let mesAtualAjustado = false;
+
     let dadosLocais = [];
     let filtrosStatus = new Set(['todos']);
     let ordemCrescente = true;
     let selecionados = new Set();
-    
+
     let clientesGlobaisCache = [];
     let idClienteSelecionadoParaNovo = null;
     let filaEnvio = [];
@@ -1102,14 +1103,14 @@
     let dadosGraficoCache = null;
     let valoresOcultos = localStorage.getItem('valoresOcultos') === 'true';
     let dashboardOculto = localStorage.getItem('dashboardOculto') === 'true';
-    
+
     let tagsNovo = [];
     let tagsDetalhe = [];
 
-    let configGeral = { 
-        chavePix: "", 
+    let configGeral = {
+        chavePix: "",
         valorPadrao: 50,
-        diaVirada: "", 
+        diaVirada: "",
         termoParticipante: "Participante",
         termoMensalidade: "Mensalidade",
         ocultarAdiantadas: false,
@@ -1224,9 +1225,9 @@
                 adminId = user.uid;
                 const emailDisplay = document.getElementById('adminEmailDisplay');
                 if (emailDisplay) emailDisplay.innerText = user.email || "Admin";
-                
+
                 db.ref(`tenants/${adminId}/perfil`).update({ email_cadastrado: user.email, ultimo_login: Date.now() });
-                
+
                 db.ref(`tenants/${adminId}/assinatura`).on('value', snap => {
                     const assinatura = snap.val() || {};
                     const status = assinatura.status ? String(assinatura.status).toLowerCase() : null;
@@ -1253,7 +1254,7 @@
                         const expiraDate = new Date(testeExpiraEm);
                         expiraDate.setHours(0, 0, 0, 0);
                         const diasRestantes = Math.max(0, Math.round((expiraDate - hojeDate) / (1000 * 60 * 60 * 24)));
-                        
+
                         if (badgeTeste) badgeTeste.innerHTML = `<span class="bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ml-2 border border-indigo-200 dark:border-indigo-800">Teste: ${diasRestantes} dia(s)</span>`;
                     } else {
                         if (badgeTeste) badgeTeste.innerHTML = '';
@@ -1267,7 +1268,7 @@
                         if (status === null) {
                             db.ref(`tenants/${adminId}/assinatura`).set({ status: 'pendente', criadoEm: agora, testeUsado: false });
                         }
-                        
+
                         const areaTeste = document.getElementById('areaTesteGratis');
                         if (areaTeste) {
                             if (assinatura.testeUsado) areaTeste.classList.add('hidden');
@@ -1278,8 +1279,8 @@
                         document.body.classList.remove('estado-login', 'estado-logado');
                     }
                 }, error => {
-                    console.error(error); 
-                    showToast("Erro de segurança. Verifique as regras do BD.", "error"); 
+                    console.error(error);
+                    showToast("Erro de segurança. Verifique as regras do BD.", "error");
                     fazerLogout();
                 });
             } else {
@@ -1324,14 +1325,14 @@
 
     function carregarConfiguracoesGerais() {
         if(!adminId) return;
-        db.ref(`tenants/${adminId}/configuracoes`).on('value', s => { 
-            if (s.val()) configGeral = { ...configGeral, ...s.val() }; 
-            
+        db.ref(`tenants/${adminId}/configuracoes`).on('value', s => {
+            if (s.val()) configGeral = { ...configGeral, ...s.val() };
+
             if (!mesAtualAjustado && configGeral.diaVirada) {
                 let d = new Date();
                 let diaV = parseInt(configGeral.diaVirada);
-                
-                if (!isNaN(diaV) && diaV > 1) { 
+
+                if (!isNaN(diaV) && diaV > 1) {
                     let ultimoDiaMes = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
                     let diaRealVirada = diaV > ultimoDiaMes ? ultimoDiaMes : diaV;
                     if (d.getDate() >= diaRealVirada) {
@@ -1361,7 +1362,7 @@
                 container.classList.toggle('esconder-status', configGeral.ocultarStatus);
                 container.classList.toggle('esconder-dia-cobranca', configGeral.ocultarDiaCobranca);
             }
-            
+
             const btnEmAnalise = document.getElementById('btn-em_analise');
             if (btnEmAnalise) {
                 btnEmAnalise.style.display = configGeral.desativarEmAnalise ? 'none' : 'block';
@@ -1369,7 +1370,7 @@
 
             const btnCopiar = document.getElementById('btnCopiarCiclo');
             if (btnCopiar) btnCopiar.style.display = mesAtual === 'todos' ? 'none' : 'flex';
-            
+
             if(idCliente) carregarPortalCliente();
         });
     }
@@ -1379,7 +1380,7 @@
         if (!dropdown) return;
         const valorAtual = dropdown.value;
         const tagsUnicas = new Set();
-        
+
         dadosLocais.forEach(p => {
             let tArr = p.tags || [];
             if (typeof p.tag === 'string' && p.tag.trim() !== '') tArr = [p.tag.trim()];
@@ -1387,12 +1388,12 @@
                 if(t.trim() !== '') tagsUnicas.add(t.trim().toUpperCase());
             });
         });
-        
+
         let html = '<option value="">Todas as Tags</option>';
         Array.from(tagsUnicas).sort().forEach(tag => {
             html += `<option value="${tag}">${tag}</option>`;
         });
-        
+
         dropdown.innerHTML = html;
         if (tagsUnicas.has(valorAtual)) dropdown.value = valorAtual;
     }
@@ -1403,7 +1404,7 @@
             db.ref(`tenants/${adminId}/cobrancas`).on('value', s => {
                 const todosMeses = s.val() || {};
                 const clientesMap = new Map();
-                
+
                 const mesesOrdenados = Object.keys(todosMeses).sort((a, b) => {
                     const partsA = String(a).split('-');
                     const partsB = String(b).split('-');
@@ -1416,7 +1417,7 @@
                         clientesMap.set(id, { id, sourceMes: mes, ...dadosMes[id] });
                     }
                 });
-                
+
                 dadosLocais = Array.from(clientesMap.values());
                 atualizarDropdownTags();
                 selecionados.forEach(id => { if(!clientesMap.has(id)) selecionados.delete(id); });
@@ -1444,7 +1445,7 @@
             for(let i = 5; i >= 0; i--) {
                 let tempDate = new Date(d.getFullYear(), d.getMonth() - i, 1);
                 let mesStr = `${String(tempDate.getMonth() + 1).padStart(2, '0')}-${tempDate.getFullYear()}`;
-                
+
                 let labelStr = tempDate.toLocaleDateString('pt-br', {month: 'short', year: '2-digit'}).replace('. de ', '/').replace('.', '');
                 labelStr = labelStr.charAt(0).toUpperCase() + labelStr.slice(1);
 
@@ -1473,8 +1474,8 @@
         if(chartInstance) chartInstance.destroy();
 
         const isDark = document.documentElement.classList.contains('dark');
-        const textColor = isDark ? '#94a3b8' : '#64748b'; 
-        const gridColor = isDark ? '#1e293b' : '#f1f5f9'; 
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? '#1e293b' : '#f1f5f9';
 
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -1483,7 +1484,7 @@
                 datasets: [{
                     label: 'Receita Confirmada (R$)',
                     data: dados,
-                    backgroundColor: '#3b82f6', 
+                    backgroundColor: '#3b82f6',
                     borderRadius: 6,
                 }]
             },
@@ -1505,7 +1506,7 @@
                     y: {
                         beginAtZero: true,
                         grid: { color: gridColor },
-                        ticks: { 
+                        ticks: {
                             color: textColor,
                             callback: function(value) {
                                 if (valoresOcultos) return '****';
@@ -1561,7 +1562,7 @@
         let inputId = arrayType === 'novo' ? 'novoTag' : 'detalhesTag';
         let input = document.getElementById(inputId);
         let val = input.value.trim().replace(',', '').toUpperCase();
-        
+
         if (val && !arr.includes(val)) {
             arr.push(val);
             renderTagsUI(arrayType);
@@ -1580,12 +1581,12 @@
         let arr = arrayType === 'novo' ? tagsNovo : tagsDetalhe;
         let containerId = arrayType === 'novo' ? 'tagsContainer_novo' : 'tagsContainer_detalhe';
         let wrapperId = arrayType === 'novo' ? 'tagInputWrapper_novo' : 'tagInputWrapper_detalhe';
-        
+
         let container = document.getElementById(containerId);
         let wrapper = document.getElementById(wrapperId);
-        
+
         container.querySelectorAll('.ui-tag').forEach(e => e.remove());
-        
+
         arr.forEach((tag, idx) => {
             let span = document.createElement('span');
             span.className = 'ui-tag bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[9px] px-2 py-1 rounded font-bold flex items-center gap-1 uppercase tracking-widest';
@@ -1597,11 +1598,11 @@
 
     function iniciarFilaWhatsApp() {
         if(selecionados.size === 0) return;
-        
+
         filaEnvio = Array.from(selecionados)
             .map(id => dadosLocais.find(c => c.id === id))
-            .filter(c => c && c.tel && !c.pago); 
-        
+            .filter(c => c && c.tel && !c.pago);
+
         if (filaEnvio.length === 0) {
             showToast("Nenhum cliente válido na seleção. (Clientes pagos ou sem telefone foram ignorados)", "error");
             return;
@@ -1623,7 +1624,7 @@
         const atual = filaTotal - filaEnvio.length + 1;
         document.getElementById('filaAtualNum').innerText = atual;
         document.getElementById('filaTotalNum').innerText = filaTotal;
-        
+
         const cliente = filaEnvio[0];
         document.getElementById('filaClienteNome').innerText = cliente.nome;
         document.getElementById('filaClienteTel').innerText = cliente.tel || 'Sem telefone';
@@ -1631,17 +1632,17 @@
 
     function proximoFilaWhatsApp() {
         if (filaEnvio.length === 0) return;
-        const cliente = filaEnvio.shift(); 
-        
+        const cliente = filaEnvio.shift();
+
         const val = parseFloat(cliente.valor) || 0;
         enviarZap(cliente.id, cliente.nome, cliente.tel, val);
-        
+
         atualizarUIFila();
     }
 
     function pularFilaWhatsApp() {
         if (filaEnvio.length === 0) return;
-        filaEnvio.shift(); 
+        filaEnvio.shift();
         atualizarUIFila();
     }
 
@@ -1723,7 +1724,7 @@
         );
     }
 
-    function removerComprovante(id) { 
+    function removerComprovante(id) {
         if(!adminId) return;
         showConfirm(
             "Remover Comprovativo",
@@ -1736,7 +1737,7 @@
         );
     }
 
-    function excluir(id) { 
+    function excluir(id) {
         if(!adminId) return;
         showConfirm(
             "Excluir Registo",
@@ -1748,17 +1749,17 @@
             }
         );
     }
-    
-    function arquivarPessoa(id, arquivarStatus) { 
+
+    function arquivarPessoa(id, arquivarStatus) {
         if(adminId) {
             const mesOrigem = getTargetMes(id);
-            
+
             if (arquivarStatus) {
                 db.ref(`tenants/${adminId}/cobrancas/${mesOrigem}/${id}`).update({ arquivado: true });
                 showToast("Registo arquivado.");
             } else {
                 const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
-                
+
                 if (mesOrigem === mesDestino) {
                     db.ref(`tenants/${adminId}/cobrancas/${mesDestino}/${id}`).update({ arquivado: false });
                     showToast("Registo restaurado.");
@@ -1794,7 +1795,7 @@
         const parts = String(mesAtual).split('-');
         let m = parseInt(parts[0]) || 1;
         let y = parseInt(parts[1]) || new Date().getFullYear();
-        
+
         let prevM = m - 1;
         let prevY = y;
         if (prevM === 0) { prevM = 12; prevY--; }
@@ -1848,7 +1849,7 @@
             }
         );
     }
-    
+
     async function abrirDetalhes(id) {
         const cliente = dadosLocais.find(c => c.id === id);
         if (!cliente) return;
@@ -1858,7 +1859,7 @@
         document.getElementById('detalhesDataEntrada').value = cliente.dataEntrada || "";
         document.getElementById('detalhesDiaCobranca').value = cliente.diaCobranca || "";
         document.getElementById('detalhesObs').value = cliente.observacao || "";
-        
+
         tagsDetalhe = cliente.tags || [];
         if (typeof cliente.tag === 'string' && cliente.tag.trim() !== '') {
             tagsDetalhe = [cliente.tag.trim().toUpperCase()];
@@ -1885,7 +1886,7 @@
             }
 
             historico.sort((a, b) => {
-                const partsA = String(a.mes).split('-'); 
+                const partsA = String(a.mes).split('-');
                 const partsB = String(b.mes).split('-');
                 const mA = parseInt(partsA[0]) || 1;
                 const yA = parseInt(partsA[1]) || 0;
@@ -1899,10 +1900,10 @@
 
             historico.forEach(item => {
                 const p = item.dados;
-                const status = p.pago 
+                const status = p.pago
                     ? `<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pago</span>`
                     : `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Pendente</span>`;
-                
+
                 htmlHist += `
                     <div class="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-white dark:hover:bg-slate-800/50 transition">
                         <span class="text-sm font-bold dark:text-white capitalize">${formatarMesAno(item.mes)}</span>
@@ -1917,7 +1918,7 @@
 
             if (historico.length === 0) htmlHist = '<div class="text-center text-slate-400 py-10 text-sm font-bold">Nenhum histórico encontrado.</div>';
             listaHist.innerHTML = htmlHist;
-            
+
             const termoMens = configGeral.termoMensalidade || "Mensalidade";
             document.getElementById('textoUltimoPago').innerText = ultimoPago ? `Última ${termoMens.toLowerCase()} paga em: ${ultimoPago}` : `Ainda não há pagamentos finalizados.`;
 
@@ -1936,7 +1937,7 @@
         const d = document.getElementById('detalhesDataEntrada').value;
         const diaC = document.getElementById('detalhesDiaCobranca').value;
         const obs = document.getElementById('detalhesObs').value.trim();
-        
+
         const inputTag = document.getElementById('detalhesTag').value.trim().replace(',', '').toUpperCase();
         if (inputTag && !tagsDetalhe.includes(inputTag)) tagsDetalhe.push(inputTag);
 
@@ -1944,14 +1945,14 @@
 
         const btn = document.getElementById('btnSalvarDetalhes');
         const txtOriginal = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...'; 
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
         btn.classList.add('opacity-50', 'pointer-events-none');
         lucide.createIcons();
 
         db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({
             nome: n, tel: t, tags: tagsDetalhe, tag: null, dataEntrada: d, diaCobranca: diaC, observacao: obs
         }).then(() => {
-            btn.innerHTML = txtOriginal; 
+            btn.innerHTML = txtOriginal;
             btn.classList.remove('opacity-50', 'pointer-events-none');
             fecharDetalhes();
             showToast("Perfil atualizado com sucesso!");
@@ -1968,26 +1969,42 @@
         return date.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
     }
 
-    function enviarZap(id, n, t, v) { 
-        if(!adminId) return;
-        const targetMes = getTargetMes(id);
-        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
-        
-        const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes; 
-        const termoMens = configGeral.termoMensalidade || "Mensalidade";
+    async function enviarZap(id, n, t, v) {
+    if(!adminId) return;
+    const targetMes = getTargetMes(id);
+    const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes;
+    const termoMens = configGeral.termoMensalidade || "Mensalidade";
+    const mesCap = formatarMesAno(targetMes).charAt(0).toUpperCase() + formatarMesAno(targetMes).slice(1);
+
+    // ROTA A: SE FOR O SEU USUÁRIO VIP (Gera o Pix Dinâmico no Mercado Pago)
+    if (adminId === USUARIO_VIP_PIX) {
+        showToast("Gerando PIX oficial...", "success");
+        const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
+
+        try {
+            await funcGerarPix({ tenantId: adminId, cobrancaId: id, mes: targetMes, valor: v, nomeCliente: n });
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true });
+
+            const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`);
+            window.open(`https://wa.me/${t}?text=${msgPix}`);
+        } catch(e) {
+            showToast("Erro ao gerar PIX", "error");
+            console.error(e);
+        }
+
+    // ROTA B: TODOS OS OUTROS USUÁRIOS (Continua no fluxo antigo pedindo comprovante)
+    } else {
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true });
         const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
-        
-        const mesFormatado = formatarMesAno(targetMes);
-        const mesCapitalizado = mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1);
-        
-        const msg = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCapitalizado}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`); 
-        window.open(`https://wa.me/${t}?text=${msg}`); 
+        const msgAntiga = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCap}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`);
+        window.open(`https://wa.me/${t}?text=${msgAntiga}`);
     }
+}
 
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
-        
+
         const dtInicio = document.getElementById('filtroDataInicio')?.value;
         const dtFim = document.getElementById('filtroDataFim')?.value;
         const filtroTagSelecionada = document.getElementById('filtroTagDropdown')?.value;
@@ -1995,7 +2012,7 @@
         if(!corpo) return;
 
         let filtrados = [...dadosLocais];
-        
+
         if (filtroTagSelecionada && filtroTagSelecionada !== '') {
             filtrados = filtrados.filter(p => {
                 let tArr = p.tags || [];
@@ -2003,7 +2020,7 @@
                 return tArr.some(t => t.toUpperCase() === filtroTagSelecionada.toUpperCase());
             });
         }
-        
+
         if (dtInicio) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada >= dtInicio);
         if (dtFim) filtrados = filtrados.filter(p => p.dataEntrada && p.dataEntrada <= dtFim);
 
@@ -2025,7 +2042,7 @@
                 filtrados = filtrados.filter(p => !p.pago && p.comprovante);
             }
             if (filtrosStatus.has('pago')) filtrados = filtrados.filter(p => p.pago);
-            if (filtrosStatus.has('pendente')) filtrados = filtrados.filter(p => !p.pago); 
+            if (filtrosStatus.has('pendente')) filtrados = filtrados.filter(p => !p.pago);
             if (filtrosStatus.has('nao_enviado')) filtrados = filtrados.filter(p => !p.msgEnviada);
         }
 
@@ -2048,24 +2065,24 @@
         filtrados.forEach(p => {
             const val = parseFloat(p.valor) || 0;
             const adiantadas = p.adiantadas || 0;
-            
+
             const totalPessoa = val + (val * adiantadas);
-            t += totalPessoa; 
+            t += totalPessoa;
             if(p.pago) pg += totalPessoa; else pd += totalPessoa;
 
             const msgIcone = p.msgEnviada ? 'check-circle-2' : 'send';
             const msgEstilo = p.msgEnviada ? 'text-blue-500' : 'text-slate-300 hover:text-brand-500';
             const icoArquivo = p.arquivado ? 'archive-restore' : 'archive';
             const tituloArquivo = p.arquivado ? 'Desarquivar' : 'Arquivar Ocultar';
-            
+
             const badgeMes = mesAtual === 'todos' ? `<span class="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] px-2 py-1 rounded-md font-extrabold ml-2 border border-indigo-200/50 dark:border-indigo-500/20 shadow-sm whitespace-nowrap shrink-0 flex items-center gap-1" title="Mês de origem"><i data-lucide="calendar-days" class="w-3 h-3"></i> ${p.sourceMes}</span>` : '';
 
             let safeObs = encodeURIComponent(p.observacao || '');
             let safeNameObs = encodeURIComponent(p.nome || '');
-            const obsIcon = (p.observacao && p.observacao.trim() !== '') 
+            const obsIcon = (p.observacao && p.observacao.trim() !== '')
                 ? `<button onclick="abrirModalObs('${safeNameObs}', '${safeObs}')" class="flex items-center justify-center shrink-0 transition-transform active:scale-90" title="Ver observações">
                      <i data-lucide="message-square-warning" class="w-4 h-4 text-amber-500 hover:text-amber-600 transition-colors"></i>
-                   </button>` 
+                   </button>`
                 : '';
 
             let tagsArray = p.tags || [];
@@ -2076,14 +2093,14 @@
             let badgeTag = '';
             if (tagsArray.length > 0) {
                 let firstTag = tagsArray[0];
-                
+
                 let safeTags = encodeURIComponent(JSON.stringify(tagsArray));
                 let safeName = encodeURIComponent(p.nome || '');
 
-                let moreTags = tagsArray.length > 1 
-                    ? `<button onclick="abrirModalTags('${safeName}', '${safeTags}')" class="bg-brand-500 hover:bg-brand-600 text-white text-[8px] px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer transition active:scale-90 shadow-sm" title="Ver todas as etiquetas">+${tagsArray.length - 1}</button>` 
+                let moreTags = tagsArray.length > 1
+                    ? `<button onclick="abrirModalTags('${safeName}', '${safeTags}')" class="bg-brand-500 hover:bg-brand-600 text-white text-[8px] px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer transition active:scale-90 shadow-sm" title="Ver todas as etiquetas">+${tagsArray.length - 1}</button>`
                     : '';
-                
+
                 badgeTag = `
                     <div class="flex items-center gap-1">
                         <span class="bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[8px] px-2 py-0.5 rounded border border-slate-300/50 dark:border-slate-700 font-bold uppercase tracking-widest whitespace-nowrap truncate max-w-[80px]" title="${firstTag}">${firstTag}</span>
@@ -2166,7 +2183,7 @@
         document.getElementById('tGeral').innerText = t.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPago').innerText = pg.toLocaleString('pt-br',{minimumFractionDigits:2});
         document.getElementById('tPend').innerText = pd.toLocaleString('pt-br',{minimumFractionDigits:2});
-        
+
         updateBulkUI();
         lucide.createIcons();
     }
@@ -2177,13 +2194,13 @@
         const isSuccess = type === 'success';
         const bgColor = isSuccess ? 'bg-emerald-500' : 'bg-rose-500';
         const icon = isSuccess ? 'check-circle' : 'alert-circle';
-        
+
         toast.className = `${bgColor} text-white px-5 py-4 rounded-[1.25rem] shadow-2xl flex items-center gap-3 text-sm font-bold transform transition-all duration-300 translate-x-full opacity-0`;
         toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 shrink-0"></i> <span>${msg}</span>`;
-        
+
         container.appendChild(toast);
         lucide.createIcons();
-        
+
         requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
         setTimeout(() => {
             toast.classList.add('translate-x-full', 'opacity-0');
@@ -2195,15 +2212,15 @@
     function showConfirm(title, message, confirmText, typeClass, iconLucide, iconBg, callback) {
         document.getElementById('confirmTitle').innerText = title;
         document.getElementById('confirmMessage').innerText = message;
-        
+
         const btn = document.getElementById('btnConfirmAction');
         btn.innerText = confirmText;
         btn.className = `flex-1 py-3 text-white rounded-2xl font-bold shadow-lg transition-all active:scale-95 ${typeClass}`;
-        
+
         const iconDiv = document.getElementById('confirmIcon');
         iconDiv.className = `w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5 shadow-glow ${iconBg}`;
         iconDiv.innerHTML = `<i data-lucide="${iconLucide}" class="w-8 h-8 text-white"></i>`;
-        
+
         confirmActionCallback = callback;
         document.getElementById('modalConfirm').classList.add('flex');
         lucide.createIcons();
@@ -2215,16 +2232,16 @@
     function abrirModalTags(encodedName, encodedTags) {
         const nome = decodeURIComponent(encodedName);
         const tags = JSON.parse(decodeURIComponent(encodedTags));
-        
+
         document.getElementById('modalTagsTitle').innerText = nome;
         const container = document.getElementById('modalTagsList');
-        
+
         container.innerHTML = tags.map(t => `
             <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest shadow-sm">
                 ${t}
             </span>
         `).join('');
-        
+
         document.getElementById('modalVisualizarTags').classList.add('flex');
         lucide.createIcons();
     }
@@ -2236,10 +2253,10 @@
     function abrirModalObs(encodedName, encodedObs) {
         const nome = decodeURIComponent(encodedName);
         const obs = decodeURIComponent(encodedObs);
-        
+
         document.getElementById('modalObsTitle').innerText = nome;
         document.getElementById('modalObsContent').innerText = obs;
-        
+
         document.getElementById('modalVisualizarObs').classList.add('flex');
         lucide.createIcons();
     }
@@ -2313,7 +2330,7 @@
     function toggleAjuda(id) {
         const conteudo = document.getElementById(id);
         const icone = document.getElementById('icon-' + id);
-        
+
         if (conteudo.classList.contains('hidden')) {
             conteudo.classList.remove('hidden');
             icone.classList.add('rotate-180');
@@ -2338,14 +2355,14 @@
         lucide.createIcons();
     }
 
-    function fecharModalConfig() { 
-        document.getElementById('modalConfig').classList.remove('flex'); 
+    function fecharModalConfig() {
+        document.getElementById('modalConfig').classList.remove('flex');
     }
 
     function salvarConfiguracoes() {
         if(!adminId) return;
         const vPadrao = parseFloat(document.getElementById('cfgValorPadrao').value) || 50;
-        
+
         const updates = {
             chavePix: document.getElementById('cfgChavePix').value,
             valorPadrao: vPadrao,
@@ -2377,10 +2394,10 @@
         document.getElementById('novoDataEntrada').value = "";
         document.getElementById('novoDiaCobranca').value = "";
         document.getElementById('novoObs').value = "";
-        
+
         tagsNovo = [];
         renderTagsUI('novo');
-        
+
         document.getElementById('modalNovaPessoa').classList.add('flex');
         lucide.createIcons();
 
@@ -2402,8 +2419,8 @@
         }
     }
 
-    function fecharModalNovaPessoa() { 
-        document.getElementById('modalNovaPessoa').classList.remove('flex'); 
+    function fecharModalNovaPessoa() {
+        document.getElementById('modalNovaPessoa').classList.remove('flex');
     }
 
     function filtrarClientesGlobais() {
@@ -2412,7 +2429,7 @@
 
         if (termo.length < 2) {
             lista.classList.add('hidden');
-            idClienteSelecionadoParaNovo = null; 
+            idClienteSelecionadoParaNovo = null;
             return;
         }
 
@@ -2452,11 +2469,11 @@
         document.getElementById('novoDataEntrada').value = c.dataEntrada || "";
         document.getElementById('novoDiaCobranca').value = c.diaCobranca || "";
         document.getElementById('novoObs').value = c.observacao || "";
-        
+
         tagsNovo = c.tags || [];
         if (typeof c.tag === 'string' && c.tag.trim() !== '') tagsNovo = [c.tag.trim().toUpperCase()];
         renderTagsUI('novo');
-        
+
         showToast("Dados do cliente preenchidos!", "success");
     }
 
@@ -2467,32 +2484,32 @@
         const d = document.getElementById('novoDataEntrada').value;
         const diaC = document.getElementById('novoDiaCobranca').value;
         const obs = document.getElementById('novoObs').value.trim();
-        
+
         const inputTag = document.getElementById('novoTag').value.trim().replace(',', '').toUpperCase();
         if (inputTag && !tagsNovo.includes(inputTag)) tagsNovo.push(inputTag);
-        
+
         if(!n) return showToast("Por favor, digite o nome.", "error");
-        
+
         const targetMes = mesAtual === 'todos' ? mesReal : mesAtual;
         const idFinal = idClienteSelecionadoParaNovo ? idClienteSelecionadoParaNovo : String(Date.now());
 
         db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${idFinal}`).once('value').then(snap => {
             const existeNoCiclo = snap.val();
-            
+
             if (existeNoCiclo && idClienteSelecionadoParaNovo && !existeNoCiclo.arquivado) {
                 showToast("Este cliente já está na lista deste ciclo!", "error");
                 return;
             }
 
-            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${idFinal}`).update({ 
-                nome: n, 
-                tel: t, 
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${idFinal}`).update({
+                nome: n,
+                tel: t,
                 tags: tagsNovo,
                 tag: null,
-                valor: (existeNoCiclo && existeNoCiclo.valor !== undefined) ? existeNoCiclo.valor : configGeral.valorPadrao, 
-                adiantadas: (existeNoCiclo && existeNoCiclo.adiantadas !== undefined) ? existeNoCiclo.adiantadas : 0, 
-                pago: (existeNoCiclo && existeNoCiclo.pago !== undefined) ? existeNoCiclo.pago : false, 
-                msgEnviada: (existeNoCiclo && existeNoCiclo.msgEnviada !== undefined) ? existeNoCiclo.msgEnviada : false, 
+                valor: (existeNoCiclo && existeNoCiclo.valor !== undefined) ? existeNoCiclo.valor : configGeral.valorPadrao,
+                adiantadas: (existeNoCiclo && existeNoCiclo.adiantadas !== undefined) ? existeNoCiclo.adiantadas : 0,
+                pago: (existeNoCiclo && existeNoCiclo.pago !== undefined) ? existeNoCiclo.pago : false,
+                msgEnviada: (existeNoCiclo && existeNoCiclo.msgEnviada !== undefined) ? existeNoCiclo.msgEnviada : false,
                 comprovante: (existeNoCiclo && existeNoCiclo.comprovante !== undefined) ? existeNoCiclo.comprovante : null,
                 arquivado: false,
                 dataEntrada: d,
@@ -2514,7 +2531,7 @@
 
     function toggleRowSelection(id) { if (selecionados.has(id)) selecionados.delete(id); else selecionados.add(id); renderizarTabela(); }
     function toggleAll(source) { const checkboxes = document.querySelectorAll('.row-checkbox'); if(source.checked) { checkboxes.forEach(cb => selecionados.add(cb.value)); } else { selecionados.clear(); } renderizarTabela(); }
-    
+
     function updateBulkUI() {
         const bar = document.getElementById('bulkActionsBar');
         const selectAllInput = document.getElementById('selectAll');
@@ -2546,25 +2563,25 @@
     }
     function clearSelection() { selecionados.clear(); renderizarTabela(); }
 
-    function editar(id, c, v) { 
+    function editar(id, c, v) {
         if(!adminId) return;
         const targetMes = getTargetMes(id);
         db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ [c]: v }).then(() => {
             if (c === 'adiantadas' && parseInt(v) > 0) propagarAdiantamento(id, parseInt(v), targetMes);
-        }); 
+        });
     }
 
     function propagarAdiantamento(id, qtdMeses, baseMes) {
         if(!adminId) return;
         const user = dadosLocais.find(u => u.id === id);
         if (!user) return;
-        
-        const parts = String(baseMes).split('-'); 
-        let mes = parseInt(parts[0]) || 0; 
+
+        const parts = String(baseMes).split('-');
+        let mes = parseInt(parts[0]) || 0;
         let ano = parseInt(parts[1]) || 0;
-        
+
         const updates = {};
-        
+
         let tagsArray = user.tags || [];
         if (typeof user.tag === 'string' && user.tag.trim() !== '') tagsArray = [user.tag.trim().toUpperCase()];
 
@@ -2580,18 +2597,18 @@
     }
 
     function togglePago(id, s) { if(adminId) db.ref(`tenants/${adminId}/cobrancas/${getTargetMes(id)}/${id}`).update({ pago: !s }); }
-    
-    function mudarMes(v) { 
-        mesAtual = v; 
-        selecionados.clear(); 
-        
+
+    function mudarMes(v) {
+        mesAtual = v;
+        selecionados.clear();
+
         const btnCopiar = document.getElementById('btnCopiarCiclo');
         if(btnCopiar) btnCopiar.style.display = mesAtual === 'todos' ? 'none' : 'flex';
-        
-        carregarDadosAdmin(); 
+
+        carregarDadosAdmin();
     }
-    
-    function setFiltroStatus(s) { 
+
+    function setFiltroStatus(s) {
         const tinhaArquivado = filtrosStatus.has('arquivado');
 
         if (s === 'todos') {
@@ -2611,7 +2628,7 @@
 
         const temArquivado = filtrosStatus.has('arquivado');
 
-        document.querySelectorAll('.filter-btn').forEach(b => { 
+        document.querySelectorAll('.filter-btn').forEach(b => {
             const btnId = b.id.replace('btn-', '');
             if (filtrosStatus.has(btnId)) {
                 b.classList.add('active', 'opacity-100');
@@ -2620,8 +2637,8 @@
                 b.classList.remove('active', 'opacity-100');
                 b.classList.add('opacity-40');
             }
-        }); 
-        
+        });
+
         // Regra para automatizar o ciclo quando entra/sai dos Arquivados
         if (temArquivado && !tinhaArquivado) {
             if (mesAtual !== 'todos') {
@@ -2638,8 +2655,8 @@
                 return;
             }
         }
-        
-        renderizarTabela(); 
+
+        renderizarTabela();
     }
 
     function toggleOrdemAlfabetica() { ordemCrescente = !ordemCrescente; renderizarTabela(); }
@@ -2647,19 +2664,19 @@
     function abrirModal() { document.getElementById('modalImport').classList.add('flex'); }
     function validarArquivo(i) { if(i.files[0]) document.getElementById('nomeArquivo').innerText = i.files[0].name; }
     function verFoto(img) { const v = window.open(""); v.document.write(`<body style="margin:0; background:#000; display:flex; align-items:center; justify-content:center"><img src="${img}" style="max-height:100%; max-width:100%; border-radius:10px;"></body>`); }
-    function toggleDarkMode() { 
-        document.documentElement.classList.toggle('dark'); 
-        localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
-        
+    function toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+        localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+
         if(dadosGraficoCache) atualizarGrafico(dadosGraficoCache.labels, dadosGraficoCache.dados);
     }
-    
+
     function baixarModeloCSV() {
         const cabecalho = "ID;Nome;Telefone;Etiquetas;Data de Entrada;Dia Cobranca;Observacoes;Valor;Adiantadas;Status;Arquivado\n";
         const exemplo1 = ";Joao Silva;5511999999999;PREMIUM, VIP;2023-10-01;10;Cliente top;50.00;0;Pendente;Nao\n";
         const exemplo2 = ";Maria Souza;5511888888888;BASICO;2023-10-15;05;;100.00;1;Pago;Nao\n";
         const csvContent = cabecalho + exemplo1 + exemplo2;
-        
+
         const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -2670,15 +2687,15 @@
     function exportarExcel() {
         if (dadosLocais.length === 0) return;
         let csv = "ID;Nome;Telefone;Etiquetas;Data de Entrada;Dia Cobranca;Observacoes;Valor;Adiantadas;Status;Arquivado;Ciclo_Origem\n";
-        dadosLocais.forEach(p => { 
+        dadosLocais.forEach(p => {
             let tagsStr = (p.tags || []).join(', ');
             if(!p.tags && p.tag) tagsStr = p.tag;
-            
-            csv += `${p.id};${p.nome};${p.tel || ''};${tagsStr};${p.dataEntrada || ''};${p.diaCobranca || ''};${p.observacao || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'};${p.sourceMes || mesAtual}\n`; 
+
+            csv += `${p.id};${p.nome};${p.tel || ''};${tagsStr};${p.dataEntrada || ''};${p.diaCobranca || ''};${p.observacao || ''};${p.valor};${p.adiantadas || 0};${p.pago ? 'Pago' : 'Pendente'};${p.arquivado ? 'Sim' : 'Nao'};${p.sourceMes || mesAtual}\n`;
         });
         const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' })); link.download = `pagflow_relatorio_${mesAtual}.csv`; link.click();
     }
-    
+
     function processarCSV() {
         const file = document.getElementById('arquivoCSV').files[0];
         if (!file || !adminId) return;
@@ -2690,11 +2707,11 @@
 
             linhas.forEach((linha, i) => {
                 if (i === 0 || !linha.trim()) return;
-                
+
                 let cols = linha.split(/[;,]/);
-                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i); 
+                let id = (cols[0] && cols[0].trim() !== "") ? cols[0].trim() : String(Date.now() + i);
                 let ext = dadosLocais.find(d => String(d.id) === id) || {};
-                
+
                 let diaLido = cols[5]?.trim() || ext.diaCobranca || "";
                 if (diaLido !== "") {
                     let dNum = parseInt(diaLido);
@@ -2704,71 +2721,71 @@
                         else diaLido = dNum.toString();
                     }
                 }
-                
+
                 let tagsStr = cols[3]?.trim() || "";
                 let tagsImport = tagsStr ? tagsStr.split(',').map(t=>t.trim().toUpperCase()).filter(Boolean) : (ext.tags || (ext.tag ? [ext.tag] : []));
 
-                updates[id] = { 
-                    nome: cols[1]?.trim() || ext.nome || "Sem Nome", 
-                    tel: cols[2]?.trim() || ext.tel || "", 
+                updates[id] = {
+                    nome: cols[1]?.trim() || ext.nome || "Sem Nome",
+                    tel: cols[2]?.trim() || ext.tel || "",
                     tags: tagsImport,
-                    tag: null, 
+                    tag: null,
                     dataEntrada: cols[4]?.trim() || ext.dataEntrada || "",
                     diaCobranca: diaLido,
                     observacao: (cols[6]?.trim() || ext.observacao || "").substring(0, 300),
-                    valor: cols[7] ? parseFloat(cols[7].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao), 
-                    adiantadas: cols[8] ? parseInt(cols[8]) : (ext.adiantadas || 0), 
-                    pago: cols[9] ? cols[9].trim().toLowerCase() === "pago" : (ext.pago || false), 
+                    valor: cols[7] ? parseFloat(cols[7].replace(',', '.')) : (ext.valor !== undefined ? ext.valor : configGeral.valorPadrao),
+                    adiantadas: cols[8] ? parseInt(cols[8]) : (ext.adiantadas || 0),
+                    pago: cols[9] ? cols[9].trim().toLowerCase() === "pago" : (ext.pago || false),
                     arquivado: cols[10] ? cols[10].trim().toLowerCase() === "sim" : (ext.arquivado || false),
-                    msgEnviada: ext.msgEnviada || false, 
+                    msgEnviada: ext.msgEnviada || false,
                     comprovante: ext.comprovante || null
                 };
             });
-            
-            db.ref(`tenants/${adminId}/cobrancas/${targetMes}`).update(updates).then(() => { 
-                fecharModal(); 
-                showToast("Dados importados com sucesso!"); 
+
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}`).update(updates).then(() => {
+                fecharModal();
+                showToast("Dados importados com sucesso!");
             });
         };
         reader.readAsText(file, 'UTF-8');
     }
-    
-    function gerarOpcoesMes() { 
+
+    function gerarOpcoesMes() {
         const s = document.getElementById('filtroMes'); if(!s) return; s.innerHTML = '';
-        
+
         const optTodos = document.createElement('option');
         optTodos.value = 'todos';
         optTodos.innerText = 'Todos os Ciclos (Geral)';
         optTodos.selected = mesAtual === 'todos';
         s.appendChild(optTodos);
 
-        let baseDate = new Date(); 
+        let baseDate = new Date();
         let diaV = configGeral ? parseInt(configGeral.diaVirada) : NaN;
-        
+
         if (!isNaN(diaV) && diaV > 1) {
             let ultimoDiaMes = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
             let diaRealVirada = diaV > ultimoDiaMes ? ultimoDiaMes : diaV;
-            
+
             if (baseDate.getDate() >= diaRealVirada) {
                 baseDate.setMonth(baseDate.getMonth() + 1);
             }
         }
 
-        for(let i = -12; i <= 36; i++) { 
-            const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1); 
-            
+        for(let i = -12; i <= 36; i++) {
+            const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+
             // Regra para excluir o ano de 2025 da lista
-            if (d.getFullYear() === 2025) continue; 
-            
-            const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; 
-            const o = document.createElement('option'); o.value = k; 
-            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'}); 
-            o.selected = k === mesAtual; 
-            s.appendChild(o); 
-        } 
+            if (d.getFullYear() === 2025) continue;
+
+            const k = `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+            const o = document.createElement('option'); o.value = k;
+            o.innerText = d.toLocaleDateString('pt-br', {month: 'long', year: 'numeric'});
+            o.selected = k === mesAtual;
+            s.appendChild(o);
+        }
     }
 
-    function carregarPortalCliente() {
+ function carregarPortalCliente() {
         if(!adminId || !idCliente) return;
         db.ref(`tenants/${adminId}/cobrancas/${mesAtual}/${idCliente}`).on('value', s => {
             const p = s.val();
@@ -2795,6 +2812,35 @@
                 exibirUpload = true;
             }
 
+            let areaPixHTML = '';
+
+            if (adminId === USUARIO_VIP_PIX && p.pixDinamico && !p.pago) {
+                areaPixHTML = `
+                    <div class="space-y-4 pt-2">
+                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Escaneie o QR Code abaixo para pagar</p>
+                        <div class="bg-white p-4 rounded-2xl inline-block mx-auto shadow-md border border-slate-100">
+                            <img src="data:image/jpeg;base64,${p.pixDinamico.qrCodeBase64}" class="w-48 h-48 mx-auto" alt="QR Code Pix" />
+                        </div>
+                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest mt-4">Ou use o Pix Copia e Cola</p>
+                        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border-2 border-dashed border-brand-200 dark:border-brand-900 flex items-center justify-between">
+                            <span class="font-mono font-bold text-xs md:text-sm truncate pr-2 md:pr-4 text-brand-600">${p.pixDinamico.copiaECola}</span>
+                            <button onclick="copiarPix('${p.pixDinamico.copiaECola}')" class="bg-brand-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90 shrink-0"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                `;
+                exibirUpload = false;
+            } else {
+                areaPixHTML = `
+                    <div class="space-y-3 md:space-y-4">
+                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Chave PIX para pagamento</p>
+                        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border-2 border-dashed border-brand-200 dark:border-brand-900 flex items-center justify-between">
+                            <span class="font-mono font-bold text-xs md:text-sm truncate pr-2 md:pr-4 text-brand-600">${configGeral.chavePix || "Não configurada"}</span>
+                            <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90 shrink-0"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                `;
+            }
+
             portal.innerHTML = `
                 <div class="glass-card p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl text-center space-y-6 md:space-y-8 border-b-8 border-b-brand-500">
                     <div class="w-16 h-16 md:w-20 md:h-20 bg-brand-500 text-white rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto shadow-glow"><i data-lucide="wallet" class="w-8 h-8 md:w-10 md:h-10"></i></div>
@@ -2804,13 +2850,9 @@
                         <div class="text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tighter">R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</div>
                         ${statusTag}
                     </div>
-                    <div class="space-y-3 md:space-y-4">
-                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Chave PIX para pagamento</p>
-                        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border-2 border-dashed border-brand-200 dark:border-brand-900 flex items-center justify-between">
-                            <span class="font-mono font-bold text-xs md:text-sm truncate pr-2 md:pr-4 text-brand-600">${configGeral.chavePix || "Não configurada"}</span>
-                            <button onclick="copiarPix('${configGeral.chavePix}')" class="bg-brand-500 text-white p-2.5 md:p-3 rounded-xl hover:bg-brand-600 transition shadow-lg active:scale-90"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
+
+                    ${areaPixHTML}
+
                     ${exibirUpload ? `<div class="pt-4 md:pt-6">
                         <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4">Já pagou? Envie o comprovativo</label>
                         <input type="file" accept="image/*" id="compFile" class="hidden" onchange="uploadComp(this)">
@@ -2831,7 +2873,7 @@
     function uploadComp(input) {
         if(!adminId || !idCliente) return;
         const file = input.files[0]; if (!file) return;
-        
+
         const label = document.getElementById('lblCompFile');
         if(label) {
             label.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> A enviar...';
@@ -2844,7 +2886,7 @@
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800; 
+                const MAX_WIDTH = 800;
                 const MAX_HEIGHT = 800;
                 let width = img.width;
                 let height = img.height;
@@ -2888,13 +2930,13 @@
     }
 
     function copiarPix(txt) {
-        const temp = document.createElement("input"); 
-        document.body.appendChild(temp); 
-        temp.value = txt; 
-        temp.select(); 
-        document.execCommand("copy"); 
+        const temp = document.createElement("input");
+        document.body.appendChild(temp);
+        temp.value = txt;
+        temp.select();
+        document.execCommand("copy");
         document.body.removeChild(temp);
-        
+
         showToast("Chave PIX copiada!");
     }
 
