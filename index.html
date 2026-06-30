@@ -2816,7 +2816,7 @@ async function enviarZap(id, n, t, v) {
 
             let areaPixHTML = '';
 
-            if (adminId === USUARIO_VIP_PIX && p.pixDinamico && !p.pago) {
+            if (p.pixDinamico && !p.pago) {
                 areaPixHTML = `
                     <div class="space-y-4 pt-2">
                         <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest">Escaneie o QR Code abaixo para pagar</p>
