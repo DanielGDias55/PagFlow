@@ -1968,7 +1968,6 @@
         const date = new Date(y, m - 1, 1);
         return date.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
     }
-
 async function enviarZap(id, n, t, v) { 
     if(!adminId) return;
     const targetMes = getTargetMes(id);
@@ -1978,21 +1977,25 @@ async function enviarZap(id, n, t, v) {
 
     // ROTA A: SE FOR O SEU USUÁRIO VIP (Gera o Pix Dinâmico no Mercado Pago)
     if (adminId === USUARIO_VIP_PIX) {
-        showToast("Gerando PIX oficial...", "success");
-        const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
+        showToast("Gerando PIX oficial e abrindo WhatsApp...", "success");
         
+        // 1. MONTAMOS A MENSAGEM DO PIX ANTES PARA NÃO TRAVAR O NAVEGADOR
+        const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
+        
+        // 2. ABRE O WHATSAPP IMEDIATAMENTE (Burla o bloqueador de pop-up)
+        window.open(`https://wa.me/${t}?text=${msgPix}`); 
+
+        // 3. CHAMA O MERCADO PAGO EM SEGUNDO PLANO
+        const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
         try {
             await funcGerarPix({ tenantId: adminId, cobrancaId: id, mes: targetMes, valor: v, nomeCliente: n });
             db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
-
-            const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
-            window.open(`https://wa.me/${t}?text=${msgPix}`); 
         } catch(e) { 
-            showToast("Erro ao gerar PIX", "error"); 
+            showToast("Erro ao processar PIX no servidor", "error"); 
             console.error(e);
         }
 
-    // ROTA B: TODOS OS OUTROS USUÁRIOS (Continua no fluxo antigo pedindo comprovante)
+    // ROTA B: TODOS OS OUTROS USUÁRIOS
     } else {
         db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
         const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
@@ -2000,7 +2003,6 @@ async function enviarZap(id, n, t, v) {
         window.open(`https://wa.me/${t}?text=${msgAntiga}`); 
     }
 }
-
     function renderizarTabela() {
         const corpo = document.getElementById('corpoTabela');
         const termoBusca = document.getElementById('inputPesquisa').value.toLowerCase();
