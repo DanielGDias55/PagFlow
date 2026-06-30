@@ -1969,10 +1969,10 @@
         return date.toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
     }
 
-    async function enviarZap(id, n, t, v) {
+async function enviarZap(id, n, t, v) { 
     if(!adminId) return;
     const targetMes = getTargetMes(id);
-    const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes;
+    const link = window.location.href.split('?')[0] + "?a=" + adminId + "&p=" + id + "&m=" + targetMes; 
     const termoMens = configGeral.termoMensalidade || "Mensalidade";
     const mesCap = formatarMesAno(targetMes).charAt(0).toUpperCase() + formatarMesAno(targetMes).slice(1);
 
@@ -1980,24 +1980,24 @@
     if (adminId === USUARIO_VIP_PIX) {
         showToast("Gerando PIX oficial...", "success");
         const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
-
+        
         try {
             await funcGerarPix({ tenantId: adminId, cobrancaId: id, mes: targetMes, valor: v, nomeCliente: n });
-            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true });
+            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
 
-            const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`);
-            window.open(`https://wa.me/${t}?text=${msgPix}`);
-        } catch(e) {
-            showToast("Erro ao gerar PIX", "error");
+            const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
+            window.open(`https://wa.me/${t}?text=${msgPix}`); 
+        } catch(e) { 
+            showToast("Erro ao gerar PIX", "error"); 
             console.error(e);
         }
 
     // ROTA B: TODOS OS OUTROS USUÁRIOS (Continua no fluxo antigo pedindo comprovante)
     } else {
-        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true });
+        db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
         const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
-        const msgAntiga = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCap}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`);
-        window.open(`https://wa.me/${t}?text=${msgAntiga}`);
+        const msgAntiga = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCap}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`); 
+        window.open(`https://wa.me/${t}?text=${msgAntiga}`); 
     }
 }
 
