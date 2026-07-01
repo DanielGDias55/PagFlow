@@ -1976,24 +1976,45 @@ async function enviarZap(id, n, t, v) {
     const termoMens = configGeral.termoMensalidade || "Mensalidade";
     const mesCap = formatarMesAno(targetMes).charAt(0).toUpperCase() + formatarMesAno(targetMes).slice(1);
 
+    // 1. Buscamos o cliente para saber a "idade" do Pix
+    const cliente = dadosLocais.find(c => c.id === id);
+    const agora = Date.now();
+    const noveDiasEmMs = 9 * 24 * 60 * 60 * 1000; // 9 dias calculados em milissegundos
+
+    // 2. Verifica se o Pix foi gerado há menos de 9 dias
+    const pixAindaValido = cliente && cliente.pixGeradoEm && (agora - cliente.pixGeradoEm < noveDiasEmMs);
+
     // ROTA A: SE FOR O SEU USUÁRIO VIP (Gera o Pix Dinâmico no Mercado Pago)
     if (adminId === USUARIO_VIP_PIX) {
-        showToast("Gerando PIX oficial e abrindo WhatsApp...", "success");
         
-        // 1. MONTAMOS A MENSAGEM DO PIX ANTES PARA NÃO TRAVAR O NAVEGADOR
-        const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
-        
-        // 2. ABRE O WHATSAPP IMEDIATAMENTE (Burla o bloqueador de pop-up)
-        window.open(`https://wa.me/${t}?text=${msgPix}`); 
+        if (pixAindaValido) {
+            // CENÁRIO 1: PIX AINDA VALE (Manda apenas o lembrete)
+            showToast("Enviando lembrete (PIX ainda válido)...", "success");
+            
+            const msgLembrete = encodeURIComponent(`Olá, ${n}!\n\nPassando para lembrar que a sua fatura de *${mesCap}* ainda está aberta.\nValor: *R$ ${v.toFixed(2)}*\n\nO seu link de pagamento continua o mesmo:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
+            
+            window.open(`https://wa.me/${t}?text=${msgLembrete}`); 
 
-        // 3. CHAMA O MERCADO PAGO EM SEGUNDO PLANO
-        const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
-        try {
-            await funcGerarPix({ tenantId: adminId, cobrancaId: id, mes: targetMes, valor: v, nomeCliente: n });
-            db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
-        } catch(e) { 
-            showToast("Erro ao processar PIX no servidor", "error"); 
-            console.error(e);
+        } else {
+            // CENÁRIO 2: NOVO PIX (Primeira vez ou já expirou os 9 dias)
+            showToast("Gerando novo PIX oficial e abrindo WhatsApp...", "success");
+            
+            const msgPix = encodeURIComponent(`Olá, ${n}!\n\nA sua fatura de *${mesCap}* está pronta.\nValor: *R$ ${v.toFixed(2)}*\n\nAcesse o link para ver o QR Code ou copiar o código PIX:\n${link}\n\n_(O sistema dará baixa automática após o pagamento)_`); 
+            window.open(`https://wa.me/${t}?text=${msgPix}`); 
+
+            const funcGerarPix = firebase.functions().httpsCallable('gerarPixCobranca');
+            try {
+                await funcGerarPix({ tenantId: adminId, cobrancaId: id, mes: targetMes, valor: v, nomeCliente: n });
+                
+                // SALVA A DATA EXATA QUE O PIX FOI GERADO PARA CONTAR OS 9 DIAS!
+                db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ 
+                    msgEnviada: true,
+                    pixGeradoEm: agora 
+                }); 
+            } catch(e) { 
+                showToast("Erro ao processar PIX no servidor", "error"); 
+                console.error(e);
+            }
         }
 
     // ROTA B: TODOS OS OUTROS USUÁRIOS
