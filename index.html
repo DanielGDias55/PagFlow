@@ -1400,40 +1400,48 @@
     }
 
     function carregarDadosAdmin() {
-        if(!adminId) return;
-        if (mesAtual === 'todos') {
-            db.ref(`tenants/${adminId}/cobrancas`).on('value', s => {
-                const todosMeses = s.val() || {};
-                const clientesMap = new Map();
+    if(!adminId) return;
 
-                const mesesOrdenados = Object.keys(todosMeses).sort((a, b) => {
-                    const partsA = String(a).split('-');
-                    const partsB = String(b).split('-');
-                    return new Date(parseInt(partsA[1]||0), parseInt(partsA[0]||1) - 1) - new Date(parseInt(partsB[1]||0), parseInt(partsB[0]||1) - 1);
-                });
-
-                mesesOrdenados.forEach(mes => {
-                    const dadosMes = todosMeses[mes];
-                    for (const id in dadosMes) {
-                        clientesMap.set(id, { id, sourceMes: mes, ...dadosMes[id] });
-                    }
-                });
-
-                dadosLocais = Array.from(clientesMap.values());
-                atualizarDropdownTags();
-                selecionados.forEach(id => { if(!clientesMap.has(id)) selecionados.delete(id); });
-                renderizarTabela();
-            });
-        } else {
-            db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`).on('value', s => {
-                const dados = s.val() || {};
-                dadosLocais = Object.keys(dados).map(id => ({ id, sourceMes: mesAtual, ...dados[id] }));
-                atualizarDropdownTags();
-                selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
-                renderizarTabela();
-            });
-        }
+    // 1. REGRA DE LIMPEZA: Desliga o ouvinte do mês passado antes de ligar o novo (Evita travamentos)
+    if (window.refCobrancasAtual) {
+        window.refCobrancasAtual.off('value');
     }
+
+    if (mesAtual === 'todos') {
+        window.refCobrancasAtual = db.ref(`tenants/${adminId}/cobrancas`);
+        window.refCobrancasAtual.on('value', s => {
+            const todosMeses = s.val() || {};
+            const clientesMap = new Map();
+
+            const mesesOrdenados = Object.keys(todosMeses).sort((a, b) => {
+                const partsA = String(a).split('-');
+                const partsB = String(b).split('-');
+                return new Date(parseInt(partsA[1]||0), parseInt(partsA[0]||1) - 1) - new Date(parseInt(partsB[1]||0), parseInt(partsB[0]||1) - 1);
+            });
+
+            mesesOrdenados.forEach(mes => {
+                const dadosMes = todosMeses[mes];
+                for (const id in dadosMes) {
+                    clientesMap.set(id, { id, sourceMes: mes, ...dadosMes[id] });
+                }
+            });
+
+            dadosLocais = Array.from(clientesMap.values());
+            atualizarDropdownTags();
+            selecionados.forEach(id => { if(!clientesMap.has(id)) selecionados.delete(id); });
+            renderizarTabela();
+        });
+    } else {
+        window.refCobrancasAtual = db.ref(`tenants/${adminId}/cobrancas/${mesAtual}`);
+        window.refCobrancasAtual.on('value', s => {
+            const dados = s.val() || {};
+            dadosLocais = Object.keys(dados).map(id => ({ id, sourceMes: mesAtual, ...dados[id] }));
+            atualizarDropdownTags();
+            selecionados.forEach(id => { if(!dados[id]) selecionados.delete(id); });
+            renderizarTabela();
+        });
+    }
+}
 
     function carregarDadosGrafico() {
         if(!adminId) return;
@@ -2081,8 +2089,11 @@ function renderizarTabela() {
             filtrados = filtrados.filter(p => p.nome.toLowerCase().includes(termoBusca) || (p.tel && p.tel.includes(termoBusca)));
         }
 
-        filtrados.sort((a,b) => ordemCrescente ? a.nome.localeCompare(b.nome) : b.nome.localeCompare(a.nome));
-
+        filtrados.sort((a,b) => {
+    let nomeA = String(a.nome || "").toLowerCase();
+    let nomeB = String(b.nome || "").toLowerCase();
+    return ordemCrescente ? nomeA.localeCompare(nomeB) : nomeB.localeCompare(nomeA);
+});
         const hojeDia = new Date().getDate();
         const pendentesHoje = dadosLocais.filter(p => !p.arquivado && !p.pago && parseInt(p.diaCobranca) === hojeDia).length;
         const btnHoje = document.getElementById('btn-hoje');
