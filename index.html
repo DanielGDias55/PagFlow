@@ -1605,105 +1605,67 @@
         lucide.createIcons();
     }
 
-  async function iniciarFilaWhatsApp() {
-        if (selecionados.size === 0) {
-            showToast("Nenhum cliente selecionado para cobrança.", "error");
-            return;
-        }
+ async function iniciarFilaWhatsApp() {
+    if (selecionados.size === 0) {
+        showToast("Nenhum cliente selecionado para cobrança.", "error");
+        return;
+    }
 
-        const clientesParaCobrar = Array.from(selecionados)
-            .map(id => dadosLocais.find(c => c.id === id))
-            .filter(c => c && c.tel && !c.pago);
+    // Filtra os válidos e já prepara o pacote exato para o servidor
+    const clientesParaCobrar = Array.from(selecionados)
+        .map(id => dadosLocais.find(c => c.id === id))
+        .filter(c => c && c.tel && !c.pago);
 
-        if (clientesParaCobrar.length === 0) {
-            showToast("Nenhum cliente válido na seleção. (Pagos ou sem telefone)", "error");
-            return;
-        }
+    if (clientesParaCobrar.length === 0) {
+        showToast("Nenhum cliente válido na seleção. (Pagos ou sem telefone)", "error");
+        return;
+    }
 
-        const idsParaEnvio = clientesParaCobrar.map(c => c.id);
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        showToast("Sessão expirada. Faça login novamente.", "error");
+        return;
+    }
 
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            showToast("Sessão expirada. Faça login novamente.", "error");
-            return;
-        }
+    // Pega a mensagem customizada das suas configurações do painel
+    const msgPersonalizada = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento.";
 
-        const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
+    // Monta a lista perfeita: o servidor não precisa mais adivinhar nada!
+    const pacoteDeClientes = clientesParaCobrar.map(c => {
+        const mesCorreto = getTargetMes(c.id); // Pega o mês exato onde o cliente está
+        return {
+            id: c.id,
+            nome: c.nome || "Cliente",
+            tel: c.tel,
+            valor: parseFloat(c.valor) || 0,
+            mesDaCobranca: mesCorreto,
+            mesFormatado: formatarMesAno(mesCorreto)
+        };
+    });
 
-        showToast(`Iniciando envio para ${idsParaEnvio.length} cliente(s) no servidor...`, "info");
+    showToast(`Iniciando envio para ${pacoteDeClientes.length} cliente(s) no servidor...`, "info");
+    
+    if (typeof clearSelection === "function") clearSelection();
+
+    try {
+        const dispararEmMassaCobrancas = firebase.functions().httpsCallable('dispararEmMassaCobrancas');
         
-        if (typeof clearSelection === "function") clearSelection();
+        // Dispara enviando o pacote completo
+        const resultado = await dispararEmMassaCobrancas({
+            tenantId: user.uid,
+            mensagemBase: msgPersonalizada,
+            clientes: pacoteDeClientes 
+        });
 
-        try {
-            const dispararEmMassaCobrancas = firebase.functions().httpsCallable('dispararEmMassaCobrancas');
-            
-            const resultado = await dispararEmMassaCobrancas({
-                tenantId: user.uid,
-                mes: mesDestino,
-                clientesIds: idsParaEnvio
-            });
-
-            if (resultado.data.sucesso) {
-                showToast(`Sucesso! Fila de ${resultado.data.totalProcessado} disparos iniciada.`, "success");
-            }
-
-        } catch (error) {
-            console.error("Erro na função de disparo:", error);
-            showToast("Erro ao comunicar com o servidor de disparos.", "error");
+        if (resultado.data.sucesso) {
+            showToast(`Sucesso! Fila de ${resultado.data.totalProcessado} disparos concluída.`, "success");
         }
+
+    } catch (error) {
+        console.error("Erro na função de disparo:", error);
+        showToast("Erro ao comunicar com o servidor de disparos.", "error");
     }
-
-    function arquivarSelecionados(arquivarStatus) {
-        if(selecionados.size === 0 || !adminId) return;
-        const acao = arquivarStatus ? "arquivar" : "desarquivar";
-        const btnClass = arquivarStatus ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/30" : "bg-brand-500 hover:bg-brand-600 shadow-brand-500/30";
-        const bgIcoClass = arquivarStatus ? "bg-amber-500" : "bg-brand-500";
-        const ico = arquivarStatus ? "archive" : "archive-restore";
-
-        showConfirm(
-            `${acao.charAt(0).toUpperCase() + acao.slice(1)} ${selecionados.size} registo(s)`,
-            `Tem a certeza que deseja ${acao} os clientes selecionados simultaneamente?`,
-            "Confirmar", btnClass, ico, bgIcoClass,
-            () => {
-                const updates = {};
-                const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
-
-                selecionados.forEach(id => {
-                    const mesOrigem = getTargetMes(id);
-                    if (arquivarStatus) {
-                        updates[`cobrancas/${mesOrigem}/${id}/arquivado`] = true;
-                    } else {
-                        if (mesOrigem === mesDestino) {
-                            updates[`cobrancas/${mesDestino}/${id}/arquivado`] = false;
-                        } else {
-                            const cliente = dadosLocais.find(c => c.id === id);
-                            if (cliente) {
-                                updates[`cobrancas/${mesDestino}/${id}`] = {
-                                    nome: cliente.nome || "",
-                                    tel: cliente.tel || "",
-                                    tags: cliente.tags || [],
-                                    dataEntrada: cliente.dataEntrada || "",
-                                    diaCobranca: cliente.diaCobranca || "",
-                                    observacao: cliente.observacao || "",
-                                    valor: cliente.valor !== undefined ? cliente.valor : configGeral.valorPadrao,
-                                    arquivado: false,
-                                    pago: false,
-                                    adiantadas: 0,
-                                    msgEnviada: false,
-                                    comprovante: null
-                                };
-                            }
-                        }
-                    }
-                });
-
-                db.ref(`tenants/${adminId}`).update(updates).then(() => {
-                    selecionados.clear();
-                    showToast(`Registos ${acao}dos com sucesso!`);
-                });
-            }
-        );
-    }
+}
 
     function excluirSelecionados() {
         if(selecionados.size === 0 || !adminId) return;
