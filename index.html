@@ -1605,63 +1605,52 @@
         lucide.createIcons();
     }
 
-    function iniciarFilaWhatsApp() {
-        if(selecionados.size === 0) return;
+   async function iniciarFilaWhatsApp() {
+        if (selecionados.size === 0) {
+            showToast("Nenhum cliente selecionado para cobrança.", "error");
+            return;
+        }
 
-        filaEnvio = Array.from(selecionados)
+        const clientesParaCobrar = Array.from(selecionados)
             .map(id => dadosLocais.find(c => c.id === id))
             .filter(c => c && c.tel && !c.pago);
 
-        if (filaEnvio.length === 0) {
-            showToast("Nenhum cliente válido na seleção. (Clientes pagos ou sem telefone foram ignorados)", "error");
+        if (clientesParaCobrar.length === 0) {
+            showToast("Nenhum cliente válido na seleção. (Pagos ou sem telefone)", "error");
             return;
         }
 
-        filaTotal = filaEnvio.length;
-        atualizarUIFila();
-        document.getElementById('modalFilaEnvio').classList.add('flex');
-    }
+        const idsParaEnvio = clientesParaCobrar.map(c => c.id);
 
-    function atualizarUIFila() {
-        if (filaEnvio.length === 0) {
-            fecharFilaWhatsApp();
-            showToast("Fila de envios concluída!", "success");
-            clearSelection();
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            showToast("Sessão expirada. Faça login novamente.", "error");
             return;
         }
 
-        const atual = filaTotal - filaEnvio.length + 1;
-        document.getElementById('filaAtualNum').innerText = atual;
-        document.getElementById('filaTotalNum').innerText = filaTotal;
+        const mesDestino = mesAtual === 'todos' ? mesReal : mesAtual;
 
-        const cliente = filaEnvio[0];
-        document.getElementById('filaClienteNome').innerText = cliente.nome;
-        document.getElementById('filaClienteTel').innerText = cliente.tel || 'Sem telefone';
-    }
+        showToast(`Iniciando envio para ${idsParaEnvio.length} cliente(s) no servidor...`, "info");
+        
+        if (typeof clearSelection === "function") clearSelection();
 
-    function proximoFilaWhatsApp() {
-        if (filaEnvio.length === 0) return;
-        const cliente = filaEnvio.shift();
+        try {
+            const dispararEmMassaCobrancas = firebase.functions().httpsCallable('dispararEmMassaCobrancas');
+            
+            const resultado = await dispararEmMassaCobrancas({
+                tenantId: user.uid,
+                mes: mesDestino,
+                clientesIds: idsParaEnvio
+            });
 
-        const val = parseFloat(cliente.valor) || 0;
-        enviarZap(cliente.id, cliente.nome, cliente.tel, val);
+            if (resultado.data.sucesso) {
+                showToast(`Sucesso! Fila de ${resultado.data.totalProcessado} disparos iniciada.`, "success");
+            }
 
-        atualizarUIFila();
-    }
-
-    function pularFilaWhatsApp() {
-        if (filaEnvio.length === 0) return;
-        filaEnvio.shift();
-        atualizarUIFila();
-    }
-
-    function cancelarFilaWhatsApp() {
-        filaEnvio = [];
-        fecharFilaWhatsApp();
-    }
-
-    function fecharFilaWhatsApp() {
-        document.getElementById('modalFilaEnvio').classList.remove('flex');
+        } catch (error) {
+            console.error("Erro na função de disparo:", error);
+            showToast("Erro ao comunicar com o servidor de disparos.", "error");
+        }
     }
 
     function arquivarSelecionados(arquivarStatus) {
