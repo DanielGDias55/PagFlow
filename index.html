@@ -1935,6 +1935,12 @@ async function enviarZap(id, n, t, v) {
     const termoMens = configGeral.termoMensalidade || "Mensalidade";
     const mesCap = formatarMesAno(targetMes).charAt(0).toUpperCase() + formatarMesAno(targetMes).slice(1);
 
+    // ========================================================
+    // A MÁGICA ACONTECE AQUI: LÊ A CHAVE NO BANCO DE DADOS
+    // ========================================================
+    const configRef = await db.ref(`tenants/${adminId}/config/usarMercadoPago`).once('value');
+    const usarMercadoPago = configRef.val() === true;
+
     // 1. Buscamos o cliente para saber a "idade" do Pix
     const cliente = dadosLocais.find(c => c.id === id);
     const agora = Date.now();
@@ -1943,8 +1949,8 @@ async function enviarZap(id, n, t, v) {
     // 2. Verifica se o Pix foi gerado há menos de 9 dias
     const pixAindaValido = cliente && cliente.pixGeradoEm && (agora - cliente.pixGeradoEm < noveDiasEmMs);
 
-    // ROTA A: SE FOR O SEU USUÁRIO VIP (Gera o Pix Dinâmico no Mercado Pago)
-    if (adminId === USUARIO_VIP_PIX) {
+    // ROTA A: CHAVE MERCADO PAGO LIGADA (Gera o Pix Dinâmico no Mercado Pago)
+    if (usarMercadoPago) {
         
         if (pixAindaValido) {
             // CENÁRIO 1: PIX AINDA VALE (Manda apenas o lembrete)
@@ -1976,11 +1982,11 @@ async function enviarZap(id, n, t, v) {
             }
         }
 
-    // ROTA B: TODOS OS OUTROS USUÁRIOS
+    // ROTA B: CHAVE DESLIGADA (Sistema Antigo - Apenas Link)
     } else {
         db.ref(`tenants/${adminId}/cobrancas/${targetMes}/${id}`).update({ msgEnviada: true }); 
         const msgMeio = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
-        const msgAntiga = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCap}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\nChave PIX: ${configGeral.chavePix}\n\nDetalhes da cobrança:\n${link}`); 
+        const msgAntiga = encodeURIComponent(`Olá, ${n}!\n\n${msgMeio}\n\nReferência: ${mesCap}\nValor da ${termoMens}: R$ ${v.toFixed(2)}\n\nDetalhes da cobrança:\n${link}`); 
         window.open(`https://wa.me/${t}?text=${msgAntiga}`); 
     }
 }
