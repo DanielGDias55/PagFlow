@@ -377,7 +377,7 @@
                     <i data-lucide="chevron-down" id="icon-ajuda2" class="w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0"></i>
                 </button>
                 <div id="ajuda2" class="hidden px-5 pb-5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
-                    O sistema atualiza a cor do status automaticamente com base nas ações:
+                    O sistema atualiza a cor do status automatically com base nas ações:
                     <ul class="list-disc pl-5 mt-2 space-y-1">
                         <li><strong class="text-emerald-500">Pago (Verde):</strong> O pagamento foi confirmado por si.</li>
                         <li><strong class="text-amber-500">Pendente (Amarelo):</strong> A aguardar pagamento, mas ainda não passou da data de vencimento.</li>
@@ -849,6 +849,29 @@
     </div>
 </div>
 
+<!-- Modal Alterar Valor em Massa -->
+<div id="modalValorMassa" class="modal-overlay" onclick="fecharModalValorMassa()">
+    <div class="glass-card w-full max-w-sm p-6 md:p-8 rounded-[2rem] shadow-2xl mx-4 transform transition-all text-center" onclick="event.stopPropagation()">
+        <div class="w-16 h-16 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow">
+            <i data-lucide="dollar-sign" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-black dark:text-white mb-2">Alterar Valor</h3>
+        <p class="text-xs text-slate-500 font-medium mb-6">Defina o novo valor para os <span id="qtdValorMassa" class="font-bold text-brand-500">0</span> clientes selecionados.</p>
+
+        <div class="text-left mb-6">
+            <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest px-1 italic">Novo Valor (R$)</label>
+            <input type="number" step="0.01" id="inputNovoValorMassa" onkeydown="if(event.key === 'Enter') salvarValorMassa()" class="w-full bg-slate-50 dark:bg-slate-900 dark:text-white px-4 py-4 rounded-2xl text-lg font-bold focus:ring-2 focus:ring-emerald-500 outline-none border border-slate-200 dark:border-slate-800 transition mt-1 text-center" placeholder="Ex: 60.00">
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="fecharModalValorMassa()" class="flex-1 py-3.5 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
+            <button onclick="salvarValorMassa()" id="btnSalvarValorMassa" class="flex-1 py-3.5 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex justify-center items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i> Aplicar a Todos
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================== -->
 <!-- 4. APLICAÇÃO ADMIN                         -->
 <!-- ========================================== -->
@@ -862,6 +885,10 @@
         <div class="h-6 w-px bg-slate-700 dark:bg-slate-300 mx-1 shrink-0"></div>
         <button id="btnBulkWhatsApp" onclick="iniciarFilaWhatsApp()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center gap-2 shrink-0">
             <i data-lucide="send" class="w-4 h-4"></i> <span class="hidden sm:inline">Cobrar Todos</span>
+        </button>
+        <!-- NOVO BOTÃO DE ALTERAR VALOR -->
+        <button onclick="abrirModalValorMassa()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex items-center gap-2 shrink-0">
+            <i data-lucide="dollar-sign" class="w-4 h-4"></i> <span class="hidden sm:inline">Alterar Valor</span>
         </button>
         <button id="btnBulkArchive" onclick="arquivarSelecionados(true)" class="bg-amber-500 hover:bg-amber-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-amber-500/30 transition-all active:scale-95 flex items-center gap-2 shrink-0">
             <i data-lucide="archive" class="w-4 h-4"></i> <span class="hidden sm:inline">Arquivar</span>
@@ -1118,7 +1145,7 @@
         ocultarStatus: false,
         ocultarDiaCobranca: false,
         desativarEmAnalise: false,
-        msgZapCustom: "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo."
+        msgZapCustom: "A sua fatura deste mês já está disponível! Como conversamos recentemente lá no grupo, temos uma nova regra de valores:\n\n✅ Pagando até o dia 25: *R$ 55,00*\n🚨 Pagando após o dia 29: *R$ 60,00*\n\nAcesse o link abaixo para realizar o pagamento e anexar o seu comprovante:"
     };
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -2362,7 +2389,7 @@ let htmlLinhas = ""; // O nosso "balde" que vai guardar o texto todo
         document.getElementById('cfgOcultarStatus').checked = configGeral.ocultarStatus || false;
         document.getElementById('cfgOcultarDiaCobranca').checked = configGeral.ocultarDiaCobranca || false;
         document.getElementById('cfgDesativarEmAnalise').checked = configGeral.desativarEmAnalise || false;
-        document.getElementById('cfgMsgCustom').value = configGeral.msgZapCustom || "A sua fatura já está disponível para pagamento. Acesse o link para anexar o comprovativo.";
+        document.getElementById('cfgMsgCustom').value = configGeral.msgZapCustom || "A sua fatura deste mês já está disponível! Como conversamos recentemente lá no grupo, temos uma nova regra de valores:\n\n✅ Pagando até o dia 25: *R$ 55,00*\n🚨 Pagando após o dia 29: *R$ 60,00*\n\nAcesse o link abaixo para realizar o pagamento e anexar o seu comprovante:";
         document.getElementById('modalConfig').classList.add('flex');
         lucide.createIcons();
     }
@@ -2950,6 +2977,59 @@ let htmlLinhas = ""; // O nosso "balde" que vai guardar o texto todo
         document.body.removeChild(temp);
 
         showToast("Chave PIX copiada!");
+    }
+
+    function abrirModalValorMassa() {
+        if (selecionados.size === 0) return;
+        document.getElementById('qtdValorMassa').innerText = selecionados.size;
+        document.getElementById('inputNovoValorMassa').value = '';
+        document.getElementById('modalValorMassa').classList.add('flex');
+        lucide.createIcons();
+        setTimeout(() => document.getElementById('inputNovoValorMassa').focus(), 100);
+    }
+
+    function fecharModalValorMassa() {
+        document.getElementById('modalValorMassa').classList.remove('flex');
+    }
+
+    function salvarValorMassa() {
+        if (!adminId || selecionados.size === 0) return;
+
+        const input = document.getElementById('inputNovoValorMassa');
+        const novoValorStr = input.value.replace(',', '.');
+        const novoValor = parseFloat(novoValorStr);
+
+        if (isNaN(novoValor) || novoValor < 0) {
+            showToast("Digite um valor numérico válido.", "error");
+            return;
+        }
+
+        const btn = document.getElementById('btnSalvarValorMassa');
+        const txtOriginal = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Aplicando...';
+        btn.classList.add('opacity-50', 'pointer-events-none');
+        lucide.createIcons();
+
+        // Cria um objeto de atualização para o Firebase
+        const updates = {};
+        selecionados.forEach(id => {
+            const targetMes = getTargetMes(id);
+            updates[`cobrancas/${targetMes}/${id}/valor`] = novoValor;
+        });
+
+        // Envia tudo de uma vez para o banco de dados
+        db.ref(`tenants/${adminId}`).update(updates).then(() => {
+            btn.innerHTML = txtOriginal;
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+            fecharModalValorMassa();
+            clearSelection(); // Limpa as caixinhas marcadas
+            showToast(`Valor atualizado com sucesso para ${selecionados.size} clientes!`, "success");
+        }).catch(err => {
+            btn.innerHTML = txtOriginal;
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+            showToast("Erro ao atualizar os valores.", "error");
+            console.error(err);
+        });
     }
 
     window.onload = function() {
